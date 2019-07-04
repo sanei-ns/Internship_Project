@@ -1,0 +1,105 @@
+#!/usr/bin/env awk
+#
+# Returns the top N EXE downloads
+#
+# Dependencies:
+#   - httpSniffer
+#
+# Examples:
+#   - tawk 'exeDL()' file.txt
+#   - tawk 'exeDL(5)' file.txt
+
+@include "aggr"
+@include "bitsallset"
+@include "hdr"
+@include "strisempty"
+#@include "unquote"
+@include "_validate_col"
+
+function exeDL(n,        _i, _l, _m, _fname, _ftype, _fsize, _img, _imgC, _vid, _vidC, _aud, _audC, _msg, _msgC, _app, _appC, _txt, _txtC, _unk, _unkC, _md5, _md5out, _duhout, _sip, _dip) {
+    _sip = _validate_col("srcIP4;srcIP6;srcIP", _my_srcIP)
+    _dip = _validate_col("dstIP4;dstIP6;dstIP", _my_dstIP)
+    _validate_col("httpAFlags")
+    _validate_col("httpMimes")
+    _validate_col("httpImages")
+    _validate_col("httpVideos")
+    _validate_col("httpAudios")
+    _validate_col("httpMsgs")
+    _validate_col("httpAppl")
+    _validate_col("httpText")
+    _validate_col("httpPunk")
+    if (__PRIHDR__ && hdr()) {
+        print $_dip, $_sip, "Mime", "Filename", "Size", "MD5", "Flows"
+    } else if (bitsallset($httpAFlags, 0x1000)) {
+        # Split the different filenames
+        _l = split($httpImages, _img, "\";\"")
+        gsub(/^"/, "", _img[1])  # remove leading quote
+        gsub(/"$/, "", _img[_l]) # remove trailing quote
+        _l = split($httpVideos, _vid, "\";\"")
+        gsub(/^"/, "", _vid[1])  # remove leading quote
+        gsub(/"$/, "", _vid[_l]) # remove trailing quote
+        _l = split($httpAudios, _aud, "\";\"")
+        gsub(/^"/, "", _aud[1])  # remove leading quote
+        gsub(/"$/, "", _aud[_l]) # remove trailing quote
+        _l = split($httpMsgs, _msg, "\";\"")
+        gsub(/^"/, "", _msg[1])  # remove leading quote
+        gsub(/"$/, "", _msg[_l]) # remove trailing quote
+        _l = split($httpAppl, _app, "\";\"")
+        gsub(/^"/, "", _app[1])  # remove leading quote
+        gsub(/"$/, "", _app[_l]) # remove trailing quote
+        _l = split($httpText, _txt, "\";\"")
+        gsub(/^"/, "", _txt[1])  # remove leading quote
+        gsub(/"$/, "", _txt[_l]) # remove trailing quote
+        _l = split($httpPunk, _unk, "\";\"")
+        gsub(/^"/, "", _unk[1])  # remove leading quote
+        gsub(/"$/, "", _unk[_l]) # remove trailing quote
+        # Split the MIME types
+        _l = split($httpMimes, _m, "\";\"")
+        gsub(/^"/, "", _m[1])  # remove leading quote
+        gsub(/"$/, "", _m[_l]) # remove trailing quote
+        for (_i = 1; _i <= _l; _i++) {
+            if (!strisempty(_m[_i])) {
+                if (_m[_i] ~ /application\//) {
+                    _fname = _app[++_appC]
+                    _dir = "Appl"
+                } else if (_m[_i] ~ /audio\//) {
+                    _fname = _aud[++_audC]
+                    _dir = "Audio"
+                } else if (_m[_i] ~ /image\//) {
+                    _fname = _img[++_imgC]
+                    _dir = "Picture"
+                } else if (_m[_i] ~ /text\//) {
+                    _fname = _txt[++_txtC]
+                    _dir = "Text"
+                } else if (_m[_i] ~ /video\//) {
+                    _fname = _vid[++_vidC]
+                    _dir = "Video"
+                } else if (_m[_i] ~ /message\//) {
+                    _fname = _msg[++_msgC]
+                    _dir = "Punk"
+                } else {
+                    _fname = _unk[++_unkC]
+                }
+                if (strisempty(_fname)) continue
+                _cmd = "[ -f '/tmp/http" _dir "/" _fname "' ] && file -b '/tmp/http" _dir "/" _fname "'"
+                if ((_cmd | getline _ftype) > 0 && _ftype ~ /executable/) {
+                    close(_cmd)
+                    if (__UNAME__ == "Darwin") {
+                        _cmd = "md5 -q '/tmp/http" _dir "/" _fname "'"
+                    } else {
+                        _cmd = "md5sum '/tmp/http" _dir "/" _fname "'"
+                    }
+                    _cmd | getline _md5out
+                    split(_md5out, _md5, "\\s")
+                    close(_cmd)
+                    _cmd = "du -h '/tmp/http" _dir "/" _fname "'"
+                    _cmd | getline _duhout
+                    split(_duhout, _fsize, "\\s")
+                }
+                close(_cmd)
+                if (_ftype !~ /executable/) continue
+                aggr($_dip OFS $_sip OFS _m[_i] OFS _fname OFS _fsize[1] OFS _md5[1], "flows", n)
+            }
+        }
+    }
+}

@@ -1,0 +1,21 @@
+#H bit | icmpType   | Description
+#H =============================================================================
+     0 | 0x0000 0001 | Echo Reply
+     3 | 0x0000 0008 | Destination Unreachable
+
+     4 | 0x0000 0010 | Source Quench
+     5 | 0x0000 0020 | Redirect (change route)
+     7 | 0x0000 0080 | Echo Request
+
+    11 | 0x0000 0800 | Time Exceeded
+
+    12 | 0x0000 1000 | Parameter Problem
+    13 | 0x0000 2000 | Timestamp Request
+    14 | 0x0000 4000 | Timestamp Reply
+    15 | 0x0000 8000 | Information Request
+
+    16 | 0x0001 0000 | Information Reply
+    17 | 0x0002 0000 | Address Mask Request
+    18 | 0x0004 0000 | Address Mask Reply
+
+    30 | 0x4000 0000 | Traceroute

@@ -1,0 +1,21 @@
+-- Top HTTPS Server Name Indication (SNI) by number of flows
+
+SELECT
+    sni,
+    COUNT(*) AS cnt
+
+FROM (
+    SELECT
+        UNNEST("sslServerName") AS sni
+    FROM
+        flow
+    WHERE
+        ARRAY_LENGTH("sslServerName", 1) > 0
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+GROUP BY sni
+ORDER BY cnt DESC
+
+LIMIT :n

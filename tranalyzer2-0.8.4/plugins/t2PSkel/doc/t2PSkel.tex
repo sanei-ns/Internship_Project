@@ -1,0 +1,158 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+% Declare author and title here, so the main document can reuse it
+\trantitle
+    {t2PSkel} % Plugin name
+    {t2PSkel} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{t2PSkel}\label{s:t2PSkel}
+
+\subsection{Description}
+The t2PSkel plugin analyzes ...
+
+\subsection{Dependencies}
+
+%\traninput{file} % use this command to input files
+%\traninclude{file} % use this command to include files
+
+%\tranimg{image} % use this command to include an image (must be located in a subfolder ./img/)
+
+\subsubsection{External Libraries}
+This plugin depends on the {\bf XXX} library.
+\paragraph{Arch:} {\tt sudo pacman -S XXX}
+\paragraph{Ubuntu/Kali:} {\tt sudo apt-get install XXX}
+\paragraph{OpenSUSE:} {\tt sudo zypper install XXX}
+\paragraph{Red Hat/Fedora:} {\tt sudo yum install XXX}
+\paragraph{MAC OSX:} {\tt brew install XXX}
+
+\subsubsection{Other Plugins}
+This plugin requires the \tranrefpl{tcpFlags} plugin.
+
+\subsubsection{Required Files}
+The file {\tt file.txt} is required.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt T2PSKEL\_VAR}  & 0 & Whether (1) or not (0) to output {\tt t2PSkelVar}\\
+    {\tt T2PSKEL\_IP}   & 0 & General description of {\tt T2PSKEL\_IP}\\
+                        &   & \qquad 0: description of value 0\\
+                        &   & \qquad 1: description of value 1\\
+                        &   & \qquad 2: description of value 2\\
+    {\tt T2PSKEL\_VEC}  & 0 & Description of {\tt T2PSKEL\_VEC} & {\tt\small T2PSKEL\_IP=1}\\ % only relevant if T2PSKEL_IP=1
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The t2PSkel plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{t2PSkelStat}}               & H8 & Status                        & \\
+    {\tt \hyperref[t2PSkelStat]{t2PSkelText}} & S  & describe t2PSkelText (string) & \\
+
+    {\tt t2PSkelVar} & U64 & describe t2PSkelVar (uint64) & {\tt\small T2PSKEL\_VAR=1}\\  % only output if T2PSKEL_VAR1=1
+    {\tt t2PSkelIP}  & IP4 & describe t2PSkelIP (IPv4)    & {\tt\small T2PSKEL\_IP=1} \\  % only output if T2PSKEL_IP=1
+    {\tt \hyperref[t2PSkelVar1]{t2PSkelVar1\_Var2}} & H32\_H16 & describe {\tt t2PSkelVar1\_Var2} & \\
+    \\
+    \multicolumn{4}{l}{If {\tt T2PSKEL\_VEC=1}, the following columns are displayed:}\\
+    \\
+    {\tt t2PSkelVar3\_Var4} & R(U8\_U8) & describe {\tt t2PSkelVar1\_Var2} & \\
+    {\tt t2PSkelVector}     & R(R(D))   & describe {\tt t2PSkelVector}     & \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{t2PSkelStat}\label{t2PSkelStat}
+The {\tt t2PSkelStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf t2PSkelStat} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x0\textcolor{magenta}{1}} & Flow is t2PSkel\\
+    {\tt 0x0\textcolor{magenta}{2}} & ---\\
+    {\tt 0x0\textcolor{magenta}{4}} & ---\\
+    {\tt 0x0\textcolor{magenta}{8}} & ---\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{t2PSkelVar1}\label{t2PSkelVar1}
+The {\tt t2PSkelVar1} column is to be interpreted as follows:\\
+\begin{minipage}{.45\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf t2PSkelVar1} & {\bf Description}\\
+        \midrule\endhead%
+        {\tt 0x0\textcolor{magenta}{1}} & ---\\
+        {\tt 0x0\textcolor{magenta}{2}} & ---\\
+        {\tt 0x0\textcolor{magenta}{4}} & ---\\
+        {\tt 0x0\textcolor{magenta}{8}} & ---\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+\hfill
+\begin{minipage}{.45\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf t2PSkelVar1} & {\bf Description}\\
+        \midrule\endhead%
+        {\tt 0x\textcolor{magenta}{1}0} & ---\\
+        {\tt 0x\textcolor{magenta}{2}0} & ---\\
+        {\tt 0x\textcolor{magenta}{4}0} & ---\\
+        {\tt 0x\textcolor{magenta}{8}0} & ---\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+
+\subsection{Packet File Output}
+In packet mode ({\tt --s} option), the t2PSkel plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt t2PSkelCol1} & I8 & describe col1 & \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Plugin Report Output}
+The following information is reported:
+\begin{itemize}
+    \item Number of XXX packets
+    \item Aggregated status flags ({\tt\nameref{t2PSkelStat}})
+\end{itemize}
+
+\subsection{Additional Output}
+Non-standard output:
+\begin{itemize}
+    \item {\tt PREFIX\_suffix.txt}: description
+\end{itemize}
+
+\subsection{Post-Processing}
+
+\subsection{Example Output}
+
+\subsection{Known Bugs and Limitations}
+
+\subsection{TODO}
+\begin{itemize}
+    \item TODO1
+    \item TODO2
+\end{itemize}
+
+\subsection{References}
+\begin{itemize}
+    \item \href{https://tools.ietf.org/html/rfcXXXX}{RFCXXXX}: Title
+    \item \url{https://www.iana.org/assignments/}
+\end{itemize}
+
+\end{document}

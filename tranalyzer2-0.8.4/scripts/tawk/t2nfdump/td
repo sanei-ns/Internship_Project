@@ -1,0 +1,16 @@
+#!/usr/bin/env awk
+#
+# Duration
+#
+# Dependencies:
+#   - basicFlow
+#
+# Example:
+#   - tawk '{ print td() }' file
+
+@include "_validate_col"
+
+function td(        _c) {
+    _c = _validate_col("duration", _my_duration)
+    return $_c
+}

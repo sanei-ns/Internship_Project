@@ -1,0 +1,363 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {radiusDecode}
+    {RADIUS}
+    {Tranalyzer Development Team} % author(s)
+
+\section{radiusDecode}\label{s:radiusDecode}
+
+\subsection{Description}
+The radiusDecode plugin analyzes RADIUS traffic.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt RADIUS\_DBG} & 0 & Whether (1) or not (0) to print debug messages\\
+    {\tt RADIUS\_NAS} & 1 & Whether (1) or not (1) to output NAS info\\
+    {\tt RADIUS\_FRAMED} & 1 & Whether (1) or not (0) to output framed info\\
+    {\tt RADIUS\_TUNNEL} & 1 & Whether (1) or not (0) to output tunnel info\\
+    {\tt RADIUS\_ACCT} & 1 & Whether (1) or not (0) to output accounting info\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The radiusDecode plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description}\\% & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{radiusStat}} & H8 & Status\\
+    {\tt radiusAxsReq\_Acc\_Rej\_Chal} & 4xU16 & Access-Request/Accept/Reject/Challenge\\
+    {\tt radiusAccReq\_Resp}   & U16\_U16 & Accounting-Request/Response\\
+    {\tt radiusAccStart\_Stop} & U16\_U16 & Accounting Start/Stop\\
+    {\tt radiusUser} & S & Username\\
+    {\tt \nameref{radiusServiceTyp}}   & U32 & Service type\\
+    {\tt \nameref{radiusLoginService}} & U32 & Login-Service\\
+    {\tt \nameref{radiusVendor}}       & U32 & Vendor Id (SMI)\\\\
+
+    \multicolumn{3}{l}{If {\tt RADIUS\_NAS=1}, the following columns are displayed:}\\\\
+
+    {\tt radiusNasId}   & S   & NAS Identifier\\
+    {\tt radiusNasIp}   & IP4 & NAS IP address\\
+    {\tt radiusNasPort} & U32 & NAS IP port\\
+    {\tt \nameref{radiusNasPortTyp}} & U32 & NAS port type\\
+    {\tt radiusNasPortId}  & S  & NAS port Id\\\\
+
+    \multicolumn{3}{l}{If {\tt RADIUS\_FRAMED=1}, the following columns are displayed:}\\\\
+
+    {\tt radiusFramedIp}   & IP4 & Framed IP address\\
+    {\tt radiusFramedMask} & IP4 & Framed IP netmask\\
+    {\tt \nameref{radiusFramedProto}} & U32 & Framed protocol\\
+    {\tt \nameref{radiusFramedComp}} & U32 & Framed compression\\
+    {\tt radiusFramedMtu} & U32 & Framed MTU\\\\
+
+    \multicolumn{3}{l}{If {\tt RADIUS\_TUNNEL=1}, the following columns are displayed:}\\\\
+
+    {\tt \nameref{radiusTunnelMedium}} & U32\_U32 & Tunnel type and medium type\\
+    {\tt radiusTunnelCli}    & S & Tunnel client endpoint\\
+    {\tt radiusTunnelSrv}    & S & Tunnel server endpoint\\
+    {\tt radiusTunnelCliAId} & S & Tunnel client authentication Id\\
+    {\tt radiusTunnelSrvAId} & S & Tunnel server authentication Id\\
+    {\tt radiusTunnelPref}   & S & Tunnel preference\\\\
+
+    \multicolumn{3}{l}{If {\tt RADIUS\_ACCT=1}, the following columns are displayed:}\\\\
+
+    {\tt radiusAcctSessId}   & S & Accounting session Id\\
+    {\tt radiusAcctSessTime} & U32 & Accounting session time (seconds)\\
+    {\tt \nameref{radiusAcctStatTyp}} & U32 & Accounting status type\\
+    {\tt \nameref{radiusAcctTerm}}    & U32 & Accounting terminate cause\\
+    {\tt radiusAcctInOct\_OutOct} & U32\_U32 & Accounting input/output octets\\
+    {\tt radiusAcctInPkt\_OutPkt} & U32\_U32 & Accounting input/output packets\\
+    {\tt radiusAcctInGw\_OutGw}   & U32\_U32 & Accounting input/output gigawords\\\\
+
+    {\tt radiusConnInfo}  & S & User connection info\\
+    {\tt radiusFilterId}  & S & Filter Identifier\\
+    {\tt radiusCalledId}  & S & Called Station Identifier\\
+    {\tt radiusCallingId} & S & Calling Station Identifier\\
+    {\tt radiusReplyMsg}  & S & Reply message\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{radiusStat}\label{radiusStat}
+The {\tt radiusStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf radiusStat} & {\bf Description}\\
+    \midrule\endhead%
+    $2^0$ (={\tt 0x01}) & Flow is RADIUS\\
+    $2^0$ (={\tt 0x02}) & Authentication and configuration traffic\\
+    $2^0$ (={\tt 0x04}) & Accounting traffic\\
+    $2^2$ (={\tt 0x10}) & Connection successful\\
+    $2^1$ (={\tt 0x20}) & Connection failed\\
+    $2^7$ (={\tt 0x80}) & Malformed packet\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{radiusServiceTyp}\label{radiusServiceTyp}
+The {\tt radiusServiceTyp} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf radiusServiceTyp} & {\bf Description}\\
+    \midrule\endhead%
+     1 & Login\\
+     2 & Framed\\
+     3 & Callback Login\\
+     4 & Callback Framed\\
+     5 & Outbound\\
+     6 & Administrative\\
+     7 & NAS Prompt\\
+     8 & Authenticate Only\\
+     9 & Callback NAS Prompt\\
+    10 & Call Check\\
+    11 & Callback Administrative\\
+    12 & Voice\\
+    13 & Fax\\
+    14 & Modem Relay\\
+    15 & IAPP-Register\\
+    16 & IAPP-AP-Check\\
+    17 & Authorize Only\\
+    18 & Framed-Management\\
+    19 & Additional-Authorization\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{radiusLoginService}\label{radiusLoginService}
+The {\tt radiusLoginService} column is to be interpreted as follows:
+\begin{longtable}{cl}
+    \toprule
+    {\bf radiusLoginService} & {\bf Description}\\
+    \midrule\endhead%
+    0 & Telnet\\
+    1 & Rlogin\\
+    2 & TCP Clear\\
+    3 & PortMaster (proprietary)\\
+    4 & LAT\\
+    5 & X25-PAD\\
+    6 & X25-T3POS\\
+    7 & Unassigned\\
+    8 & TCP Clear Quiet (suppresses any NAS-generated connect string)\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{radiusVendor}\label{radiusVendor}
+The {\tt radiusVendor} column represents the SMI Network Management Private Enterprise Codes which can be found at \url{https://www.iana.org/assignments/enterprise-numbers}.
+Alternatively use {\tt grep} on the file {\tt vendor.txt} as follows: {\tt grep id vendor.txt}, where {\tt id} is the actual Id reported by Tranalyzer, e.g., 4874 for Juniper.
+
+\subsubsection{radiusNasPortTyp}\label{radiusNasPortTyp}
+The {\tt radiusNasPortTyp} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf radiusNasPortTyp} & {\bf Description}\\
+    \midrule\endhead%
+     0 & Async\\
+     1 & Sync\\
+     2 & ISDN Sync\\
+     3 & ISDN Async V.120\\
+     4 & ISDN Async V.110\\
+     5 & Virtual\\
+     6 & PIAFS\\
+     7 & HDLC Clear Channel\\
+     8 & X.25\\
+     9 & X.75\\
+    10 & G.3 Fax\\
+    11 & SDSL - Symmetric DSL\\
+    12 & ADSL-CAP - Asymmetric DSL, Carrierless Amplitude Phase Modulation\\
+    13 & ADSL-DMT - Asymmetric DSL, Discrete Multi-Tone\\
+    14 & IDSL - ISDN Digital Subscriber Line\\
+    15 & Ethernet\\
+    16 & xDSL - Digital Subscriber Line of unknown type\\
+    17 & Cable\\
+    18 & Wireless - Other\\
+    19 & Wireless - IEEE 802.11\\
+    20 & Token-Ring\\
+    21 & FDDI\\
+    22 & Wireless - CDMA2000\\
+    23 & Wireless - UMTS\\
+    24 & Wireless - 1X-EV\\
+    25 & IAPP\\
+    26 & FTTP - Fiber to the Premises\\
+    27 & Wireless - IEEE 802.16\\
+    28 & Wireless - IEEE 802.20\\
+    29 & Wireless - IEEE 802.22\\
+    30 & PPPoA - PPP over ATM\\
+    31 & PPPoEoA - PPP over Ethernet over ATM\\
+    32 & PPPoEoE - PPP over Ethernet over Ethernet\\
+    33 & PPPoEoVLAN - PPP over Ethernet over VLAN\\
+    34 & PPPoEoQinQ - PPP over Ethernet over IEEE 802.1QinQ\\
+    35 & xPON - Passive Optical Network\\
+    36 & Wireless - XGP\\
+    37 & WiMAX Pre-Release 8 IWK Function\\
+    38 & WIMAX-WIFI-IWK: WiMAX WIFI Interworking\\
+    39 & WIMAX-SFF: Signaling Forwarding Function for LTE/3GPP2\\
+    40 & WIMAX-HA-LMA: WiMAX HA and or LMA function\\
+    41 & WIMAX-DHCP: WiMAX DCHP service\\
+    42 & WIMAX-LBS: WiMAX location based service\\
+    43 & WIMAX-WVS: WiMAX voice service\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{radiusFramedProto}\label{radiusFramedProto}
+The {\tt radiusFramedProto} column is to be interpreted as follows:
+\begin{longtable}{cl}
+    \toprule
+    {\bf radiusFramedProto} & {\bf Description}\\
+    \midrule\endhead%
+    1 & PPP\\
+    2 & SLIP\\
+    3 & AppleTalk Remote Access Protocol (ARAP)\\
+    4 & Gandalf proprietary SingleLink/MultiLink protocol\\
+    5 & Xylogics proprietary IPX/SLIP\\
+    6 & X.75 Synchronous\\
+    7 & GPRS PDP Context\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{radiusFramedComp}\label{radiusFramedComp}
+The {\tt radiusFramedComp} column is to be interpreted as follows:
+\begin{longtable}{cl}
+    \toprule
+    {\bf radiusFramedComp} & {\bf Description}\\
+    \midrule\endhead%
+    0 & None\\
+    1 & VJ TCP/IP header compression\\
+    2 & IPX header compression\\
+    3 & Stac-LZS compression\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{radiusTunnel\_Medium}\label{radiusTunnelMedium}
+The {\tt radiusTunnel\_Medium} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf radiusTunnel} & {\bf Description}\\
+    \midrule\endhead%
+     1 & Point-to-Point Tunneling Protocol (PPTP)\\
+     2 & Layer Two Forwarding (L2F)\\
+     3 & Layer Two Tunneling Protocol (L2TP)\\
+     4 & Ascend Tunnel Management Protocol (ATMP)\\
+     5 & Virtual Tunneling Protocol (VTP)\\
+     6 & IP Authentication Header in the Tunnel-mode (AH)\\
+     7 & IP-in-IP Encapsulation (IP-IP)\\
+     8 & Minimal IP-in-IP Encapsulation (MIN-IP-IP)\\
+     9 & IP Encapsulating Security Payload in the Tunnel-mode (ESP)\\
+    10 & Generic Route Encapsulation (GRE)\\
+    11 & Bay Dial Virtual Services (DVS)\\
+    12 & IP-in-IP Tunneling\\
+    13 & Virtual LANs (VLAN)\\
+    \bottomrule
+\end{longtable}
+
+\begin{longtable}{rl}
+    \toprule
+    {\bf radiusMedium} & {\bf Description}\\
+    \midrule\endhead%
+     1 & IPv4 (IP version 4)\\
+     2 & IPv6 (IP version 6)\\
+     3 & NSAP\\
+     4 & HDLC (8-bit multidrop)\\
+     5 & BBN 1822\\
+     6 & 802 (includes all 802 media plus Ethernet ``canonical format'')\\
+     7 & E.163 (POTS)\\
+     8 & E.164 (SMDS, Frame Relay, ATM)\\
+     9 & F.69 (Telex)\\
+    10 & X.121 (X.25, Frame Relay)\\
+    11 & IPX\\
+    12 & Appletalk\\
+    13 & Decnet IV\\
+    14 & Banyan Vines\\
+    15 & E.164 with NSAP format subaddress\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{radiusAcctStatTyp}\label{radiusAcctStatTyp}
+The {\tt radiusAcctStatTyp} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf radiusAcctStatTyp} & {\bf Description}\\
+    \midrule\endhead%
+     1 & Start\\
+     2 & Stop\\
+     3 & Interim-Update\\
+     7 & Accounting-On\\
+     8 & Accounting-Off\\
+     9 & Tunnel-Start\\
+    10 & Tunnel-Stop\\
+    11 & Tunnel-Reject\\
+    12 & Tunnel-Link-Start\\
+    13 & Tunnel-Link-Stop\\
+    14 & Tunnel-Link-Reject\\
+    15 & Failed\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{radiusAcctTerm}\label{radiusAcctTerm}
+The {\tt radiusAcctTerm} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf radiusAcctTerm} & {\bf Description}\\
+    \midrule\endhead%
+     1 & User Request\\
+     2 & Lost Carrier\\
+     3 & Lost Service\\
+     4 & Idle Timeout\\
+     5 & Session Timeout\\
+     6 & Admin Reset\\
+     7 & Admin Reboot\\
+     8 & Port Error\\
+     9 & NAS Error\\
+    10 & NAS Request\\
+    11 & NAS Reboot\\
+    12 & Port Unneeded\\
+    13 & Port Preempted\\
+    14 & Port Suspended\\
+    15 & Service Unavailable\\
+    16 & Callback\\
+    17 & User Error\\
+    18 & Host Request\\
+    19 & Supplicant Restart\\
+    20 & Reauthentication Failure\\
+    21 & Port Reinitialized\\
+    22 & Port Administratively Disabled\\
+    23 & Lost Power\\
+    \bottomrule
+\end{longtable}
+
+%\subsection{Custom File Output}
+%Non-standard output
+
+\subsection{Plugin Report Output}
+The number of RADIUS, Access, Access-Accept, Access-Reject and Accounting packets is reported.
+
+%\subsection{Post-Processing}
+
+%\subsection{Example Output}
+
+%\subsection{Known Bugs and Limitations}
+
+%\subsection{TODO}
+%\begin{itemize}
+%    \item TODO1
+%    \item TODO2
+%\end{itemize}
+
+\subsection{References}
+\begin{itemize}
+    \item \href{https://tools.ietf.org/html/rfc2865}{RFC2865}: Remote Authentication Dial In User Service (RADIUS)
+    \item \href{https://tools.ietf.org/html/rfc2866}{RFC2866}: RADIUS Accounting
+    \item \href{https://tools.ietf.org/html/rfc2867}{RFC2867}: RADIUS Accounting Modifications for Tunnel Protocol Support
+    \item \href{https://tools.ietf.org/html/rfc2868}{RFC2868}: RADIUS Attributes for Tunnel Protocol Support
+    \item \href{https://tools.ietf.org/html/rfc2869}{RFC2869}: RADIUS Extensions
+    \item \url{https://www.iana.org/assignments/radius-types/radius-types.xhtml}
+\end{itemize}
+
+\end{document}

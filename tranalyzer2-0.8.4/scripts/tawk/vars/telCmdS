@@ -1,0 +1,18 @@
+#H telCmdS | Description
+#H =============================================================================
+        SE | Subnegotiation End
+       NOP | No Operation
+        DM | Data Mark
+       BRK | Break
+        IP | Interrupt Process
+        AO | Abort Output
+       AYT | Are You There
+        EC | Erase Character
+        EL | Erase Line
+        GA | Go Ahead
+        SB | Subnegotiation
+      WILL | Will Perform
+      WONT | Won't Perform
+        DO | Do Perform
+      DONT | Don't Perform
+       IAC | Interpret As Command

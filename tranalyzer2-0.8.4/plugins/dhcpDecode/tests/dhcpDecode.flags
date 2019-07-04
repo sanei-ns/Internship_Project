@@ -1,0 +1,13 @@
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/dhcpDecode
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+IPV6_ACTIVATE   ../../tranalyzer2/src/networkHeaders.h
+
+# src/dhcpDecode.h
+DHCPBITFLD      src/dhcpDecode.h
+DHCPMASKFRMT    src/dhcpDecode.h

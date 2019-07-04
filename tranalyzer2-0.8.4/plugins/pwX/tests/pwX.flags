@@ -1,0 +1,26 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/pwX
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/pwX.h
+PWX_DEBUG       src/pwX.h
+PWX_STATUS      src/pwX.h
+PWX_USERNAME    src/pwX.h
+PWX_PASSWORD    src/pwX.h
+PWX_FTP         src/pwX.h
+PWX_POP3        src/pwX.h
+PWX_IMAP        src/pwX.h
+PWX_SMTP        src/pwX.h
+PWX_HTTP_BASIC  src/pwX.h
+PWX_HTTP_PROXY  src/pwX.h
+PWX_HTTP_GET    src/pwX.h
+PWX_HTTP_POST   src/pwX.h
+PWX_IRC         src/pwX.h
+PWX_TELNET      src/pwX.h
+PWX_LDAP        src/pwX.h
+PWX_PAP         src/pwX.h

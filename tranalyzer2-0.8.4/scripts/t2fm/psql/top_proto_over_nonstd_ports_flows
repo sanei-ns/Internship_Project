@@ -1,0 +1,42 @@
+-- Top protocols over non-standard ports by bytes
+
+SELECT
+    detected,
+    expected_n,
+    expected,
+    COUNT(*) AS cnt
+
+FROM (
+    -- A flows
+    SELECT
+        LOWER(SPLIT_PART("nDPIclass", '.', 1)) AS detected,
+        LOWER("dstPortClass") AS expected,
+        "dstPortClassN" AS expected_n
+    FROM
+        flow
+    WHERE
+        ("flowStat"::BIGINT & 1) = 0::BIGINT
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+
+    UNION ALL
+
+    -- B flows
+    SELECT
+        LOWER(SPLIT_PART("nDPIclass", '.', 1)) AS detected,
+        LOWER("dstPortClass") AS expected,
+        "dstPortClassN" AS expected_n
+    FROM
+        flow
+    WHERE
+        ("flowStat"::BIGINT & 1) = 1::BIGINT
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+WHERE detected != expected AND detected != 'unknown' AND expected != 'unknown'
+
+GROUP BY detected, expected, expected_n
+ORDER BY cnt DESC
+
+LIMIT :n

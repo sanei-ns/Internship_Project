@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+#
+# Configuration file for tcpFlags
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    SPKTMD_SEQACKREL radio ""
+        "Seq/Ack numbers representation (-s option); \
+            0: Absolute; \
+            1: relative"
+
+    IPCHECKSUM radio ""
+        "; \
+            0: No checksum calculation; \
+            1: Calculation of L3 (IP) header checksum; \
+            2: L3+L4 (TCP, UDP) checksum"
+
+    RTT_ESTIMATE  check "" "Round trip time estimation"
+    WINDOWSIZE    check "" "Calculation of TCP window size parameters"
+    SEQ_ACK_NUM   check "" "Seq/Ack number feature analysis"
+    FRAG_ANALYZE  check "" "Fragmentation analysis"
+    NAT_BT_EST    check "" "NAT boot time estimation"
+    SCAN_DETECTOR check "" "Scan flow detector"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

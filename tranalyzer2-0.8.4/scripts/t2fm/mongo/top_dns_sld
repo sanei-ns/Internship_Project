@@ -1,0 +1,76 @@
+cursor = db.flow.aggregate([
+    {
+        $match : {
+            timeFirst : { $gte : time_from },
+            timeLast  : { $lte : time_to },
+            dnsStat : { $bitsAllClear : NumberInt(0x12) },
+        }
+    },
+    {
+        $unwind : "$dnsQname"
+    },
+    {
+        $match : {
+            dnsQname : { $regex : /[^\.]\.[^\.]{2,}$/ }
+        }
+    },
+    {
+        $project : {
+            sld : {
+                $slice : [
+                    {
+                        $split : [
+                            { $toLower : "$dnsQname" },
+                            "."
+                        ]
+                    },
+                    -2
+                ]
+            }
+        }
+    },
+    //{
+    //    $project : {
+    //        sld : {
+    //            $concat : [ "$sld.0", ".", "$sld.1" ]
+    //        }
+    //    }
+    //},
+    {
+        $group : {
+            _id : "$sld",
+            count : { $sum : 1 }
+        }
+    },
+    {
+        $match : {
+            "_id.0" : {
+                $ne : "",
+            },
+            "_id.1" : {
+                $not : /^[0-9]*$/,
+            },
+            //_id : {
+            //    $not : /^[0-9]*\.[0-9]*$/,
+            //    $not : /^\./,
+            //    $not : /\.$/
+            //}
+        }
+    },
+    {
+        $sort : { count : -1 }
+    },
+    {
+        $limit : n
+    }
+])
+
+cursor.forEach(
+    function(e) {
+        //print(e._id + "\t" + e.count)
+        print(
+              e._id[0] + "." + e._id[1] + "\t"
+            + e.count
+        )
+    }
+)

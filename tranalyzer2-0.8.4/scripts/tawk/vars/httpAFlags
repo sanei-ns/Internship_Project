@@ -1,0 +1,18 @@
+#H bit | httpAFlags | Description
+#H =============================================================================
+#W   0 | 0x0001     | POST query with parameters
+#W   1 | 0x0002     | Host is IPv4
+#W   2 | 0x0004     | Possible DGA
+#W   3 | 0x0008     | Mismatched content-type
+#W   4 | 0x0010     | Sequence number violation
+#E   5 | 0x0020     | Parse Error
+#W   6 | 0x0040     | Header without value, e.g., Content-Type: [missing]
+     7 | 0x0080     |
+#I   8 | 0x0100     | X-Site Scripting protection
+#I   9 | 0x0200     | Content Security Policy
+#I  10 | 0x0400     | Do not track
+    11 | 0x0800     |
+#W  12 | 0x1000     | Possible EXE download
+#W  13 | 0x2000     | Possible ELF download
+#W  14 | 0x4000     | HTTP 1.0
+    15 | 0x8000     |

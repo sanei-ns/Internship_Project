@@ -1,0 +1,25 @@
+#H radiusAcctTerm | Description
+#H =============================================================================
+                1 | User Request
+                2 | Lost Carrier
+                3 | Lost Service
+                4 | Idle Timeout
+                5 | Session Timeout
+                6 | Admin Reset
+                7 | Admin Reboot
+                8 | Port Error
+                9 | NAS Error
+               10 | NAS Request
+               11 | NAS Reboot
+               12 | Port Unneeded
+               13 | Port Preempted
+               14 | Port Suspended
+               15 | Service Unavailable
+               16 | Callback
+               17 | User Error
+               18 | Host Request
+               19 | Supplicant Restart
+               20 | Reauthentication Failure
+               21 | Port Reinitialized
+               22 | Port Administratively Disabled
+               23 | Lost Power

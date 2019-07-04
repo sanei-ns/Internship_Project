@@ -1,0 +1,18 @@
+#!/usr/bin/env awk
+#
+# Source Port
+#
+# Dependencies:
+#   - basicFlow
+#
+# Example:
+#   - tawk '{ print sp() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function sp(        _c) {
+    _c = _validate_col("srcPort", _my_srcPort)
+    if (hdr()) return "Src Pt"
+    return $_c
+}

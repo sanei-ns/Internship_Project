@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+# Configuration file for wavelet
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    WAVELET_IAT radio "" "Value to analyse; 0: pktLen; 1: IAT"
+    WAVELET_SIG check "" "Print signal"
+    WAVELET_PREC radio "" "Precision; 0: float; 1: double"
+    WAVELET_THRES range "" "Min number of packets for analysis: 0 255"
+    WAVELET_MAX_PKT range "" "Max number of packets: 0 255"
+    WAVELET_LEVEL range "" "Wavelet decomposition level: 0 255"
+    WAVELET_EXTMODE radio "" "Extension Mode; NON: NON; SYM: SYM; ZPD: ZPD"
+    WAVELET_TYPE radio "" "Mother Wavelet; DB1: DB1; DB2: DB2; DB3: DB3; DB4: DB4"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

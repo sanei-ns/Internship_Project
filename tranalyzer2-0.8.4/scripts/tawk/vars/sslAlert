@@ -1,0 +1,34 @@
+#H bit | sslAlert     | Description
+#H =============================================================================
+     0 | 0x0000 0001  | Close notify
+     1 | 0x0000 0002  | Unexpected message
+     2 | 0x0000 0004  | Bad record MAC
+     3 | 0x0000 0008  | Decryption failed
+     4 | 0x0000 0010  | Record overflow
+     5 | 0x0000 0020  | Decompression failed
+     6 | 0x0000 0040  | Handshake failed
+     7 | 0x0000 0080  | No certificate
+     8 | 0x0000 0100  | Bad certificate
+     9 | 0x0000 0200  | Unsupported certificate
+    10 | 0x0000 0400  | Certificate revoked
+    11 | 0x0000 0800  | Certificate expired
+    12 | 0x0000 1000  | Certificate unknown
+    13 | 0x0000 2000  | Illegal parameter
+    14 | 0x0000 4000  | Unknown CA
+    15 | 0x0000 8000  | Access denied
+    16 | 0x0001 0000  | Decode error
+    17 | 0x0002 0000  | Decrypt error
+    18 | 0x0004 0000  | Export restriction
+    19 | 0x0008 0000  | Protocol version
+    20 | 0x0010 0000  | Insufficient security
+    21 | 0x0020 0000  | Internal error
+    22 | 0x0040 0000  | User canceled
+    23 | 0x0080 0000  | No renegotiation
+    24 | 0x0100 0000  | Unsupported extension
+    25 | 0x0200 0000  | Inappropriate fallback
+    26 | 0x0400 0000  | Certificate unobtainable
+    27 | 0x0800 0000  | Unrecognized name
+    28 | 0x1000 0000  | Bad certificate status response
+    29 | 0x2000 0000  | Bad certificate hash value
+    30 | 0x4000 0000  | Unknown PSK identity
+    31 | 0x8000 0000  | No application protocol

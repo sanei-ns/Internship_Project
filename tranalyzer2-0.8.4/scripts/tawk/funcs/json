@@ -1,0 +1,46 @@
+#!/usr/bin/env awk
+#
+# Converts the output to JSON.
+#
+# The first record is used as column names.
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{ print json($0) }' file.txt
+#   - tawk '{ print json(tuple5()) }' file.txt
+#   - tawk '{ print json($srcIP4 OFS $dstIP4) }' file.txt
+#   - tawk 'aggr(tuple2())' file.txt | tawk '{ print json($0) }'
+
+@include "isnum"
+@include "unquote"
+
+function json(s,        _f, _i, _l, _str, _val) {
+    if (!__JSONCOLNAME__[1]) {
+        split(s, __JSONCOLNAME__, OFS)
+        gsub("^" __HDRSEP__, "", __JSONCOLNAME__[1]) # remove leading character, e.g., percent
+        next
+    } else {
+        _l = split(s, _f, OFS)
+        _str = "{"
+        for (_i = 1; _i <= _l; _i++) {
+            # Print numbers as such
+            if (isnum(_f[_i])) _val = _f[_i]
+            # Print string without inner quotes as such
+            else if (_f[_i] ~ /^"[^"]*"$/) _val = _f[_i]
+            # Escape strings with inner quotes
+            else if (unquote(_f[_i]) ~ /"/) {
+                _val = _f[_i]
+                gsub(/\\/, "\\\\", _val) # escape backslash
+                gsub(/"/, "\\\"", _val)  # escape quotes
+                _val = "\"" _val "\""
+            }
+            # Surround other values with quotes
+            else _val = "\"" _f[_i] "\""
+            _str = _str " \"" __JSONCOLNAME__[_i] "\": " _val ","
+        }
+        gsub(/,$/, " }", _str) # replace trailing comma with ' }'
+        return _str
+    }
+}

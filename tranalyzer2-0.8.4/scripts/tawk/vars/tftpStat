@@ -1,0 +1,18 @@
+#H bit | tftpStat | Description
+#H =============================================================================
+     0 | 0x0001   | TFTP flow found
+     1 | 0x0002   | TFTP data read
+     2 | 0x0004   | TFTP data write
+     3 | 0x0008   | File open error for TFTP_SAVE
+     4 | 0x0010   | Error in block send sequence
+     5 | 0x0020   | Error in block ack sequence
+     6 | 0x0040   | Error or TFTP protocol error or not TFTP
+     7 | 0x0080   | Array overflow
+     8 | 0x0100   | -
+     9 | 0x0200   | -
+    10 | 0x0400   | -
+    11 | 0x0800   | Crafted packet or TFTP read/write parameter length error
+    12 | 0x1000   | TFTP active
+    13 | 0x2000   | TFTP passive
+    14 | 0x4000   | -
+    15 | 0x8000   | -

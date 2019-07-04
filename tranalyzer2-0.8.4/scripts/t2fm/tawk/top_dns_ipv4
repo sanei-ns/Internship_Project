@@ -1,0 +1,14 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+!strisempty($dns4Aaddress) && !bitsallset($dnsStat, 0x2) {  # ignore NBNS
+    _l = split($dns4Aaddress, _d, ";");
+    for (_i = 1; _i <= _l; _i++) {
+        if (!strisempty(_d[_i]) && _d[_i] != "0.0.0.0") {
+            aggr(_d[_i], "flows", n)
+        }
+    }
+}

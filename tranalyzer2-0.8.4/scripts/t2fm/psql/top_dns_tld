@@ -1,0 +1,27 @@
+-- Returns the top 10 Top-Level Domains (TLD)
+
+SELECT
+    tld,
+    COUNT(*) AS cnt
+
+FROM (
+    SELECT
+        UNNEST("dnsQname") as query,
+        LOWER((STRING_TO_ARRAY(UNNEST("dnsQname"), '.'))[ARRAY_LENGTH((STRING_TO_ARRAY(UNNEST("dnsQname"), '.')), 1)]) AS tld
+    FROM
+        flow
+    WHERE
+        ARRAY_LENGTH("dnsQname", 1) > 0
+        AND ("dnsStat" & x'12'::INT) = 0::INT  -- Ignore NBNS and truncated entries
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+WHERE
+    tld !~ '^[0-9]*$'
+    AND query ~ '[^\.]\.[^\.]{2,}$'
+
+GROUP BY tld
+ORDER BY cnt DESC
+
+LIMIT :n

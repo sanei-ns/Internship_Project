@@ -1,0 +1,14 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/sctpDecode
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/sctpDecode.h
+SCTP_CRC32CHK	src/sctpDecode.h
+SCTP_ADL32CHK	src/sctpDecode.h
+SCTP_CHNKVAL	src/sctpDecode.h
+SCTP_CHNKSTR	src/sctpDecode.h

@@ -1,0 +1,21 @@
+#!/usr/bin/env awk
+#
+# Returns true if val1 is equal to val2 (case insensitive)
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - streq
+#   - strneq
+#   - strneqi
+#
+# Examples:
+#   - tawk 'streqi($srcIP4, $dstIP4)' file.txt
+#   - tawk 'streqi("abc", "ABC") { print }' file.txt
+
+@include "streq"
+
+function streqi(val1, val2) {
+    return streq(val1, val2, 1)
+}

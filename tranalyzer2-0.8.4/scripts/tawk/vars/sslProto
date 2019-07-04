@@ -1,0 +1,18 @@
+#H bit | sslProto | Description
+#H =============================================================================
+     0 | 0x0001   | HTTP/0.9, HTTP/1.0, HTTP/1.1 (ALPN starts with 'http')
+     1 | 0x0002   | HTTP/2 ('h2', 'h2c')
+     2 | 0x0004   | HTTP/3 ('h3')
+     3 | 0x0008   | SPDY
+     4 | 0x0010   | IMAP
+     5 | 0x0020   | POP3
+     6 | 0x0040   | FTP
+     7 | 0x0080   | XMPP jabber
+     8 | 0x0100   | STUN/TURN
+     9 | 0x0200   | APNS (Apple Push Notification Service)
+    10 | 0x0400   | WebRTC Media and Data
+    11 | 0x0800   | CoAP (RFC8323)
+    12 | 0x1000   | ManageSieve (RFC5804)
+    13 | 0x2000   | RTP or RTCP (Guessed by the 'use-srtp' hello extension)
+    14 | 0x4000   | OpenVPN (Guessed by being able to decode the protocol)
+    15 | 0x8000   | Unknown protocol (ALPN matched none of the above)

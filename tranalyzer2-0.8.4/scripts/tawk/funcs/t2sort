@@ -1,0 +1,82 @@
+#!/usr/bin/env awk
+#
+# Sorts the file according to 'col'
+#
+# If num is omitted or 0, returns the full list, otherwise
+# the top (num > 0) or bottom (num < 0) num results
+#
+# The type of sorting to do (numeric, IP (version) or string) is determined
+# based on the first matching record. If the field is empty, then numeric sort
+# will be used. The type can be forced by specifiying the 'type' parameter as
+# follows:
+#   - "ip" : sorts IP addresses or version (sort -V)
+#   - "str": sorts strings
+#   - "num": sorts numbers (sort -g) [default]
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk 't2sort(1)' file.txt
+#   - tawk 't2sort(duration)' file.txt
+#   - tawk 't2sort(numBytesSnt, 5)' file.txt
+#   - tawk 't2sort(srcIP4, 0, "ip")' file.txt
+
+@include "hdr"
+@include "isipstr"
+@include "isnum"
+
+function t2sort(col, num, type,        _sortorder, _sorttype) {
+    if (hdr()) {
+        __SORTHDR__ = $0
+    } else {
+        if (length(__SORTCMD__) == 0) {
+            if (num < 0) {
+                __SORTNUM__ = -num
+            } else {
+                __SORTNUM__ = num
+                _sortorder = "r" # reverse sort
+            }
+            # If no type provided, try to guess the type
+            if (!type) {
+                if (isipstr($col)) type = "ip"
+                else if (isnum($col)) type = "num"
+                else type = "str"
+            }
+            switch (tolower(type)) {
+                case "ip":
+                    _sorttype = "V"
+                    break
+                case "str":
+                    _sorttype = ""
+                    break
+                case "num":
+                default:
+                    _sorttype = "g"
+                    break
+            }
+            __SORTCMD__ = "sort -t'"OFS"' -" _sorttype "" _sortorder "k" col
+        }
+        print |& __SORTCMD__
+    }
+}
+
+# Print the result of the t2sort() function
+# (see END block at the end of this file)
+function _prisort(        _line, _linenum) {
+    close(__SORTCMD__, "to")
+    if (__PRIHDR__ && __SORTHDR__) print __SORTHDR__
+    while ((__SORTNUM__ == 0 || _linenum < __SORTNUM__) && (__SORTCMD__ |& getline _line) > 0) {
+        print _line
+        _linenum++
+    }
+    close(__SORTCMD__)
+    __SORTCMD__ = ""
+    __SORTHDR__ = ""
+}
+
+END {
+    if (__SORTCMD__) {
+        _prisort()
+    }
+}

@@ -1,0 +1,66 @@
+# Bash/ZSH completion for t2fm
+
+_t2fm() {
+    #compdef t2fm
+    if type compdef &> /dev/null; then
+        local opts=(
+            '(-r -R -F -m -p)'{-i,-i}'[Interface to capture traffic from]:interface:_net_interfaces'
+            '(-i -R -F -m -p)'{-r,-r}'[PCAP file to analyse]:file:_files'
+            '(-i -r -F -m -p)'{-R,-R}'[List of PCAP files to analyse]:file:_files'
+            '(-i -r -R -m -p)'{-F,-F}'[Flow file to analyse]:file:_files'
+            '(-i -r -R -F -p)'{-m,-m}'[Mongo database name]:name:'
+            '(-i -r -R -F -m)'{-p,-p}'[PostgreSQL database name]:name:'
+            '-b[Configure and build Tranalyzer2 and the plugins]'
+            '-f[hashfactor]:Multiplication factor for hash table (int):'
+            '-o[folder]:Output folder:'
+            '-w[prefix]:Output prefix:'
+            '-t[title]:Set the report title:'
+            '-a[author]:Set the report author:'
+            '-C[color]:Set the chart color:'
+            '-L[Do not use logarithmic scale for axis]'
+            '-H[Output raw numbers instead of human readable]'
+            '-HH[Output raw and human readable numbers]'
+            '-n[num]:Compute to num statistics for tables (int):'
+            '-c[num]:Compute to num statistics for charts (int):'
+            '--copyright[text]:Print a copyright notice at the bottom of every page:'
+            '--watermark[text]:Print a watermark on every page'
+            '(- 1 *)'{-h,--help}'[Show help options and exit]'
+        )
+        _arguments -s -S "${opts[@]}"
+    else # BASH
+        local cur prev words cword
+        _init_completion || return
+        case $prev in
+            -i|--iface)
+                # active interfaces only
+                _available_interfaces -a
+                return
+                ;;
+            -r|--pcap|-R|--caplist|-w|--output-prefix|-F|--flow-file)
+                _filedir
+                return
+                ;;
+            -o|--output-folder)
+                _filedir -d
+                return
+                ;;
+            #-p)
+            #    _filedir -d
+            #    return
+            #    ;;
+        esac
+        local args=(
+            -i --iface -r --pcap -R --caplist -F --flow-file -b --build
+            -m --mongo -p --postgres -T --copyright --watermark
+            -f --hash-factor -o --output-folder -w --output-prefix -t --title
+            -a --author -C --color -L --no-log-axis -n --table-n -c --chart-n
+            -H --raw-numbers -HH --raw-and-hrnum -A --open-pdf -h -? --help)
+        COMPREPLY=($(compgen -W "${args[*]}" -- "$cur"))
+    fi
+}
+
+if type compdef &> /dev/null; then
+    compdef _t2fm t2fm
+else
+    complete -F _t2fm t2fm
+fi

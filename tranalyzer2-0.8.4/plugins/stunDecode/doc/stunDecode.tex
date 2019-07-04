@@ -1,0 +1,173 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {stunDecode}
+    {STUN, TURN and NAT-PMP}
+    {Tranalyzer Development Team}
+
+\section{stunDecode}\label{s:stunDecode}
+This plugin analyzes STUN, TURN and NAT-PMP traffic.
+
+\subsection{Required Files}
+None
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt NAT\_PMP} & 1 & Whether (1) or not (0) to analyse NAT-PMP\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The stunDecode plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt \nameref{natStat}}            & H32                & status\\\\
+    {\tt \nameref{natErr}}             & H32                & error code\\
+    {\tt \nameref{natMCReqIndSuccErr}} & U16\_U16\_U16\_U16 & number of messages (Req, Ind, Succ, Err)\\
+    {\tt natAddr\_Port}                & IP4\_U16           & mapped address and port\\
+    {\tt natXAddr\_Port}               & IP4\_U16           & (xor) mapped address and port\\
+    {\tt natPeerAddr\_Port}            & IP4\_U16           & peer address and port\\
+    {\tt natOrigAddr\_Port}            & IP4\_U16           & response origin address and port\\
+    {\tt natRelayAddr\_Port}           & IP4\_U16           & relayed address and port\\
+    {\tt natDstAddr\_Port}             & IP4\_U16           & destination address and port\\
+    {\tt natOtherAddr\_Port}           & IP4\_U16           & other address and port\\
+    {\tt natLifetime}                  & U32                & binding lifetime (seconds)\\
+    {\tt natUser}                      & S                  & username\\
+    {\tt natPass}                      & S                  & password\\
+    {\tt natRealm}                     & S                  & realm\\
+    {\tt natSoftware}                  & S                  & software\\
+    \\
+    \multicolumn{3}{l}{If {\tt NAT\_PMP=1}, the following columns are displayed:}\\
+    \\
+    {\tt natPMPReqEA\_MU\_MT }         & U16\_U16\_U16      & NAT-PMP num.\ of requests\\
+                                       &                    & (External Address, Map UDP, Map TCP)\\
+    {\tt natPMPRespEA\_MU\_MT}         & U16\_U16\_U16      & NAT-PMP num.\ of responses\\
+                                       &                    & (External Address, Map UDP, Map TCP)\\
+    {\tt natPMPSSSOE}                  & U32                & NAT-PMP seconds since start of epoch\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{natStat}\label{natStat}
+The {\tt natStat} column is to be interpreted as follows:%\\
+%\begin{minipage}{.45\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf natStat} & {\bf Description}\\
+        \midrule\endhead%
+        $2^{0}$  (={\tt 0x0000 000\textcolor{magenta}{1}}) & STUN protocol\\
+        $2^{1}$  (={\tt 0x0000 000\textcolor{magenta}{2}}) & TURN protocol\\
+        $2^{2}$  (={\tt 0x0000 000\textcolor{magenta}{4}}) & ICE protocol\\
+        $2^{3}$  (={\tt 0x0000 000\textcolor{magenta}{8}}) & SIP protocol\\
+        $2^{4}$  (={\tt 0x0000 00\textcolor{magenta}{1}0}) & Microsoft Extension\\
+        $2^{5}$  (={\tt 0x0000 00\textcolor{magenta}{2}0}) & Even Port\\
+        $2^{6}$  (={\tt 0x0000 00\textcolor{magenta}{4}0}) & Reserve next port\\
+        $2^{7}$  (={\tt 0x0000 00\textcolor{magenta}{8}0}) & don't fragment\\
+        $2^{8}$  (={\tt 0x0000 0\textcolor{magenta}{1}00}) & nonce\\
+        %$2^{9}$  (={\tt 0x0000 0\textcolor{magenta}{2}00}) & ---\\
+        %$2^{10}$ (={\tt 0x0000 0\textcolor{magenta}{4}00}) & ---\\
+        %$2^{11}$ (={\tt 0x0000 0\textcolor{magenta}{8}00}) & ---\\
+        %$2^{12}$ (={\tt 0x0000 \textcolor{magenta}{1}000}) & ---\\
+        $2^{13}$ (={\tt 0x0000 \textcolor{magenta}{2}000}) & deprecated message attribute\\
+        $2^{14}$ (={\tt 0x0000 \textcolor{magenta}{4}000}) & STUN over non-standard port\\
+        $2^{15}$ (={\tt 0x0000 \textcolor{magenta}{8}000}) & malformed message\\
+%        \bottomrule
+%    \end{longtable}
+%\end{minipage}
+%\hfill
+%\begin{minipage}{.45\textwidth}
+%    \begin{longtable}{rl}
+%        \toprule
+%        {\bf natStat} & {\bf Description}\\
+%        \midrule\endhead%
+        $2^{16}$ (={\tt 0x000\textcolor{magenta}{1} 0000}) & Port Mapping Protocol (PMP)\\
+        %$2^{17}$ (={\tt 0x000\textcolor{magenta}{2} 0000}) & ---\\
+        %$2^{18}$ (={\tt 0x000\textcolor{magenta}{4} 0000}) & ---\\
+        %$2^{19}$ (={\tt 0x000\textcolor{magenta}{8} 0000}) & ---\\
+        %$2^{20}$ (={\tt 0x00\textcolor{magenta}{1}0 0000}) & ---\\
+        %$2^{21}$ (={\tt 0x00\textcolor{magenta}{2}0 0000}) & ---\\
+        %$2^{22}$ (={\tt 0x00\textcolor{magenta}{4}0 0000}) & ---\\
+        %$2^{23}$ (={\tt 0x00\textcolor{magenta}{8}0 0000}) & ---\\
+        %$2^{24}$ (={\tt 0x0\textcolor{magenta}{1}00 0000}) & ---\\
+        %$2^{25}$ (={\tt 0x0\textcolor{magenta}{2}00 0000}) & ---\\
+        %$2^{26}$ (={\tt 0x0\textcolor{magenta}{4}00 0000}) & ---\\
+        %$2^{27}$ (={\tt 0x0\textcolor{magenta}{8}00 0000}) & ---\\
+        %$2^{28}$ (={\tt 0x\textcolor{magenta}{1}000 0000}) & ---\\
+        %$2^{29}$ (={\tt 0x\textcolor{magenta}{2}000 0000}) & ---\\
+        %$2^{30}$ (={\tt 0x\textcolor{magenta}{4}000 0000}) & ---\\
+        $2^{31}$ (={\tt 0x\textcolor{magenta}{8}000 0000}) & Packet snapped, analysis incomplete\\
+        \bottomrule
+    \end{longtable}
+%\end{minipage}
+
+\subsubsection{natErr}\label{natErr}
+The hex based error variable {\tt natErr} is defined as follows (STUN):
+\begin{longtable}{rl}
+    \toprule
+    {\bf natErr} & {\bf Description} \\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0000000\textcolor{magenta}{1}}) & try alt\\
+    $2^{1}$  (={\tt 0x0000000\textcolor{magenta}{2}}) & bad request\\
+    $2^{2}$  (={\tt 0x0000000\textcolor{magenta}{4}}) & unauthorized\\
+    $2^{3}$  (={\tt 0x0000000\textcolor{magenta}{8}}) & forbidden\\
+    $2^{4}$  (={\tt 0x000000\textcolor{magenta}{1}0}) & unknown attribute\\
+    $2^{5}$  (={\tt 0x000000\textcolor{magenta}{2}0}) & allocation mismatch\\
+    $2^{5}$  (={\tt 0x000000\textcolor{magenta}{4}0}) & stale nonce\\
+    $2^{6}$  (={\tt 0x000000\textcolor{magenta}{8}0}) & address family not supported\\
+    $2^{7}$  (={\tt 0x00000\textcolor{magenta}{1}00}) & wrong credentials\\
+    $2^{8}$  (={\tt 0x00000\textcolor{magenta}{2}00}) & unsupported transport protocol\\
+    $2^{9}$  (={\tt 0x00000\textcolor{magenta}{4}00}) & peer address family mismatch\\
+    $2^{10}$ (={\tt 0x00000\textcolor{magenta}{8}00}) & connection already exists\\
+    $2^{11}$ (={\tt 0x0000\textcolor{magenta}{1}000}) & connection timeout or failure\\
+    $2^{12}$ (={\tt 0x0000\textcolor{magenta}{2}000}) & allocation quota reached\\
+    $2^{13}$ (={\tt 0x0000\textcolor{magenta}{4}000}) & role conflict\\
+    $2^{14}$ (={\tt 0x0000\textcolor{magenta}{8}000}) & server error\\
+    $2^{15}$ (={\tt 0x000\textcolor{magenta}{1}0000}) & insufficient capacity\\
+    $2^{31}$ (={\tt 0x\textcolor{magenta}{8}0000000}) & Unhandled error\\
+    \bottomrule
+\end{longtable}
+
+The hex based error variable {\tt natErr} is defined as follows (NAT-PMP):
+\begin{longtable}{rl}
+    \toprule
+    {\bf natErr} & {\bf Description} \\
+    \midrule\endhead%
+    $2^{1}$ (={\tt 0x0000000\textcolor{magenta}{2}}) & Unsupported version\\
+    $2^{2}$ (={\tt 0x0000000\textcolor{magenta}{4}}) & Not authorized/refused\\
+    $2^{3}$ (={\tt 0x0000000\textcolor{magenta}{8}}) & Network failure\\
+    $2^{4}$ (={\tt 0x000000\textcolor{magenta}{1}0}) & Out of resources\\
+    $2^{5}$ (={\tt 0x000000\textcolor{magenta}{2}0}) & Unsupported opcode\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{natMCReq\_Ind\_Succ\_Err}\label{natMCReqIndSuccErr}
+The number of messages variable {\tt natMCReq\_Ind\_Succ\_Err} decomposed as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf natMCReq\_Ind\_Succ\_Err} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt natMCReq}  & number of requests\\
+    {\tt natMCInd}  & number of indications\\
+    {\tt natMCSucc} & number of success response\\
+    {\tt natMCErr}  & number of error response\\
+    \bottomrule
+\end{longtable}
+
+%\subsection{Additional Output}
+%None
+
+\subsection{TODO}
+Port Control Protocol (PCP)
+
+\end{document}

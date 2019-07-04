@@ -1,0 +1,9 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+$sslJA3Hash {
+    aggr($sslJA3Hash OFS unquote($sslJA3Desc), "flows", n)
+}

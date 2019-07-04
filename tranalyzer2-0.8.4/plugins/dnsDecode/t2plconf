@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+#
+# Configuration file for dnsDecode
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    DNS_MODE radio ""
+        "Information to output; \
+            0: Only aggregated header info; \
+            1: +Req Content Info; \
+            2: +Answer Records; \
+            3: +AUX records; \
+            4: +Add records"
+
+    DNS_HEXON check "" "Hex output flags"
+
+    DNS_REQA check "" "Aggregate request records"
+    DNS_ANSA check "" "Aggregate answer records"
+
+    DNS_QRECMAX range "" "Max # of query records / flow: 0 255"
+    DNS_ARECMAX range "" "Max # of answer records / flow: 0 255"
+
+    MAL_TEST check "" "Activate malware domain test"
+    MAL_TYPE   radio "MAL_TEST == 1" "Malware type; 0: Code; 1 : type string"
+    MAL_DOMAIN radio "MAL_TEST == 1" "Blacklist to use; 0: IP addresses; 1: domain names"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

@@ -1,0 +1,165 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {ftpDecode}
+    {File Transfer Protocol (FTP)}
+    {Tranalyzer Development Team} % author(s)
+
+\section{ftpDecode}\label{s:ftpDecode}
+
+\subsection{Description}
+The ftpDecode plugin analyses FTP traffic. User defined compiler switches are in {\em ftpDecode.h}.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt FTP\_SAVE}    &  0 & Save content to FTP\_F\_PATH\\
+    {\tt BITFIELD}     &  0 & Bitfield coding of FTP commands\\
+    {\tt FTP\_MXNMUN}  & 10 & maximal USER name length\\
+    {\tt FTP\_MXNMPN}  & 10 & maximal PW length\\
+    {\tt FTP\_MXNMLN}  & 50 & maximal name length\\
+    {\tt FTP\_MAXCPFI} & 10 & Maximal number of parent findex\\
+    {\tt MAXUNM}       &  5 & maximal number of users\\
+    {\tt MAXPNM}       &  5 & maximal number of passwords\\
+    {\tt MAXCNM}       & 20 & maximal number of parameters\\
+    {\tt FTP\_F\_PATH} & {\tt\small "/tmp/FTPFILES/"} & Path for extracted content\\
+    %{\tt FTP\_NON} & "wurst" & maximal number of parameters\\
+    \bottomrule
+\end{longtable}
+
+The plugin identifies the client ftp flows automatically and links them via the ftpCDFindex, identifiying
+the findex of the associated flows.
+
+\subsection{Flow File Output}
+The ftpDecode plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{ftpStat}} &  H8  & Status bit field\\
+    {\tt \nameref{ftpCBF}}  &  H64 & Command bit field & {\tt BITFIELD=1}\\
+    {\tt ftpCDFindex}       & RU64 & Command/data findex link\\
+    {\tt ftpCC}             & RSC  & FTP Command Codes \\
+    {\tt ftpRC}             & RU16 & FTP Response Codes \\
+    {\tt ftpUsrNum}         &  U8  & number of FTP users \\
+    {\tt ftpPwNum}          &  U8  & number of FTP passwords \\
+    {\tt ftpCNum}           &  U8  & number of FTP parameters \\
+    {\tt ftpUsr}            & RS   & FTP users \\
+    {\tt ftpPw}             & RS   & FTP passwords \\
+    {\tt ftpC}              & RS   & FTP content \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{ftpStat}\label{ftpStat}
+The {\tt ftpStat} column describes the errors encountered during the flow lifetime:
+\begin{longtable}{rll}
+    \toprule
+    {\bf ftpStat} & {\bf Name} & {\bf Description}\\
+    \midrule\endhead%
+    $2^0$ (={\tt 0x01}) & FTP control port found\\
+    $2^1$ (={\tt 0x02}) & FTP passive parent flow\\
+    $2^2$ (={\tt 0x04}) & FTP passive parent flow write finished\\
+    $2^3$ (={\tt 0x08}) & FTP active parent flow\\
+    $2^4$ (={\tt 0x10}) & FTP hash map full \\
+    $2^5$ (={\tt 0x20}) & File error\\
+    $2^6$ (={\tt 0x40}) & Data flow not detected\\
+    $2^7$ (={\tt 0x80}) & Array overflow\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{ftpCBF}\label{ftpCBF}
+The {\tt ftpCBF} column is to be interpreted as follows:\\
+\begin{minipage}{0.49\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf ftpCBF} & {\bf Description} \\
+        \midrule\endhead%
+        $2^{0}$  (={\tt 0x0000.0000.0000.0001}) & ABOR\\
+        $2^{1}$  (={\tt 0x0000.0000.0000.0002}) & ACCT\\
+        $2^{2}$  (={\tt 0x0000.0000.0000.0004}) & ADAT\\
+        $2^{3}$  (={\tt 0x0000.0000.0000.0008}) & ALLO\\
+        $2^{4}$  (={\tt 0x0000.0000.0000.0010}) & APPE\\
+        $2^{5}$  (={\tt 0x0000.0000.0000.0020}) & AUTH\\
+        $2^{6}$  (={\tt 0x0000.0000.0000.0040}) & CCC\\
+        $2^{7}$  (={\tt 0x0000.0000.0000.0080}) & CDUP\\
+        $2^{8}$  (={\tt 0x0000.0000.0000.0100}) & CONF\\
+        $2^{9}$  (={\tt 0x0000.0000.0000.0200}) & CWD\\
+        $2^{10}$ (={\tt 0x0000.0000.0000.0400}) & DELE\\
+        $2^{11}$ (={\tt 0x0000.0000.0000.0800}) & ENC\\
+        $2^{12}$ (={\tt 0x0000.0000.0000.1000}) & EPRT\\
+        $2^{13}$ (={\tt 0x0000.0000.0000.2000}) & EPSV\\
+        $2^{14}$ (={\tt 0x0000.0000.0000.4000}) & FEAT\\
+        $2^{15}$ (={\tt 0x0000.0000.0000.8000}) & HELP\\
+        $2^{16}$ (={\tt 0x0000.0000.0001.0000}) & LANG\\
+        $2^{17}$ (={\tt 0x0000.0000.0002.0000}) & LIST\\
+        $2^{18}$ (={\tt 0x0000.0000.0004.0000}) & LPRT\\
+        $2^{19}$ (={\tt 0x0000.0000.0008.0000}) & LPSV\\
+        $2^{20}$ (={\tt 0x0000.0000.0010.0000}) & MDTM\\
+        $2^{21}$ (={\tt 0x0000.0000.0020.0000}) & MIC\\
+        $2^{22}$ (={\tt 0x0000.0000.0040.0000}) & MKD\\
+        $2^{23}$ (={\tt 0x0000.0000.0080.0000}) & MLSD\\
+        $2^{24}$ (={\tt 0x0000.0000.0100.0000}) & MLST\\
+        $2^{25}$ (={\tt 0x0000.0000.0200.0000}) & MODE\\
+        $2^{26}$ (={\tt 0x0000.0000.0400.0000}) & NLST\\
+        $2^{27}$ (={\tt 0x0000.0000.0800.0000}) & NOOP\\
+        $2^{28}$ (={\tt 0x0000.0000.1000.0000}) & OPTS\\
+        $2^{29}$ (={\tt 0x0000.0000.2000.0000}) & PASS\\
+        $2^{30}$ (={\tt 0x0000.0000.4000.0000}) & PASV\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+\begin{minipage}{0.49\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf ftpCBF} & {\bf Description} \\
+        \midrule\endhead%
+        $2^{31}$ (={\tt 0x0000.0000.8000.0000}) & PBSZ\\
+        $2^{32}$ (={\tt 0x0000.0001.0000.0000}) & PORT\\
+        $2^{33}$ (={\tt 0x0000.0002.0000.0000}) & PROT\\
+        $2^{34}$ (={\tt 0x0000.0004.0000.0000}) & PWD\\
+        $2^{35}$ (={\tt 0x0000.0008.0000.0000}) & QUIT\\
+        $2^{36}$ (={\tt 0x0000.0010.0000.0000}) & REIN\\
+        $2^{37}$ (={\tt 0x0000.0020.0000.0000}) & REST\\
+        $2^{38}$ (={\tt 0x0000.0040.0000.0000}) & RETR\\
+        $2^{39}$ (={\tt 0x0000.0080.0000.0000}) & RMD\\
+        $2^{40}$ (={\tt 0x0000.0100.0000.0000}) & RNFR\\
+        $2^{41}$ (={\tt 0x0000.0200.0000.0000}) & RNTO\\
+        $2^{42}$ (={\tt 0x0000.0400.0000.0000}) & SITE\\
+        $2^{43}$ (={\tt 0x0000.0800.0000.0000}) & SIZE\\
+        $2^{44}$ (={\tt 0x0000.1000.0000.0000}) & SMNT\\
+        $2^{45}$ (={\tt 0x0000.2000.0000.0000}) & STAT\\
+        $2^{46}$ (={\tt 0x0000.4000.0000.0000}) & STOR\\
+        $2^{47}$ (={\tt 0x0000.8000.0000.0000}) & STOU\\
+        $2^{48}$ (={\tt 0x0001.0000.0000.0000}) & STRU\\
+        $2^{49}$ (={\tt 0x0002.0000.0000.0000}) & SYST\\
+        $2^{50}$ (={\tt 0x0004.0000.0000.0000}) & TYPE\\
+        $2^{51}$ (={\tt 0x0008.0000.0000.0000}) & USER\\
+        $2^{52}$ (={\tt 0x0010.0000.0000.0000}) & XCUP\\
+        $2^{53}$ (={\tt 0x0020.0000.0000.0000}) & XMKD\\
+        $2^{54}$ (={\tt 0x0040.0000.0000.0000}) & XPWD\\
+        $2^{55}$ (={\tt 0x0080.0000.0000.0000}) & XRCP\\
+        $2^{56}$ (={\tt 0x0100.0000.0000.0000}) & XRMD\\
+        $2^{57}$ (={\tt 0x0200.0000.0000.0000}) & XRSQ\\
+        $2^{58}$ (={\tt 0x0400.0000.0000.0000}) & XSEM\\
+        $2^{59}$ (={\tt 0x0800.0000.0000.0000}) & XSEN\\
+        $2^{60}$ (={\tt 0x1000.0000.0000.0000}) & CLNT\\\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+
+%\subsection{TODO}
+%\begin{itemize}
+%    \item fragmentation
+%    \item reply address extraction
+%\end{itemize}
+
+\end{document}

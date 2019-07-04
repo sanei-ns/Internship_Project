@@ -1,0 +1,160 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {ircDecode}
+    {Internet Relay Chat (IRC)}
+    {Tranalyzer Development Team} % author(s)
+
+\section{ircDecode}\label{s:ircDecode}
+
+\subsection{Description}
+The ircDecode plugin analyses IRC traffic. User defined compiler switches are in {\em ircDecode.h}.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt IRC\_SAVE}     &  0 & Save content to {\tt\small IRC\_F\_PATH}\\
+    {\tt IRC\_BITFIELD} &  0 & Bitfield coding of IRC commands\\
+    {\tt IRC\_UXNMLN}   & 10 & maximal USER length\\
+    {\tt IRC\_PXNMLN}   & 10 & maximal PW length\\
+    {\tt IRC\_MXNMLN}   & 50 & maximal name length\\
+    {\tt IRC\_MAXUNM}   &  5 & Maximal number of users\\
+    {\tt IRC\_MAXPNM}   &  5 & Maximal number of passwords\\
+    {\tt IRC\_MAXCNM}   & 20 & Maximal number of parameters\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The ircDecode plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{ircStat}} & H8   & Status \\
+    {\tt \nameref{ircCBF}}  & H64  & Commands & {\tt BITFIELD=1}\\
+    {\tt ircCC}             & RSC  & Command codes \\
+    {\tt ircRC}             & RU16 & Response codes \\
+    {\tt ircUsrNum}         & U8   & Number of users\\
+    {\tt ircPwNum}          & U8   & Number of passwords\\
+    {\tt ircCNum}           & U8   & Number of parameters\\
+    {\tt ircUsr}            & RS   & Users\\
+    {\tt ircPw}             & RS   & Passwords\\
+    {\tt ircC}              & RS   & Content\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{ircStat}\label{ircStat}
+The {\tt ircStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf ircStat} & {\bf Description}\\
+    \midrule\endhead%
+    $2^0$ (=0x01) & IRC port found              \\ % IRC_INIT
+    $2^1$ (=0x02) & IRC passive parent flow     \\ % IRC_PPRNT
+    $2^2$ (=0x04) & IRC passive write finished  \\ % IRC_PPWF
+    $2^3$ (=0x08) & IRC active parent flow      \\ % IRC_APRNT
+    $2^4$ (=0x10) & ---                         \\
+    $2^5$ (=0x20) & File error                  \\ % IRC_PPWFERR
+    $2^6$ (=0x40) & ---                         \\
+    $2^7$ (=0x80) & Array overflow              \\ % IRC_OVFL
+    \bottomrule
+\end{longtable}
+
+\subsubsection{ircCBF}\label{ircCBF}
+The {\tt ircCBF} column is to be interpreted as follows:\\
+\begin{minipage}{0.49\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf ircCBF} & {\bf Description} \\
+        \midrule\endhead%
+        $2^{0}$  (={\tt 0x0000.0000.0000.0001}) & {\tt ADMIN  }\\
+        $2^{1}$  (={\tt 0x0000.0000.0000.0002}) & {\tt AWAY   }\\
+        $2^{2}$  (={\tt 0x0000.0000.0000.0004}) & {\tt CONNECT}\\
+        $2^{3}$  (={\tt 0x0000.0000.0000.0008}) & {\tt DIE    }\\
+        $2^{4}$  (={\tt 0x0000.0000.0000.0010}) & {\tt ERROR  }\\
+        $2^{5}$  (={\tt 0x0000.0000.0000.0020}) & {\tt INFO   }\\
+        $2^{6}$  (={\tt 0x0000.0000.0000.0040}) & {\tt INVITE }\\
+        $2^{7}$  (={\tt 0x0000.0000.0000.0080}) & {\tt ISON   }\\
+        $2^{8}$  (={\tt 0x0000.0000.0000.0100}) & {\tt JOIN   }\\
+        $2^{9}$  (={\tt 0x0000.0000.0000.0200}) & {\tt KICK   }\\
+        $2^{10}$ (={\tt 0x0000.0000.0000.0400}) & {\tt KILL   }\\
+        $2^{11}$ (={\tt 0x0000.0000.0000.0800}) & {\tt LINKS  }\\
+        $2^{12}$ (={\tt 0x0000.0000.0000.1000}) & {\tt LIST   }\\
+        $2^{13}$ (={\tt 0x0000.0000.0000.2000}) & {\tt LUSERS }\\
+        $2^{14}$ (={\tt 0x0000.0000.0000.4000}) & {\tt MODE   }\\
+        $2^{15}$ (={\tt 0x0000.0000.0000.8000}) & {\tt MOTD   }\\
+        $2^{16}$ (={\tt 0x0000.0000.0001.0000}) & {\tt NAMES  }\\
+        $2^{17}$ (={\tt 0x0000.0000.0002.0000}) & {\tt NICK   }\\
+        $2^{18}$ (={\tt 0x0000.0000.0004.0000}) & {\tt NJOIN  }\\
+        $2^{19}$ (={\tt 0x0000.0000.0008.0000}) & {\tt NOTICE }\\
+        $2^{20}$ (={\tt 0x0000.0000.0010.0000}) & {\tt OPER   }\\
+        $2^{21}$ (={\tt 0x0000.0000.0020.0000}) & {\tt PART   }\\
+        $2^{22}$ (={\tt 0x0000.0000.0040.0000}) & {\tt PASS   }\\
+        $2^{23}$ (={\tt 0x0000.0000.0080.0000}) & {\tt PING   }\\
+        $2^{24}$ (={\tt 0x0000.0000.0100.0000}) & {\tt PONG   }\\
+        $2^{25}$ (={\tt 0x0000.0000.0200.0000}) & {\tt PRIVMSG}\\
+        $2^{26}$ (={\tt 0x0000.0000.0400.0000}) & {\tt QUIT   }\\
+        $2^{27}$ (={\tt 0x0000.0000.0800.0000}) & {\tt REHASH }\\
+        $2^{28}$ (={\tt 0x0000.0000.1000.0000}) & {\tt RESTART}\\
+        $2^{29}$ (={\tt 0x0000.0000.2000.0000}) & {\tt SERVER }\\
+        $2^{30}$ (={\tt 0x0000.0000.4000.0000}) & {\tt SERVICE}\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+\begin{minipage}{0.49\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf ircCBF} & {\bf Description} \\
+        \midrule\endhead%
+        $2^{31}$ (={\tt 0x0000.0000.8000.0000}) & {\tt SERVLIST}\\
+        $2^{32}$ (={\tt 0x0000.0001.0000.0000}) & {\tt SQUERY  }\\
+        $2^{33}$ (={\tt 0x0000.0002.0000.0000}) & {\tt SQUIRT  }\\
+        $2^{34}$ (={\tt 0x0000.0004.0000.0000}) & {\tt SQUIT   }\\
+        $2^{35}$ (={\tt 0x0000.0008.0000.0000}) & {\tt STATS   }\\
+        $2^{36}$ (={\tt 0x0000.0010.0000.0000}) & {\tt SUMMON  }\\
+        $2^{37}$ (={\tt 0x0000.0020.0000.0000}) & {\tt TIME    }\\
+        $2^{38}$ (={\tt 0x0000.0040.0000.0000}) & {\tt TOPIC   }\\
+        $2^{39}$ (={\tt 0x0000.0080.0000.0000}) & {\tt TRACE   }\\
+        $2^{40}$ (={\tt 0x0000.0100.0000.0000}) & {\tt USER    }\\
+        $2^{41}$ (={\tt 0x0000.0200.0000.0000}) & {\tt USERHOST}\\
+        $2^{42}$ (={\tt 0x0000.0400.0000.0000}) & {\tt USERS   }\\
+        $2^{43}$ (={\tt 0x0000.0800.0000.0000}) & {\tt VERSION }\\
+        $2^{44}$ (={\tt 0x0000.1000.0000.0000}) & {\tt WALLOPS }\\
+        $2^{45}$ (={\tt 0x0000.2000.0000.0000}) & {\tt WHO     }\\
+        $2^{46}$ (={\tt 0x0000.4000.0000.0000}) & {\tt WHOIS   }\\
+        $2^{47}$ (={\tt 0x0000.8000.0000.0000}) & {\tt WHOWAS  }\\
+        $2^{48}$ (={\tt 0x0001.0000.0000.0000}) & {\tt --      }\\
+        $2^{49}$ (={\tt 0x0002.0000.0000.0000}) & {\tt --      }\\
+        $2^{50}$ (={\tt 0x0004.0000.0000.0000}) & {\tt --      }\\
+        $2^{51}$ (={\tt 0x0008.0000.0000.0000}) & {\tt --      }\\
+        $2^{52}$ (={\tt 0x0010.0000.0000.0000}) & {\tt --      }\\
+        $2^{53}$ (={\tt 0x0020.0000.0000.0000}) & {\tt --      }\\
+        $2^{54}$ (={\tt 0x0040.0000.0000.0000}) & {\tt --      }\\
+        $2^{55}$ (={\tt 0x0080.0000.0000.0000}) & {\tt --      }\\
+        $2^{56}$ (={\tt 0x0100.0000.0000.0000}) & {\tt --      }\\
+        $2^{57}$ (={\tt 0x0200.0000.0000.0000}) & {\tt --      }\\
+        $2^{58}$ (={\tt 0x0400.0000.0000.0000}) & {\tt --      }\\
+        $2^{59}$ (={\tt 0x0800.0000.0000.0000}) & {\tt --      }\\
+        $2^{60}$ (={\tt 0x1000.0000.0000.0000}) & {\tt --      }\\
+        \\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+
+%\subsection{TODO}
+%\begin{itemize}
+%    \item fragmentation
+%    \item reply address extraction
+%    \item IRC parent hash
+%\end{itemize}
+
+\end{document}

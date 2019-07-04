@@ -1,0 +1,27 @@
+#!/usr/bin/env awk
+#
+# MPLS label 'idx'
+#
+# Dependencies:
+#   - basicStats
+#
+# Example:
+#   - tawk '{ print _mplsi(2) }' file
+
+@include "hdr"
+@include "splitc"
+@include "splitr"
+@include "_validate_col"
+
+function _mplsi(idx,        _c, _m) {
+    _c = _validate_col("mplsLabel_ToS_S_TTL")
+    if (idx < 1 || idx > 10) {
+        print "MPLS label number must be comprised between 1 and 10"
+        exit(1)
+    }
+    if (hdr()) return "MPLS lbl " idx
+    _m = splitr($_c, idx)
+    if (length(_m) == 0) return "0-0-0"
+    # TODO the value in the middle should be the experimental bit only
+    return splitc(_m, 1) "-" splitc(_m, 2) "-" splitc(_m, 3)
+}

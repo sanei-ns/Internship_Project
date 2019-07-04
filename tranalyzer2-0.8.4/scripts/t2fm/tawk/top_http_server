@@ -1,0 +1,9 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+$httpServ {
+    aggrrep($httpServ, "flows", n)
+}

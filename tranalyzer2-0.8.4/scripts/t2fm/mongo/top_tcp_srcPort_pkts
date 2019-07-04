@@ -1,0 +1,58 @@
+cursor = db.flow.aggregate([
+    {
+        $match : {
+            l4Proto : 6,
+            timeFirst : { $gte : time_from },
+            timeLast  : { $lte : time_to },
+        }
+    },
+    {
+        $project : {
+            port : {
+                $cond : {
+                    if : {
+                        $eq : [
+                            { $mod : [ "$flowStat", 2 ] },
+                            0
+                        ]
+                    },
+                    then : "$srcPort",
+                    else : "$dstPort"
+                }
+            },
+            pkts : {
+                $cond : {
+                    if : {
+                        $eq : [
+                            { $mod : [ "$flowStat", 2 ] },
+                            0
+                        ]
+                    },
+                    then : "$numPktsSnt",
+                    else : "$numPktsRcvd"
+                }
+            }
+        }
+    },
+    {
+        $group : {
+            _id : "$port",
+            count : { $sum : "$pkts" }
+        }
+    },
+    {
+        $sort : { count : -1 }
+    },
+    {
+        $limit : n
+    }
+])
+
+cursor.forEach(
+    function(e) {
+        print(
+              e._id + "\t"
+            + e.count
+        )
+    }
+)

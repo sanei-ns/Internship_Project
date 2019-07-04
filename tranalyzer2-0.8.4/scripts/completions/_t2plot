@@ -1,0 +1,26 @@
+# Bash/ZSH completion for t2plot
+
+_t2plot() {
+    #compdef t2plot
+    if type compdef &> /dev/null; then
+        if [[ "${words[CURRENT]}" == -* ]]; then
+            _arguments --
+        else
+            _files
+        fi
+    else
+        local cur prev words cword
+        _init_completion || return
+        if [[ "$cur" == -* ]]; then
+            COMPREPLY=($(compgen -W "$(_parse_help "$T2HOME/scripts/t2plot")" -- "$cur"))
+        else
+            _filedir
+        fi
+    fi
+}
+
+if type compdef &> /dev/null; then
+    compdef _t2plot t2plot
+else
+    complete -F _t2plot t2plot
+fi

@@ -1,0 +1,157 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {modbus} % Plugin name
+    {Modbus} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{modbus}\label{s:modbus}
+
+\subsection{Description}
+The modbus plugin analyzes Modbus traffic.
+
+%\subsection{Dependencies}
+%None.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt MB\_DEBUG}      & 0 & Whether (1) or not (0) to activate debug output\\\\
+    {\tt MB\_FE\_FRMT}   & 0 & Function/Exception codes representation: 0: hex, 1: int\\\\
+    {\tt MB\_NUM\_FUNC}  & 0 & Number of function codes to store (0 to hide \hyperref[modbusFC]{modbusFC})\\
+    {\tt MB\_UNIQ\_FUNC} & 0 & Whether or not to aggregate multiply defined function codes\\\\
+    {\tt MB\_NUM\_FEX}   & 0 & Number of function codes causing exceptions to store (0 to hide \hyperref[modbusFEx]{modbusFEx})\\
+    {\tt MB\_UNIQ\_FEX}  & 0 & Whether or not to aggregate multiply defined function codes causing exceptions\\\\
+    {\tt MB\_NUM\_EX}    & 0 & Number of exception codes to store (0 to hide \hyperref[modbusExC]{modbusExC})\\
+    {\tt MB\_UNIQ\_EX}   & 0 & Whether or not to aggregate multiply defined exception codes\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The modbus plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{modbusStat}} & H16 & Status\\
+    {\tt modbusUID}   & U8  & Unit identifier\\
+    {\tt modbusNPkts} & U32 & Number of Modbus packets\\
+    {\tt modbusNumEx} & U16 & Number of exceptions\\
+    {\tt \hyperref[modbusFC]{modbusFCBF}}   & H64 & Aggregated function codes\\
+    {\tt \hyperref[modbusFC]{modbusFC}}     & RH8 & List of function codes & {\tt MB\_NUM\_FUNC>0}\\
+    {\tt \hyperref[modbusFEx]{modbusFExBF}} & H64 & Aggregated function codes which caused exceptions\\
+    {\tt \hyperref[modbusFEx]{modbusFEx}}   & RH8 & List of function codes which caused exceptions & {\tt MB\_NUM\_FEX>0}\\
+    {\tt \hyperref[modbusExC]{modbusExCBF}} & H16 & Aggregated exception codes\\
+    {\tt \hyperref[modbusExC]{modbusExC}}   & RH8 & List of exception codes & {\tt MB\_NUM\_EX>0}\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{modbusStat}\label{modbusStat}
+The {\tt modbusStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf modbusStat} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x0001} & Flow is Modbus\\
+    {\tt 0x0002} & Non-modbus protocol identifier\\
+    {\tt 0x0004} & Unknown function code\\
+    {\tt 0x0008} & Unknown exception code\\
+    {\tt 0x0010} & Multiple unit identifiers\\
+    {\tt 0x0100} & List of function codes truncated\ldots increase {\tt MB\_NUM\_FUNC}\\
+    {\tt 0x0200} & List of function codes which caused exceptions truncated\ldots increase {\tt MB\_NUM\_FEX}\\
+    {\tt 0x0400} & List of exception codes truncated\ldots increase {\tt MB\_NUM\_EX}\\
+    {\tt 0x4000} & Snapped packet\\
+    {\tt 0x8000} & Malformed packet\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{modbusFC and modbusFCBF}\label{modbusFC}
+The {\tt modbusFC} and {\tt modbusFCBF} columns are to be interpreted as follows:
+\begin{longtable}{rll}
+    \toprule
+    {\bf modbusFC} & {\bf modbusFCBF} & {\bf Description}\\
+    \midrule\endhead%
+    % Data Access
+    {\tt  1 = 0x01} & {\tt 0x0000 0000 0000 0002} & Read Coils\\
+    {\tt  2 = 0x02} & {\tt 0x0000 0000 0000 0004} & Read Discrete Inputs\\
+    {\tt  3 = 0x03} & {\tt 0x0000 0000 0000 0008} & Read Multiple Holding Registers\\
+    {\tt  4 = 0x04} & {\tt 0x0000 0000 0000 0010} & Read Input Registers\\
+    {\tt  5 = 0x05} & {\tt 0x0000 0000 0000 0020} & Write Single Coil\\
+    {\tt  6 = 0x06} & {\tt 0x0000 0000 0000 0040} & Write Single Holding Register\\
+    {\tt  7 = 0x07} & {\tt 0x0000 0000 0000 0080} & Read Exception Status\\
+    {\tt  8 = 0x08} & {\tt 0x0000 0000 0000 0100} & Diagnostic\\
+    {\tt 11 = 0x0b} & {\tt 0x0000 0000 0000 0800} & Get Com Event Counter\\
+    {\tt 12 = 0x0c} & {\tt 0x0000 0000 0000 1000} & Get Com Event Log\\
+    {\tt 15 = 0x0f} & {\tt 0x0000 0000 0000 8000} & Write Multiple Coils\\
+    {\tt 16 = 0x10} & {\tt 0x0000 0000 0001 0000} & Write Multiple Holding Registers\\
+    {\tt 17 = 0x11} & {\tt 0x0000 0000 0002 0000} & Report Slave ID\\
+    {\tt 20 = 0x14} & {\tt 0x0000 0000 0010 0000} & Read File Record\\
+    {\tt 21 = 0x15} & {\tt 0x0000 0000 0020 0000} & Write File Record\\
+    {\tt 22 = 0x16} & {\tt 0x0000 0000 0040 0000} & Mask Write Register\\
+    {\tt 23 = 0x17} & {\tt 0x0000 0000 0080 0000} & Read/Write Multiple Registers\\
+    {\tt 24 = 0x18} & {\tt 0x0000 0000 0100 0000} & Read FIFO Queue\\
+    {\tt 43 = 0x2b} & {\tt 0x0000 0800 0000 0000} & Read Decide Identification\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{modbusFEx and modbusFExBF}\label{modbusFEx}
+The {\tt modbusFEx} and {\tt modbusFExBF} columns are to be interpreted as {\tt\hyperref[modbusFC]{modbusFC}} and {\tt\hyperref[modbusFC]{modbusFCBF}}, respectively.
+
+\subsubsection{modbusExC and modbusExCBF}\label{modbusExC}
+The {\tt modbusExC} and {\tt modbusExCBF} column are to be interpreted as follows:
+\begin{longtable}{rrl}
+    \toprule
+    {\bf modbusExC} & {\bf modbusExCBF} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt  1 = 0x01} & {\tt 0x0002} & Illegal function code\\
+    {\tt  2 = 0x02} & {\tt 0x0004} & Illegal data address\\
+    {\tt  3 = 0x03} & {\tt 0x0008} & Illegal data value\\
+    {\tt  4 = 0x04} & {\tt 0x0010} & Slave device failure\\
+    {\tt  5 = 0x05} & {\tt 0x0020} & Acknowledge\\
+    {\tt  6 = 0x06} & {\tt 0x0040} & Slave device busy\\
+    {\tt  7 = 0x07} & {\tt 0x0080} & Negative acknowledge\\
+    {\tt  8 = 0x08} & {\tt 0x0100} & Memory parity error\\
+    {\tt 10 = 0x0a} & {\tt 0x0400} & Gateway path unavailable\\
+    {\tt 11 = 0x0b} & {\tt 0x0800} & Gateway target device failed to respond\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Packet File Output}
+In packet mode ({\tt --s} option), the modbus plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt mbTranId} & U16 & Transaction Identifier\\
+    {\tt mbProtId} & U16 & Protocol Identifier\\
+    {\tt mbLen}    & U16 & Length\\
+    {\tt mbUnitId} & U8 & Unit identifier\\
+    {\tt \nameref{mbFuncCode}} & H8 & Function code & {\tt MB\_FE\_FRMT=0}\\
+    {\tt \nameref{mbFuncCode}} & U8 & Function code & {\tt MB\_FE\_FRMT=1}\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{mbFuncCode}\label{mbFuncCode}
+If {\tt mbFuncCode} column is to be interpreted as follows:
+\begin{longtable}{ll}
+    \toprule
+    {\bf mbFuncCode} & {\bf Description}\\
+    \midrule\endhead%
+    $< 128$ (={\tt 0x80}) & refer to \nameref{modbusFC}\\
+    $\geq 128$ (={\tt 0x80}) & subtract 128 (={\tt 0x80}) and refer to \nameref{modbusFEx}\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Plugin Report Output}
+The number of Modbus packets is reported.
+
+\end{document}

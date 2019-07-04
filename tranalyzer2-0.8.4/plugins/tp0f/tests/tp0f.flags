@@ -1,0 +1,15 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/tp0f
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+#
+# Flag name     File
+
+# src/tp0f.h
+TP0FRULES   src/tp0f.h
+TP0FHSH     src/tp0f.h
+TP0FRC      src/tp0f.h

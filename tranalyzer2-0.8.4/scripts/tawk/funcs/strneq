@@ -1,0 +1,22 @@
+#!/usr/bin/env awk
+#
+# Returns true if val1 is not equal to val2
+# If ign is 1, performs a case insensitive comparison
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - streq
+#   - streqi
+#   - strneqi
+#
+# Examples:
+#   - tawk 'strneq($srcIP4, $dstIP4)' file.txt
+#   - tawk 'strneq("abc", "abc") { print }' file.txt
+
+@include "streq"
+
+function strneq(val1, val2, ign) {
+    return !streq(val1, val2, ign)
+}

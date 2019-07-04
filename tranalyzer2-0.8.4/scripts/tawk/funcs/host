@@ -1,0 +1,37 @@
+#!/usr/bin/env awk
+#
+# Returns true if source or destination IP is equal to 'ip' or belongs to 'ip', e.g., 1.2.3.4/24
+# If 'ip' is omitted, returns the source and destination IP
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - net: alias for host
+#
+# Examples:
+#   - tawk 'host("1.2.3.4")' file.txt
+#   - tawk 'host("1.2.3.4/24")' file.txt
+#   - tawk 'host(0x01020304) { print host() }' file.txt
+#   - tawk '{ print host() }' file.txt
+
+@include "hdr"
+@include "ip2num"
+@include "ipinnet"
+@include "tuple2"
+@include "_validate_col"
+
+function host(ip,        _ip, _dip, _sip, _i6, _s6) {
+    _sip = _validate_col("srcIP;srcIP4;srcIP6", _my_srcIP)
+    _dip = _validate_col("dstIP;dstIP4;dstIP6", _my_dstIP)
+    if (!ip || (__PRIHDR__ && hdr())) return tuple2()
+    if (index(ip, "/") != 0) {
+        return ipinnet($_sip, ip) || ipinnet($_dip, ip)
+    } else if (length(ip) > 0) {
+        _i6 = isip6(ip)
+        _s6 = isip6($_sip)
+        if ((_i6 && !_s6) || (!_i6 && _s6)) return 0
+        _ip = ip2num(ip)
+        return ip2num($_sip) == _ip || ip2num($_dip) == _ip
+    }
+}

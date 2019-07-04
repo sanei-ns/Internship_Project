@@ -1,0 +1,128 @@
+.TH T2NFDUMP "1" "February 2017" "0.1" "User Commands"
+
+.SH NAME
+t2nfdump \- collection of functions for \fBtawk\fR allowing access to specific fields using a syntax similar as \fBnfdump\fR.
+
+.SH FUNCTIONS
+.TP
+\fBts()\fR
+Start Time - first seen
+.TP
+\fBte()\fR
+End Time - last seen
+.TP
+\fBtd()\fR
+Duration
+.TP
+\fBpr()\fR
+Protocol
+.TP
+\fBsa()\fR
+Source Address
+.TP
+\fBda()\fR
+Destination Address
+.TP
+\fBsap()\fR
+Source Address:Port
+.TP
+\fBdap()\fR
+Destination Address:Port
+.TP
+\fBsp()\fR
+Source Port
+.TP
+\fBdp()\fR
+Destination Port
+.TP
+\fBpkt()\fR
+Packets - default input
+.TP
+\fBipkt()\fR
+Input Packets
+.TP
+\fBopkt()\fR
+Output Packets
+.TP
+\fBbyt()\fR
+Bytes - default input
+.TP
+\fBibyt()\fR
+Input Bytes
+.TP
+\fBobyt()\fR
+Output Bytes
+.TP
+\fBflg()\fR
+TCP Flags
+.TP
+\fBmpls1()\fR
+MPLS label 1
+.TP
+\fBmpls2()\fR
+MPLS label 2
+.TP
+\fBmpls3()\fR
+MPLS label 3
+.TP
+\fBmpls4()\fR
+MPLS label 4
+.TP
+\fBmpls5()\fR
+MPLS label 5
+.TP
+\fBmpls6()\fR
+MPLS label 6
+.TP
+\fBmpls7()\fR
+MPLS label 7
+.TP
+\fBmpls8()\fR
+MPLS label 8
+.TP
+\fBmpls9()\fR
+MPLS label 9
+.TP
+\fBmpls10()\fR
+MPLS label 10
+.TP
+\fBmpls()\fR
+MPLS labels 1-10
+.TP
+\fBbps()\fR
+Bits per second
+.TP
+\fBpps()\fR
+Packets per second
+.TP
+\fBbpp()\fR
+Bytes per package
+.TP
+\fBoline()\fR
+nfdump line output format (-o line)
+.TP
+\fBolong()\fR
+nfdump long output format (-o long)
+.TP
+\fBoextended()\fR
+nfdump extended output format (-o extended)
+
+.SH AUTHORS
+\fBt2nfdump\fR was written by the Tranalyzer Development Team
+
+.SH BUGS
+Please send problems, bugs, questions and suggestions to:
+
+.ti +8
+\fItranalyzer@rdit.ch\fR
+
+.SH DISTRIBUTION
+The latest version of \fBt2nfdump\fR can be found at \fIhttps://tranalyzer.com\fR
+
+.SH "SEE ALSO"
+\fItawk(1)\fR, \fItranalyzer(1)\fR, \fIgawk(1)\fR, \fInfdump(1)\fR
+
+The full documentation for \fBt2nfdump\fR is available at
+
+.ti +8
+\fIhttps://tranalyzer.com/downloads/doc/documentation.pdf\fR

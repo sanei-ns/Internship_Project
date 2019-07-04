@@ -1,0 +1,35 @@
+#!/usr/bin/env awk
+#
+# Returns true if the protocol number is equal to 'p'
+# If 'p' is omitted, returns the protocol
+#
+# Parameters:
+#   - [p] : the protocol number(s) to test
+#
+# Dependencies:
+#   - basicFlow
+#
+# Examples:
+#   - tawk 'proto(6)' file.txt      # test for TCP
+#   - tawk 'proto("6;17")' file.txt # test for TCP or UDP
+#   - tawk 'proto("1-6")' file.txt  # test for ICMP(1), IGMP(2), ..., or  TCP(6)
+#   - tawk '{ print proto() }' file.txt
+
+@include "hdr"
+@include "_validate_col"
+
+function proto(p,        _i, _l, _pr, _protocols) {
+    _pr = _validate_col("l4Proto", _my_l4Proto)
+    if (__PRIHDR__ && hdr()) return $_pr
+    if (!p) return proto2str($_pr)
+    _pr = strtonum($_pr)
+    if (match(p, /^(0x[[:xdigit:]]+|[0-9]+)-(0x[[:xdigit:]]+|[0-9]+)$/, _protocols)) {
+        return (_pr >= strtonum(_protocols[1]) && _pr <= strtonum(_protocols[2]))
+    } else if (p ~ /^(0x[[:xdigit:]]+|[0-9]+)(;(0x[[:xdigit:]]+|[0-9]+))*$/) {
+        _l = split(p, _protocols, /;/)
+        for (_i = 1; _i <= _l; _i++) {
+            if (_pr == strtonum(_protocols[_i])) return 1
+        }
+        return 0
+    }
+}

@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+#
+# Format FILE_ospfDBD.txt to look like the output of Cisco's show ip ospf database
+#
+# Usage: ./dbd FILE_ospfDBD.txt
+
+source "$(dirname "$0")/../../../scripts/t2utils.sh"
+
+usage() {
+    printf "Usage:\n"
+    printf "    $SNAME [OPTION...] <FILE_ospfDBD.txt>\n"
+    printf "\nOptional arguments:\n"
+    printf "    -h          display this help, then exit\n"
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -h|-\?|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            if [ ! -f "$1" ]; then
+                abort_option_unknown "$1"
+            fi
+            INFILE="$1"
+            ;;
+    esac
+    shift
+done
+
+if [ ! -f "$INFILE" ]; then
+    abort_required_file
+fi
+
+area=$($AWK -F"\t" 'NR > 1 { print $1 }' "$INFILE" | sort -u)
+# Routers in area
+rid=$($AWK -F"\t" '$8 == "Router"  { print $3 }' "$INFILE" | sort -u | xargs) # routers ID
+#dr=$($AWK -F"\t" '$8 == "Network" { print $3 }' "$INFILE" | sort -u | xargs)
+#abr=$($AWK -F"\t" '$8 == "Summary" { print $4 }' "$INFILE" | sort -u | xargs)
+#net=$($AWK -F"\t" '$8 == "Summary" { print $3 }' "$INFILE" | sort -u | xargs)
+
+for r in $rid; do
+    printf "${GREEN_BOLD}OSPF Router with ID ($r)${NOCOLOR}\n\n"
+    for a in $area; do
+        # TODO get num links...
+        printinf "Router Link States (Area $a)\n"
+        $AWK -F"\t" -v OFS="\t" -v r="$r" -v a="$a" '
+            NR == 1 { print $3, $4, $5, $6, $7 }
+            ($1 == a && $8 == "Router" && $2 == r) {
+                s[$3] = $3 "\t" $4 "\t" $5 "\t" $6 "\t" $7
+            }
+            END {
+                if (!length(s)) print "EMPTY"
+                else for (i in s) print s[i]
+            }' $INFILE
+        printinf "\nNet Link States (Area $a)\n"
+        $AWK -F"\t" -v OFS="\t" -v r="$r" -v a="$a" '
+            NR == 1 { print $3, $4, $5, $6, $7 }
+            ($1 == a && $8 == "Network" && $2 == r) {
+                s[$3] = $3 "\t" $4 "\t" $5 "\t" $6 "\t" $7
+            }
+            END {
+                if (!length(s)) print "EMPTY"
+                else for (i in s) print s[i]
+            }' $INFILE
+        # known networks outside the area
+        printinf "\nSummary Net Link States (Area $a)\n"
+        $AWK -F"\t" -v OFS="\t" -v r="$r" -v a="$a" '
+            NR == 1 { print $3, $4, $5, $6, $7 }
+            ($1 == a && $8 == "Summary" && $2 == r) {
+                found = 1
+                print $3, $4, $5, $6, $7
+            }
+            END {
+                if (!found) print "EMPTY"
+            }' $INFILE
+        #printinf "\nSummary ASB Link States (Area $a)\n"
+        #$AWK -F"\t" -v OFS="\t" -v r="$r" -v a="$a" '
+        #    NR == 1 { print $3, $4, $5, $6, $7 }
+        #    ($1 == a && $8 == "ASBR" && $2 == r) {
+        #        found = 1
+        #        print $3, $4, $5, $6, $7
+        #    }
+        #    END {
+        #        if (!found) print "EMPTY"
+        #    }' $INFILE
+        #printinf "\nType-5 AS External Link States\n"
+        #$AWK -F"\t" -v OFS="\t" -v r="$r" -v a="$a" '
+        #    NR == 1 { print $3, $4, $5, $6, $7 }
+        #    ($1 == a && $8 == "ASext" && $2 == r) {
+        #        found = 1
+        #        print $3, $4, $5, $6, $7
+        #    }
+        #    END {
+        #        if (!found) print "EMPTY"
+        #    }' $INFILE
+    done
+    printf "\n\n"
+done

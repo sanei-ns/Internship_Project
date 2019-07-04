@@ -1,0 +1,20 @@
+# Example patch for Tranalyzer and the plugins.
+#
+# Apply the patch as follows: t2conf -x --patch file.patch
+# Revert the patch as follows: t2conf -x --rpatch file.patch
+#
+# Format of the patch:
+#     - Empty lines and lines starting with '%' or '#'’ are ignored
+#     - Filenames are relative to $T2HOME, e.g., ~/tranalyzer2-0.8.3.
+#     - A line is composed of four tabs (not spaces) separated columns:
+#         NAME <tab> newvalue <tab> oldvalue <tab> file
+
+# tranalyzer2
+USE_PLLIST	1	0	tranalyzer2/src/loadPlugins.h
+
+# nDPI
+NDPI_OUTPUT_STR	1	0	plugins/nDPI/src/nDPI.h
+
+# portClassifier
+PBC_NUM	1	0	plugins/portClassifier/src/portClassifier.h
+PBC_STR	1	0	plugins/portClassifier/src/portClassifier.h

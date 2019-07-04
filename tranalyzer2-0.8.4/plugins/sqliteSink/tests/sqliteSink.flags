@@ -1,0 +1,15 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/sqliteSink
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+#
+# Flag name     File
+
+# src/sqliteSink.h
+SQLITE_OVERWRITE            src/sqliteSink.h
+SQLITE_HEX_AS_INT           src/sqliteSink.h
+SQLITE_TRANSACTION_NFLOWS   src/sqliteSink.h

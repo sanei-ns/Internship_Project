@@ -1,0 +1,145 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {geoip}
+    {Geo-Localization of IP Addresses}
+    {Tranalyzer Development Team}
+
+\section{geoip}\label{s:geoip}
+
+\subsection{Description}
+This plugin outputs the geographic location of IP addresses.
+
+\subsection{Dependencies}
+This product includes GeoLite2 data created by MaxMind, available from \url{http://www.maxmind.com}.\\
+Legacy databases ({\tt GeoLiteCity.data.gz} and {\tt GeoLiteCityv6.dat.gz}) require {\em libgeoip},
+while GeoLite2 requires {\em libmaxminddb}.
+
+\paragraph{Ubuntu:} {\tt sudo apt-get install libgeoip-dev libmaxminddb-dev}
+\paragraph{Kali:} {\tt sudo apt-get install libgeoip-dev}
+\paragraph{OpenSUSE:} {\tt sudo zypper install libGeoIP-devel}
+\paragraph{Arch:} {\tt sudo pacman -S geoip}\\
+\indent\indent~~{\em libmaxminddb} can be found in the Arch User Repository (AUR) at\\
+\indent\indent~~\url{https://aur.archlinux.org/packages/libmaxminddb}.
+\paragraph{Mac OS X:} {\tt brew install geoip libmaxminddb}\\
+
+\subsubsection{Databases Update}
+The geoIP databases can be updated with the {\tt updatedb.sh} script as follows:
+
+\begin{center}
+    {\tt ./scripts/updatedb.sh}
+\end{center}
+
+\noindent Alternatively the latest version of the databases can be found at \url{https://dev.maxmind.com/geoip/geoip2/geolite2/} (GeoLite2-City). Legacy databases, the latest version of which can be found at \url{https://dev.maxmind.com/geoip/legacy/geolite} (Geo Lite City and Geo Lite City IPv6), are also supported.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin (Information in italic only applies to legacy databases):
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt GEOIP\_LEGACY} & 0 & Whether to use GeoLite2 (0) or the GeoLite legacy database (1)\\
+    &\\
+    {\tt GEOIP\_SRC} & 1 & Display geo info for the source IP\\
+    {\tt GEOIP\_DST} & 1 & Display geo info for the destination IP\\
+    &\\
+    {\tt GEOIP\_CONTINENT} & 2 & 0: no continent, 1: name ({\bf GeoLite2}), 2: two letters code\\
+    {\tt GEOIP\_COUNTRY} & 2 & 0: no country, 1: name, 2: two letters code, {\em 3: three letters code}\\
+    {\tt GEOIP\_REGION} & {\em 1} & {\em 0: no region, 1: name, 2: code}\\
+    {\tt GEOIP\_CITY} & 1 & Display the city of the IP\\
+    {\tt GEOIP\_POSTCODE} & 1 & Display the postal code of the IP\\
+    {\tt GEOIP\_ACCURACY} & 1 & ({\bf GeoLite2}) Display the accuracy of the geolocation\\
+    {\tt GEOIP\_POSITION} & 1 & Display the position (latitude, longitude) of the IP\\
+    {\tt GEOIP\_METRO\_CODE} & 0 & Display the metro (dma) code of the IP (US only)\\
+    {\tt GEOIP\_AREA\_CODE} & {\em 0} & {\em Display the telephone area code of the IP}\\
+    {\tt GEOIP\_NETMASK} & {\em 1} & {\em 0: no netmask, 1: netmask as int (cidr), 2: netmask as hex, 3: netmask as IP}\\
+    {\tt GEOIP\_TIME\_ZONE} & 1 & ({\bf GeoLite2}) Display the time zone\\
+    &\\
+    {\tt GEOIP\_LANG} & {\tt "en"} & ({\bf GeoLite2}) Language to use:\\
+                      &            & Brazilian Portuguese (pt-BR), English (en), French (fr), German (de),\\
+                      &            & Japanese (jp), Russian (ru), Simplified Chinese (zh-CN) or Spanish (es)\\
+    &\\
+    {\tt GEOIP\_BUFSIZE} & 64 & ({\bf GeoLite2}) Buffer size\\
+    &\\
+    {\tt GEOIP\_DB\_CACHE} & {\em 2} & {\em 0: read DB from file system (slower, least memory)}\\
+                           &   & {\em 1: index cache (cache frequently used index only)}\\
+                           &   & {\em 2: memory cache (faster, more memory)}\\
+    &\\
+    {\tt GEOIP\_UNKNOWN} & {\tt"--{}--"} & Representation of unknown locations (GeoIP's default)\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The geoip plugin outputs the following columns (for src and dst IP):
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt srcIpContinent} & S & Continent name & {\tt GEOIP\_CONTINENT=1}\\
+    {\tt \nameref{srcIpContinent}} & SC & Continent code & {\tt GEOIP\_CONTINENT=2}\\
+    {\tt srcIpCountry} & S & Country name & {\tt GEOIP\_COUNTRY=1}\\
+    {\tt srcIpCountry} & SC & Country code & {\tt GEOIP\_COUNTRY=2|3}\\
+    {\tt srcIpRegion} & SC & Region & {\tt GEOIP\_REGION=1}\\
+    {\tt srcIpRegion} & S & Region & {\tt GEOIP\_REGION=2}\\
+    {\tt srcIpCity} & S & City &\\
+    {\tt srcIpPostcode} & SC & Postal code &\\
+    {\tt srcIpAccuracy} & U16 & Accuracy of the geolocation (in km)&\\
+    {\tt srcIpLatitude} & D & Latitude & {\tt GEOIP\_LEGACY=0}\\
+    {\tt srcIpLongitude} & D & Longitude & {\tt GEOIP\_LEGACY=0}\\
+    {\tt srcIpLatitude} & F & Latitude & {\tt GEOIP\_LEGACY=1}\\
+    {\tt srcIpLongitude} & F & Longitude & {\tt GEOIP\_LEGACY=1}\\
+    {\tt srcIpMetroCode} & U16 & Metro (DMA) code (US only) & {\tt GEOIP\_LEGACY=0}\\
+    {\tt srcIpMetroCode} & I32 & Metro (DMA) code (US only) & {\tt GEOIP\_LEGACY=1}\\
+    {\tt srcIpAreaCode} & I32 & Area code &\\
+    {\tt srcIpNetmask} & U32 & Netmask (CIDR) & {\tt GEOIP\_NETMASK=1}\\
+    {\tt srcIpNetmask} & H32 & Netmask & {\tt GEOIP\_NETMASK=2}\\
+    {\tt srcIpNetmask} & IP4 & Netmask & {\tt GEOIP\_NETMASK=3}\\
+    {\tt srcIpTimeZone} & S & Time zone &\\
+    {\tt \nameref{geoStat}} & H8 & Status & {\tt GEOIP\_LEGACY=0}\\
+    \bottomrule
+\end{longtable}
+
+\clearpage
+\subsubsection{srcIpContinent}\label{srcIpContinent}
+Continent codes are as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf Code} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt AF} & Africa\\
+    {\tt AS} & Asia\\
+    {\tt EU} & Europe\\
+    {\tt NA} & North America\\
+    {\tt OC} & Oceania\\
+    {\tt SA} & South America\\
+    {\tt --{}--} & Unknown (see {\tt GEOIP\_UNKNOWN})\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{geoStat}\label{geoStat}
+The {\tt geoStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf geoStat} & {\bf Description}\\
+    \midrule\endhead%
+    $2^0$ (={\tt 0x01}) & A string had to be truncated\ldots increase {\tt GEOIP\_BUFSIZE}\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Post-Processing}
+
+The geoIP plugin comes with the {\tt genkml.sh} script which generates a KML (Keyhole Markup Language) file from a flow file.
+This KML file can then be loaded in Google Earth to display the location of the IP addresses involved in the dump file. Its usage
+is straightforward:
+
+\begin{center}
+    {\tt ./scripts/genkml.sh FILE\_flows.txt}
+\end{center}
+
+\end{document}

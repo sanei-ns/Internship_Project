@@ -1,0 +1,614 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {Creating a Custom Plugin}
+    {Developer Guide} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{Creating a Custom Plugin}
+% TODO rewrite
+A plugin is a shared library file comprising of special functionality. Tranalyzer2 dynamically loads these shared libraries at runtime from the {\em \textasciitilde{}/.tranalyzer/plugins} directory in the user's home folder. Therefore Tranalyzer2 is available for users if being installed in the {\em /usr/local/bin} directory while the plugins are user dependent. To develop a plugin it is strongly recommended that the user utilizes our special ``new\_plugin`` script. This script uses the plugin skeleton ``t2PSkel'' to create a new custom named plugin. It is available via SVN from the Tranalyzer repository under the {\em scripts/} folder. The script copies only the required files. Therefore it is recommended to upload the newly created folder to a SVN/GIT repository before running {\tt ./autogen.sh} (alternatively, {\tt ./autogen.sh -c} can be used to clean up automatically generated files that should not be committed). The skeleton contains a header and a source file comprising of all mandatory and optional functions as well as a small {\tt HOWTO} file and a script to build and move a shared library to the plugins folder.
+
+\subsection{Plugin Name}
+Plugin names should be kept short, start with a lowercase letter and only contain characters in the following ranges: {a--z, A--Z, 0--9}.
+In addition, each ``word'' should start with an uppercase letter, e.g., {\tt pluginName}.
+
+\subsection{Plugin Number}
+The plugin number (or order) influences when a plugin is to be loaded (useful if a plugin depends on another one).
+This number should consist of three digits and be unique.
+The plugin orders used in your Tranalyzer installation can be listed with {\tt ./scripts/pne}.
+As a rule of thumb, numbers greater than 900 should be kept for sink (output) plugins and numbers smaller than 10 for global plugins.
+
+\begin{longtable}{ll}
+    \toprule
+    {\bf plugin range} & {\bf description}\\
+    \midrule\endhead%
+    {\tt 000 -- 099} & global\\
+    {\tt 100 -- 199} & basic L2/3/4 plugins\\
+    {\tt 200 -- 299} & service and routing\\
+    {\tt 300 -- 699} & L7 protocols\\
+    {\tt 700 -- 799} & Math and statistics\\
+    {\tt 800 -- 899} & classifier and AI\\
+    {\tt 900 -- 999} & output\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Plugin Creation}
+To create a new plugin named {\em pluginName} with plugin order 123, run the following command from Tranalyzer's root, i.e., {\tt trunk} folder:
+\begin{center}
+{\tt ./scripts/new\_plugin pluginName 123}
+\end{center}
+
+If no plugin number is provided, then the script will choose a random one that is not used by any other plugin.
+
+\subsubsection{autogen.sh}
+The {\tt autogen.sh} script provides the {\tt EXTRAFILES} variable, which is used to list extra files, such as lists of subnets, protocols, services, databases or blacklists, that the plugin needs in order to run.
+The files listed in this variable are automatically copied into the Tranalyzer plugin folder.
+\begin{center}
+{\tt EXTRAFILES=(dependency1 dependency2)}
+\end{center}
+
+The {\tt CFLAGS} variable in {\tt autogen.sh} can be used if a plugin requires specific libraries, compilation or linking flags, e.g., {\tt CFLAGS="-lzip"}.
+In such a case, the {\tt DEPS} variable can be used to list the dependencies, e.g., {\tt DEPS="libzip"}.
+
+\subsection{Compilation}
+The plugin can then be compiled by typing {\tt ./autogen.sh}.
+For a complete list of options, run {\tt ./autogen.sh -h}
+
+%Usage of the skeleton plugin requires the main folder of the Tranalyzer source files to be located in the same folder as the main folder of the skeleton. Also the tools automake and libtool must be installed. Further directions concerning the {\tt configure.ac} and the {\tt Makefile.am} are located in the {\tt HOWTO} file.
+
+\subsection{Plugin Structure}
+
+All plugins have the same global structures, namely, a comment describing the license of the plugin, e.g., GPLv2+, some includes, followed by the declaration of variables and functions.
+This section discusses the Tranalyzer callbacks which follows the elements already mentionned.
+Note that all the callbacks are optional, but a plugin {\bf MUST} call one of the initialization macros.
+
+\paragraph{First, a plugin {\bf MUST} have one the following declarations:}
+\begin{itemize}
+    \item {\tt T2\_PLUGIN\_INIT(name, version, t2\_v\_major, t2\_v\_minor)}
+    \item {\tt T2\_PLUGIN\_INIT\_WITH\_DEPS(name, version, t2\_v\_major, t2\_v\_minor, deps)}
+\end{itemize}
+For example, to initialize {\tt myPlugin}:
+\begin{center}
+{\tt T2\_PLUGIN\_INIT\_WITH\_DEPS("myPlugin", "0.8.3", 0, 8, "tcpFlags,basicStats")}
+\end{center}
+
+\paragraph{The available callbacks are:}
+\begin{itemize}
+    \item {\tt\nameref{t2cb-initialize}}
+    \item {\tt\nameref{t2cb-printHeader}}
+    \item {\tt\nameref{t2cb-onFlowGenerated}}
+    \item {\tt\nameref{t2cb-claimLayer2Information}}
+    \item {\tt\nameref{t2cb-claimLayer3Information}} \textcolor{red}{[Deprecated]}
+    \item {\tt\nameref{t2cb-claimLayer4Information}}
+    \item {\tt\nameref{t2cb-onFlowTerminate}}
+    \item {\tt\nameref{t2cb-pluginReport}}
+    \item {\tt\nameref{t2cb-onApplicationTerminate}}
+    \item {\tt\nameref{t2cb-bufferToSink}} \textcolor{blue}{[Sink (output) plugins only]}
+\end{itemize}
+
+\paragraph{The following callbacks offer more advanced capabilities:}
+\begin{itemize}
+    \item {\tt\nameref{t2cb-t2BusCallback}} \textcolor{orange}{[Not implemented]}
+    \item {\tt\nameref{t2cb-monitoring}}
+    \item {\tt\nameref{t2cb-saveState}}
+    \item {\tt\nameref{t2cb-restoreState}}
+\end{itemize}
+
+%For a more complete example, refer to the \tranrefpl{t2PSkel} plugin.
+
+\subsubsection{\tt void initialize()}\label{t2cb-initialize}
+This function is called before processing any packet.
+
+\subsubsection{\tt binary\_value\_t *printHeader()}\label{t2cb-printHeader}
+This function is used to describe the columns output by the plugin
+Refer to \refs{section:output} and the {\tt BV\_APPEND} macros.
+
+\subsubsection{\tt void onFlowGenerated(packet\_t *packet, unsigned long flowIndex)}\label{t2cb-onFlowGenerated}
+This function is called every time a new flow is created.
+
+\subsubsection{\tt void claimLayer2Information(packet\_t *packet, unsigned long flowIndex)}\label{t2cb-claimLayer2Information}
+This function is called for every packet with a layer 2.
+If {\tt flowIndex} is {\tt HASHTABLE\_ENTRY\_NOT\_FOUND}, this means the packet also has
+a layer 4 and thus a call to {\tt claimLayer4Information()} will follow.
+
+\subsubsection{\tt void claimLayer3Information(packet\_t *packet)}\label{t2cb-claimLayer3Information}
+This function is called for every packet with a layer 3.
+
+\subsubsection{\tt void claimLayer4Information(packet\_t *packet, unsigned long flowIndex)}\label{t2cb-claimLayer4Information}
+This function is called for every packet with a layer 4.
+
+\subsubsection{\tt void onFlowTerminate(unsigned long flowIndex)}\label{t2cb-onFlowTerminate}
+This function is called once a flow is terminated.
+Output all the statistics for the flow here.
+Refer to \refs{section:output} and the {\tt OUTBUF\_APPEND} macros.
+
+\subsubsection{\tt void t2BusCallback(uint32\_t status)}\label{t2cb-t2BusCallback}
+Currently not implemented.
+
+\subsubsection{\tt void monitoring(FILE *stream, uint8\_t state)}\label{t2cb-monitoring}
+This function is used to report information regarding the plugin at regular interval or when a {\tt USR1} signal is received.
+{\tt state} can be one of the following:
+\begin{itemize}
+    \item {\tt T2\_MON\_PRI\_HDR}: a header (value names) must be printed
+    \item {\tt T2\_MON\_PRI\_VAL}: the actual data must be printed
+    \item {\tt T2\_MON\_PRI\_REPORT}: a report (similar to the plugin report) must be printed
+\end{itemize}
+
+\subsubsection{\tt void pluginReport(FILE *stream)}\label{t2cb-pluginReport}
+This function is used to report information regarding the plugin.
+This will appear in the final report.
+
+\subsubsection{\tt void onApplicationTerminate()}\label{t2cb-onApplicationTerminate}
+This function is called once all the packets have been processed.
+Cleanup all used memory here.
+
+\subsubsection{\tt void saveState(FILE *stream)}\label{t2cb-saveState}
+This function is used to save the state of the plugin.
+Tranalyzer can then restore the state in a future execution.
+
+\subsubsection{\tt void restoreState(char *str)}\label{t2cb-restoreState}
+This function is used to restore the state of the plugin.
+{\tt str} represents the line written in {saveState()}.
+
+\subsubsection{\tt void bufferToSink(outputBuffer\_t *buffer\label{t2cb-bufferToSink})}
+This callback is only required for sink (output) plugins.
+
+\subsection{Error, warning, and informational messages}
+Tranalyzer2 provides several macros to report errors, warnings, informations or simple messages:
+\begin{longtable}{lll}
+    \toprule
+    {\tt T2\_PLOG()} & print a normal message (standard terminal colors) & {\tt pluginName: message}\\
+    {\tt T2\_PINF()} & print an information message (blue) & \color{blue}{\tt [INF] pluginName: message}\\
+    {\tt T2\_PWRN()} & print a warning message (yellow) & \color[rgb]{1,.75,0}{\tt [WRN] pluginName: message}\\
+    {\tt T2\_PERR()} & print an error message (red) & \color{red}{\tt [ERR] pluginName: message}\\
+    \bottomrule
+\end{longtable}
+Note that {\tt T2\_PERR} always prints to {\tt stderr}, while the other macros print to {\tt stdout} or {\tt PREFIX\_log.txt} if Tranalyzer {\tt -l} option was used.\\
+
+Their usage is straightforward:
+
+\begin{center}
+    {\tt T2\_PLOG("pluginName", "message \%d", 42);}
+\end{center}
+
+Note that a trailing newline is automatically added.
+
+\subsection{Generating Output}\label{section:output}
+
+The following macros can be used to declare and append new columns to the output buffer.
+The {\tt BV\_APPEND\_*} macros are used to declare a new column with a given {\tt name}, description {\tt desc} and type.
+The {\tt OUTBUF\_APPEND\_*} macros are used to append a value {\tt val} of the given type to the buffer {\tt buf}.
+
+\begin{longtable}{lll}
+    \toprule
+    {\bf {\tt BV} Macro} & {\bf Type} & {\bf Corresponding {\tt OUBUF} Macro}\\
+    \midrule
+
+    \\\multicolumn{3}{l}{\bf Unsigned values}\\\\
+
+    {\tt BV\_APPEND\_U8(bv, name, desc)}  & {\tt bt\_uint\_8}  & {\tt OUTBUF\_APPEND\_U8(buf, val)}\\
+    {\tt BV\_APPEND\_U16(bv, name, desc)} & {\tt bt\_uint\_16} & {\tt OUTBUF\_APPEND\_U16(buf, val)}\\
+    {\tt BV\_APPEND\_U32(bv, name, desc)} & {\tt bt\_uint\_32} & {\tt OUTBUF\_APPEND\_U32(buf, val)}\\
+    {\tt BV\_APPEND\_U64(bv, name, desc)} & {\tt bt\_uint\_64} & {\tt OUTBUF\_APPEND\_U64(buf, val)}\\
+    \\
+    {\tt BV\_APPEND\_H8(bv, name, desc)}  & {\tt bt\_hex\_8}  & {\tt OUTBUF\_APPEND\_H8(buf, val)}\\
+    {\tt BV\_APPEND\_H16(bv, name, desc)} & {\tt bt\_hex\_16} & {\tt OUTBUF\_APPEND\_H16(buf, val)}\\
+    {\tt BV\_APPEND\_H32(bv, name, desc)} & {\tt bt\_hex\_32} & {\tt OUTBUF\_APPEND\_H32(buf, val)}\\
+    {\tt BV\_APPEND\_H64(bv, name, desc)} & {\tt bt\_hex\_64} & {\tt OUTBUF\_APPEND\_H64(buf, val)}\\
+
+    \\\multicolumn{3}{l}{\bf Signed values}\\\\
+
+    {\tt BV\_APPEND\_I8(bv, name, desc)}  & {\tt bt\_int\_8}  & {\tt OUTBUF\_APPEND\_I8(buf, val)}\\
+    {\tt BV\_APPEND\_I16(bv, name, desc)} & {\tt bt\_int\_16} & {\tt OUTBUF\_APPEND\_I16(buf, val)}\\
+    {\tt BV\_APPEND\_I32(bv, name, desc)} & {\tt bt\_int\_32} & {\tt OUTBUF\_APPEND\_I32(buf, val)}\\
+    {\tt BV\_APPEND\_I64(bv, name, desc)} & {\tt bt\_int\_64} & {\tt OUTBUF\_APPEND\_I64(buf, val)}\\
+
+    \\\multicolumn{3}{l}{\bf Floating points values}\\\\
+
+    {\tt BV\_APPEND\_FLT(bv, name, desc)} & {\tt bt\_float}  & {\tt OUTBUF\_APPEND\_FLT(buf, val)}\\
+    {\tt BV\_APPEND\_DBL(bv, name, desc)} & {\tt bt\_double} & {\tt OUTBUF\_APPEND\_DBL(buf, val)}\\
+
+    \\\multicolumn{3}{l}{\bf String values}\\\\
+
+    {\tt BV\_APPEND\_STR(bv, name, desc)} & {\tt bt\_string}         & {\tt OUTBUF\_APPEND\_STR(buf, val)}\\
+    {\tt BV\_APPEND\_STRC(bv, name, desc)} & {\tt bt\_string\_class} & {\tt OUTBUF\_APPEND\_STR(buf, val)}\\
+
+    \\\multicolumn{3}{l}{\bf Time values (timestamp and duration)\footnote{Time values use an {\tt uint64} for the seconds and an {\tt uint32} for the micro-seconds}}\\\\
+
+    {\tt BV\_APPEND\_TIMESTAMP(bv, name, desc)} & {\tt bt\_timestamp} & {\tt OUTBUF\_APPEND\_TIME(buf, sec, usec)}\\
+    {\tt BV\_APPEND\_DURATION(bv, name, desc)}  & {\tt bt\_duration}  & {\tt OUTBUF\_APPEND\_TIME(buf, sec, usec)}\\
+
+    \\\multicolumn{3}{l}{\bf IP values (network order)}\\\\
+
+    {\tt BV\_APPEND\_IP4(bv, name, desc)} & {\tt bt\_ip4\_addr} & {\tt OUTBUF\_APPEND\_IP4(buf, val)}\\
+    {\tt BV\_APPEND\_IP6(bv, name, desc)} & {\tt bt\_ip6\_addr} & {\tt OUTBUF\_APPEND\_IP6(buf, val)}\\
+    {\tt BV\_APPEND\_IPX(bv, name, desc)} & {\tt bt\_ipx\_addr} & {\tt OUTBUF\_APPEND\_IPX(buf, version, val)}\footnote{Appends the IP {\tt version} ({\tt uint8}), followed by the IP. If {\tt version} is 6, then calls {\tt OUTBUF\_APPEND\_IP6(buf, val.IPv6.s6\_addr[0]} else calls {\tt OUTBUF\_APPEND\_IP4(buf, val.IPv4.s\_addr}}\\
+
+    \bottomrule
+\end{longtable}
+
+If more flexibility is required the following macros can be used:
+\begin{itemize}
+    \item {\tt BV\_APPEND(bv, name, desc, num\_val, type1, type2, \ldots)}
+    \item {\tt OUTBUF\_APPEND(buf, val, size)}
+\end{itemize}
+
+\subsubsection{Repetitive Values}
+
+A repetitive value consists of a {\tt uint32} representing the number of repetitions, followed by the actual repetitions.\\
+
+All the {\tt BV\_APPEND} macros introduced in the previous section can be suffixed with {\tt \_R} to represent a repetitive value:
+\begin{center}
+    {\tt BV\_APPEND\_U8(bv, name, desc)} (non-repetitive) $\Rightarrow$ {\tt BV\_APPEND\_U8\_R(bv, name, desc)} (repetitive).
+\end{center}
+
+In addition, the following {\tt OUTBUF} macros are available for repetitive values:
+
+\begin{longtable}{lll}
+    \toprule
+    {\bf {\tt OUTBUF} Macro} & {\bf Description} & {\bf Type}\\
+    \midrule
+    {\tt OUTBUF\_APPEND\_OPTSTR(buf, val)} & If {\tt val} is {\tt NULL} or empty, appends 0 ({\tt uint32}) & {\tt bt\_string},\\
+                                           & else appends 1 ({\tt uint32}) and the string                 & {\tt bt\_string\_class}\\\\
+    {\tt OUTBUF\_APPEND\_NUMREP(buf, reps)} & Appends the number of repetitions ({\tt uint32})\footnote{The correct number of values {\bf MUST} then be appended.}\\
+
+    \bottomrule
+\end{longtable}
+
+\subsubsection{Column Names}
+Column names should be kept short and only contain characters in the following ranges: {\tt \_, a--z, A--Z, 0--9}.
+In addition, each ``word'' should start with an uppercase letter, e.g., {\tt myCol2}.
+The {\tt '\_'} character should be used to name compound values, e.g., {\tt field1\_field2}.
+A good practice is to prefix each column name with the short name of the plugin, e.g.,\\{\tt ftpDecode $\rightarrow$ ftpStat, ftpCNum}
+
+\subsubsection{More Complex Output}
+Refer to \refs{section:output}.
+
+% TODO rewrite
+\subsection{Accessible structures}
+Due to practical reasons all plugins are able to access every structure of the main program and the other plugins. This is indeed a security risk, but since Tranalyzer2 is a tool for practitioners and scientists in access limited environments the maximum possible freedom of the programmer is more important for us.
+
+\subsection{Important structures}
+A predominant structure in the main program is the flow table {\em flow} where the six tuple for the flow lookup timing information is stored as well as a pointer to a possible opposite flow. A plugin can access this structure by including the {\tt packetCapture.h} header. For more information please refer to the header file.\\
+Another important structure is the main output buffer {\tt mainOutputBuffer}. This structure holds all standard output of activated plugins whenever a flow is terminated. The main output buffer is accessible if the plugin includes the header file {\tt main.h}.
+
+\subsection{Generating output (advanced)}\label{section:output2}
+As mentioned in Section \ref{tranalyzer_output} there are two ways to generate output. The first is the case where a plugin just writes its arbitrary output into its own file, the second is writing flow-based information to a standard output file. We are now discussing the later case. \\
+The standard output file generated by the Standard File sink plugin consists of a header, a delimiter and values. The header is generated using header information provided by each plugin, that writes output into the standard output file. During the initialization phase of the sniffing process, the core calls the {\tt printHeader()} functions of these plugins. These functions return a single structure or a list of structures of type {\tt binary\_value\_t}. Each structure represents a statistic. To provide a mechanism for hierarchical ordering, the statistic itself may contain one ore more values and one or more substructures.\\
+The structure contains the following fields:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Field name} & {\bf Field type} & {\bf Explanation} \\
+    \midrule\endhead%
+    num\_values & uint32\_t & Amount of values in the statistic\\
+    subval & binary\_subvalue\_t* & Type definition of the values\\
+    name\_value\_short & char[128] & Short definition of the statistic\\
+    name\_value\_long & char[1024] & Long definition of the statistic\\
+    is\_repeating & uint32\_t & one, if the statistic is repeating, zero otherwise\\
+    next & binary\_value\_t* & used if the plugin provides more than one statistics\\
+    \bottomrule
+\end{longtable}
+The substructure {\tt binary\_subvalue\_t} is used to describe the values of the statistic. For each value, one substructure is required. For example, if {\tt num\_values} is two, two substructures have to be allocated. The substructures must be implemented as a continuous array consisting of the following fields:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Field name} & {\bf Field type} & {\bf Explanation} \\
+    \midrule\endhead%
+    value\_type & uint32\_t & Type of the value\\
+    num\_values & uint32\_t & Amount of values in the statistic\\
+    subval & binary\_subvalue\_t* & Definition of the values\\
+    is\_repeating & uint32\_t & one, statistic is repeating, zero otherwise\\
+    \bottomrule
+\end{longtable}
+Compared to the {\tt binary\_value\_t} representation two strings are omitted in the statistic's short and long description and the *next pointer but it contains a new field, the value type. Possible values for this new field are described in the enumeration {\tt binary\_types} defined in the header file {\tt binaryValue.h}. If the field contains a value greater than zero the fields {\tt num\_values} and {\tt subval} are ignored. They are needed if a subval contains itself subvalues. To indicate additional subvalues, the field {\tt value\_type} need to be set to zero. The mechanism is the same as for the {\tt binary\_value\_t}.\\[2ex]
+The field {\tt is\_repeating} should be used if the number of values inside a statistic is variable; e.g. a statistic of a vector with variable length.
+
+\subsubsection{Examples}
+The following examples illustrate the usage of the said two structures:
+\paragraph{Example 1: Two Statistics each containing a single value}
+If a plugin's output is consisting of two statistics each having a single value it needs to pass a list containing two structures of type {\tt binary\_value\_t}. Both structures contain a substructure with the type of the single values. The following diagram shows the relationships between all four structures:
+\begin{figure}[H]
+    \centering
+    \tranimg[width=.9\textwidth]{custom_plugin/binaryHeader_example1.png}
+\end{figure}
+
+\paragraph{Example 2: A statistic composed of two values}
+Now the output of the plugin is again two statistics, but the first statistic consists of two values; e.g. to describe a position on a grid. Therefore {\tt num\_values} is two and {\tt subval*} points to a memory field of size two-times struct {\tt binary\_subvalue\_t}. The subvalues themselves contain again the type of the statistic's values. Note: These values do not need to be identical.
+\begin{figure}[H]
+    \centering
+    \tranimg[width=.9\textwidth]{custom_plugin/binaryHeader_example2.png}
+\end{figure}
+
+\paragraph{Example 3: A statistic containing a complete matrix}
+With the ability to define subvalues in subvalues it is possible to store multidimensional structures such as matrices. The following example illustrates the definition of a matrix of size three times two:
+\begin{figure}[H]
+    \centering
+    \tranimg[width=.9\textwidth]{custom_plugin/binaryHeader_example3.png}
+\end{figure}
+
+\subsubsection{Helper functions}
+In order to avoid filling the structures by hand a small API is located in the header file {\tt binaryValue.h} doing all the nitty-gritty work for the programmer. The therefore important four functions are described below.\\[2ex]
+{\tt binary\_value\_t* bv\_append\_bv(binary\_value\_t* dest, binary\_value\_t* new)} \\
+{\em Appends a binary\_value\_t struct at the end of a list of binary\_value\_t structures and returns a pointer to the start of the list.}\\[2ex]
+Arguments:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Type} & {\bf Name} & {\bf Explanation} \\
+    \midrule\endhead%
+    binary\_value\_t* & dest & The pointer to the start of the list \\
+    binary\_value\_t* & new & The pointer to the new binary\_value\_t structure \\
+    \bottomrule
+\end{longtable}
+\vspace{18pt}
+\begin{tabbing}
+\={\bf binary\_value\_t*} \={\bf bv\_new\_bv} \={\bf (char* name\_long, char* name\_short, uint32\_t is\_repeating,} \\
+\>\>\>  {\bf uint32\_t num\_values...)} \\
+\end{tabbing}
+{\em Generates a new structure of type binary\_value\_t and returns a pointer to it}\\[2ex]
+Arguments:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Type} & {\bf Name} & {\bf Explanation} \\
+    \midrule\endhead%
+    char* & name\_long & a long name for the statistic \\
+    char* & name\_short & a short name for the statistic \\
+    uint32\_t & is\_repeating & one, if the statistic is repeating, zero otherwise \\
+    uint32\_t & num\_values & the number of values for the statistic \\
+    int & \ldots & the types of the statistical values, repeated {\tt num\_values}-times \\
+    \bottomrule
+\end{longtable}
+The function creates a {\tt binary\_value\_t} structure and sets the values. In addition, it creates an array field with num\_values binary\_subvalue\_t structures and fills the value types provided in the variable argument list.
+
+\paragraph{Example:} The call {\tt bv\_new\_bv(``Statistic vector'', ``stat\_vec'', 2, 0, bt\_uint\_64, bt\_uint\_64)} creates the following structures:
+\begin{figure}[H]
+    \centering
+    \tranimg[width=0.3\textwidth]{custom_plugin/binaryHeader_example4.png}
+\end{figure}
+\vspace{18pt}
+\begin{tabbing}
+\={\tt binary\_value\_t*} \= {\tt bv\_add\_sv\_to\_bv} \={\tt(binary\_value\_t* dest, uint32\_t pos,}\\
+\>\>\>{\tt uint32\_t is\_repeating, uint32\_t num\_values, \ldots)} \\
+\end{tabbing}
+{\em Replaces a subvalue in a {\tt binary\_value\_t} structure with a new substructure that contains additional substructures and returns a pointer to the parent binary value.}\\[2ex]
+Arguments:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Type} & {\bf Name} & {\bf Explanation} \\
+    \midrule\endhead%
+    binary\_value\_t* & dest & the pointer to the parent binary value \\
+    uint32\_t & pos & the position of the substructure to be replaced, starting at 0 \\
+    uint32\_t & is\_repeating & one, if the subvalue is repeating, zero otherwise \\
+    uint32\_t & num\_values & the number of values in the subvalue \\
+    int & \ldots & the types of the statistical values, repeated {\tt num\_values}-times \\
+    \bottomrule
+\end{longtable}
+This function is only valid if {\tt dest} is already a complete statistic containing all necessary structures.
+
+\paragraph{Example:}
+Let {\em dest} be a pointer to the {\tt binary\_value\_t} structure from the example above. A call to the function {\tt bv\_add\_sv\_to\_bv(dest, 1, 0, 2, bt\_uint\_64, bt\_uint\_64)} replaces the second substructure with a new substructure containing two more substructures:
+\begin{figure}[H]
+    \centering
+    \tranimg[width=.9\textwidth]{custom_plugin/binaryHeader_example5.png}
+\end{figure}
+\vspace{18pt}
+\begin{tabbing}
+\={\tt binary\_value\_t*} \={\tt bv\_add\_sv\_to\_sv} \={\tt(binary\_subvalue\_t* dest, uint32\_t pos,} \\
+\>\>\>{\tt uint32\_t is\_repeating, uint32\_t num\_values, ...)} \\
+\end{tabbing}
+{\em Replaces a subvalue in a {\tt binary\_subvalue\_t} structure with a new substructure that contains additional substructures and returns a pointer to the parent binary subvalue.}\\[2ex]
+Arguments:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Type} & {\bf Name} & {\bf Explanation} \\
+    \midrule\endhead%
+    binary\_subvalue\_t* & dest & Pointer to the parent binary subvalue \\
+    uint32\_t & pos & Position of the substructure to be replaced, starting at 0 \\
+    uint32\_t & is\_repeating & one, if the subvalue is repeating, zero otherwise \\
+    uint32\_t & num\_values & Number of values in the subvalue \\
+    int & \ldots & Types of the statistical values, repeated \textit{num\_values}-times \\
+    \bottomrule
+\end{longtable}
+For all hierarchical deeper located structures than above the function described above is required.
+
+\paragraph{Example:}
+Let {\em dest} be a pointer to the subvalue structure being replaced in the example above. A call to the function {\tt bv\_add\_sv\_to\_sv(dest, 0, 0, 2, bt\_uint\_64, bt\_uint\_64)} replaces {\em dest's} first the substructure with a new substructure containing two more substructures:
+\begin{figure}[H]
+    \centering
+    \tranimg[width=0.7\textwidth]{custom_plugin/binaryHeader_example6.png}
+\end{figure}
+
+\subsubsection{Writing into the standard output}
+Standard output is generated using a buffer structure. Upon the event {\tt onFlowTerminate} (see \ref{event:onFlowTerminate}) Plugins write all output into this buffer. It is strongly recommended using the function {\tt outputBuffer\_append(outputBuffer\_t* buffer, char* output, size\_t size\_of\_output)}.\\
+Arguments:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Type} & {\bf Name} & {\bf Explanation} \\
+    \midrule\endhead%
+    outputBuffer\_t* & buffer & the pointer to the standard output buffer structure, for standard\\ & & output, this is {\tt main\_output\_buffer}\\
+    char* & output & a pointer to the output, currently of type char \\
+    size\_t & size\_of\_output & the length of field {\em output} in single bytes \\
+    \bottomrule
+\end{longtable}
+The output buffer is send to the {\em output sinks} after all plugins have stored their information.
+
+\paragraph{Example:}
+If a plugin wants to write two statistics each with a single value of type {\tt uint64\_t} it first has to commit its {\tt binary\_value\_t} structure(s) (see section above). During the call of its {\tt onFlowTerminate()} function the plugin writes both statistical values using the append function:
+\begin{figure*}[!ht]
+\centering
+%\begin{tabular}{c}
+\begin{lstlisting}
+outputBuffer_append(main_output_buffer, (char*) &value1, 4);
+outputBuffer_append(main_output_buffer, (char*) &value2, 4);
+\end{lstlisting}
+%\end{tabular}
+\end{figure*}
+
+Where {\tt value1} and {\tt value2} are two pointers to the statistical values.
+
+\subsection{Writing repeated output}
+If a statistic could be repeated (field {\tt is\_repeating} is one) the plugin has first to store the number of values as {\tt uint32\_t} value into the buffer. Afterwards, it appends the values.
+
+\paragraph{Example:}
+A plugin's output is a vector of variable length, the values are of type {\tt uint16\_t}. For the current flow, that is terminated in the function {\tt onFlowTerminate()}, there are three values to write. The plugin first writes a field of type {\tt uint32\_t} with value three into the buffer, using the append function:
+\begin{lstlisting}
+outputbuffer_append(main_output_buffer, (char*) &numOfValues, sizeof(uint32_t));
+\end{lstlisting}
+Afterwards, it writes the tree values.
+
+\subsection{Important notes}
+\begin{itemize}
+    \item IP addresses (bt\_ip4\_addr or bt\_ip6\_addr) or MAC addresses (bt\_mac\_addr) are stored in network order.
+    \item Strings are of variable length and need to be stored with a trailing zero bit ('\textbackslash0').
+\end{itemize}
+
+\subsection{Administrative functions}
+Every plugin has to provide five administrative functions. The first four are mandatory while the last one is optional.
+For convenience, the following two macros can be used instead:
+\begin{itemize}
+    \item {\tt T2\_PLUGIN\_INIT(name, version, t2\_v\_major, t2\_v\_minor)}
+    \item {\tt T2\_PLUGIN\_INIT\_WITH\_DEPS(name, version, t2\_v\_major, t2\_v\_minor, deps)}
+\end{itemize}
+For example, to initialize {\tt myPlugin}:
+\begin{center}
+{\tt T2\_PLUGIN\_INIT\_WITH\_DEPS("myPlugin", "0.8.3", 0, 8, "tcpFlags,basicStats")}
+\end{center}
+\begin{longtable}{lll}
+    \toprule
+    {\bf Function name} & {\bf Return type} & {\bf Explanation} \\
+    \midrule\endhead%
+    get\_plugin\_name() & char* & a unique name of the plugin, not \\&&necessarily the filename. All characters \\&&except the comma is allowed.\\
+    get\_plugin\_version() & char* & a version number, usually a dot separated\\&& 3 tuple (x.y.z) \\
+    get\_supported\_tranalyzer\_version\_major() & unsigned int & The minimum major version number of\\&& the main program being supported by \\&&the plugin \\
+    get\_supported\_tranalyzer\_version\_minor() & unsigned int & The minimum minor version number in\\&& combination with the minimum major\\&& version number of the main program\\&& being supported by the plugin \\
+    get\_dependencies() & char* & if exists, the plugin loader checks the\\&& availability of the plugin names returned\\&& by this function. The plugin names have \\&&to be separated by a comma. White \\&&spaces, tabs or any other characters are \\&& {\bf not} treated as name separators. \\
+    \bottomrule
+\end{longtable}
+
+The existence of these functions is checked during the plugin initialization phase one and two, as highlighted in Figure~\ref{fig:plugin_loading}.
+
+\begin{figure}[!ht]
+    \centering
+    \tranimg[width=.9\textwidth]{custom_plugin/plugin_loading.png}
+    \caption{Processing of the plugin loading mechanism}
+    \label{fig:plugin_loading}
+\end{figure}
+
+\subsection{Processing functions}
+During flow analysis Tranalyzer2 generates several {\em events} based on the status of the program, the inspected OSI layer of the current packet or the status of the current flow. These events consist of specific function calls provided by the plugins. The implementation of the event functions is dependent on the required action of a plugin to be carried out upon a certain event.
+
+\subsubsection{Event: initialize()}
+\begin{longtable}{ccc}
+    \toprule
+    {\bf Event / function name} & {\bf Return type} & {\bf Parameters} \\
+    \midrule\endhead%
+    initialize & void & --- \\
+    \bottomrule
+\end{longtable}
+The {\tt initialize} event is generated before the program activates the packet capturing phase. After Tranalyzer2 has initialized its internal structures it grants the same phase to the plugins. Therefore temporary values should be allocated during that event by using a C {\tt malloc}.
+
+\subsubsection{Event: printHeader()}
+\begin{longtable}{ccc}
+    \toprule
+    {\bf Event / function name} & {\bf Return type} & {\bf Parameters} \\
+    \midrule\endhead%
+    printHeader & binary\_value\_t* & --- \\
+    \bottomrule
+\end{longtable}
+This event is also generated during the initialization phase. With this event the plugin providing data to the standard output file signals the core what type of output they want to write (see \ref{section:output}). The function returns a pointer to the generated {\tt binary\_value\_t} structure or to the start pointer of a list of generated {\tt binary\_value\_t} structures.
+
+\subsubsection{Event: onFlowGenerated()}
+\begin{longtable}{ccc}
+    \toprule
+    {\bf Event / function name} & {\bf Return type} & {\bf Parameters} \\
+    \midrule\endhead%
+    onFlowGenerated & void & packet\_t *packet, unsigned long flowIndex \\
+    \bottomrule
+\end{longtable}
+This event is generated every time Tranalyzer2 recognizes a new flow not present in the flow table. The first parameter is the currently processed packet, the second denotes the new generated flow index. As long as the flow is not terminated the flow index is valid. After flow termination the flow number is reintegrated into a list for later reuse.
+
+\subsubsection{Event: claimLayer2Information()}
+\begin{longtable}{ccc}
+    \toprule
+    {\bf Event / function name} & {\bf Return type} & {\bf Parameters} \\
+    \midrule\endhead%
+    claimLayer2Information & void & packet\_t *packet \\
+    \bottomrule
+\end{longtable}
+This event is generated for every new packet comprising of a valid and supported layer two header, e.g. Ethernet as default. This is the first event generated after libpcap dispatches a packet and before a lookup in the flow table happened. At this very point in time no tests are conducted for higher layer headers. If a plugin tries to access higher layer structures it has to test itself if they are present or not. Otherwise, at non-presence of higher layers an unchecked access can result in a {\tt NULL} pointer access and therefore in a possible segmentation fault! We recommend using the subsequent two events to access higher layers.
+
+%\subsubsection{Event: claimLayer3Information()}
+%\begin{longtable}{ccc}
+%    \toprule
+%    {\bf Event / function name} & {\bf Return type} & {\bf Parameters} \\
+%    \midrule\endhead%
+%    claimLayer3Information & void & packet\_t *packet \\
+%    \bottomrule
+%\end{longtable}
+%This event is generated for every new packet comprising of a valid and supported layer three header. The currently supported layer three headers are IP and IP encapsulated in a variable number of VLAN headers. The event is generated after the {\tt claimLayer2Information} event and before a lookup in the flow table is performed. Again, no tests are conducted for higher layer headers. If a plugin tries to access higher layer structures it has to test their existence. If not present an unchecked access can result in a {\tt NULL} pointer access and therefore in a possible segmentation fault! We recommend using the subsequent event to access higher layers.
+
+\subsubsection{Event: claimLayer4Information()}
+\begin{longtable}{ccc}
+    \toprule
+    {\bf Event / function name} & {\bf Return type} & {\bf Parameters} \\
+    \midrule\endhead%
+    claimLayer4Information & void & packet\_t *packet, unsigned long flowIndex \\
+    \bottomrule
+\end{longtable}
+This event is generated for every new packet containing a valid and supported layer four header. The current supported layer four headers are TCP, UDP and ICMP. This event is called after Tranalyzer2 performs a lookup in its flow table and eventually generates an {\tt onFlowGenerated} event. Implementation of other protocols such as IPsec or OSPF are planned.
+
+\subsubsection{Event: onFlowTerminate()}\label{event:onFlowTerminate}
+\begin{longtable}{ccc}
+    \toprule
+    {\bf Event / function name} & {\bf Return type} & {\bf Parameters} \\
+    \midrule\endhead%
+    onFlowTerminate & void & unsigned long flowIndex \\
+    \bottomrule
+\end{longtable}
+This event is generated every time Tranalyzer2 removes a flow from its active status either due to timeout or protocol normal or abnormal termination. Only during this event, the plugins write output to the standard output.
+
+\subsubsection{Event: onApplicationTerminate()}
+\begin{longtable}{ccc}
+    \toprule
+    {\bf Event / function name} & {\bf Return type} & {\bf Parameters} \\
+    \midrule\endhead%
+    onFlowTerminate & void & --- \\
+    \bottomrule
+\end{longtable}
+This event is generated shortly before the program is terminated. At this time no more packets or flows are processed. This event enables the plugins to do memory housekeeping, stream buffer flushing or printing of final statistics.
+
+\subsubsection{Event: bufferToSink()}
+\begin{longtable}{ccc}
+    \toprule
+    {\bf Event / function name} & {\bf Return type} & {\bf Parameters} \\
+    \midrule\endhead%
+    bufferToSink & void & outputBuffer* buffer \\
+    \bottomrule
+\end{longtable}
+The Tranalyzer core generates this event immediately after the {\tt onFlowTerminate} event with the main output buffer as parameter. A plugin listening to this event is able to write this buffer to a data sink. For example the \tranrefpl{binSink} plugin pushes the output into the {\tt PREFIX\_flows.bin} file.
+
+\begin{figure}[ht]
+    \centering
+    \tranimg[width=0.8\textwidth]{custom_plugin/packet_processing.png}
+    \caption{Tranalyzer packet processing and event generation.}
+\end{figure}
+
+\subsection{Timeout handlers}
+A flow is terminated after a certain timeout being defined by so called {\em timeout handlers}. The default timeout value for a flow is 182 seconds. The plugins are able to access and change this value. For example, the \tranrefpl{tcpStates} plugin changes the value according to different connection states of a TCP flow.
+
+\subsubsection{Registering a new timeout handler}
+To register a new timeout handler, a plugin has to call the {\tt timeout\_handler\_add(float timeout\_in\_sec)} function. The argument is the new timeout value in seconds. Now the plugin is authorized by the core to change the timeout of a flow to the registered timeout value. Without registering a timeout handler the test is unreliable.
+
+\subsubsection{Programming convention and hints}
+\begin{itemize}
+    \item A call of {\tt timeout\_handler\_add} should only happen during the initialization function of the plugin.
+    \item Registering the same timeout value twice is no factor.
+    \item Registering timeout values in fractions of seconds is possible, see \tranrefpl{tcpStates} plugin.
+\end{itemize}
+
+\end{document}

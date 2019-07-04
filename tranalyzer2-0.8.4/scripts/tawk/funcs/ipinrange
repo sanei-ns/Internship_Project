@@ -1,0 +1,23 @@
+#!/usr/bin/env awk
+#
+# Tests whether an IP address lies between low and high (included)
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk 'ipinrange($srcIP4, "192.168.1.0", "192.168.1.255")' file.txt
+
+@include "hdr"
+@include "ip2num"
+
+function ipinrange(ip, low, high,        _ipnum, _h6, _i6) {
+    if (hdr()) return __PRIHDR__
+
+    _i6 = isip6(ip)
+    _h6 = isip6(high)
+    if ((_i6 && !_h6) || (!_i6 && _h6)) return 0
+
+    _ipnum = ip2num(ip)
+    return _ipnum >= ip2num(low) && _ipnum <= ip2num(high)
+}

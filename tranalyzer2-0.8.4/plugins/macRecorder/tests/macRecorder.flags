@@ -1,0 +1,13 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/macRecorder
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/macRecorder.h
+MR_MAC_FMT  src/macRecorder.h
+MR_NPAIRS   src/macRecorder.h
+MR_MANUF    src/macRecorder.h

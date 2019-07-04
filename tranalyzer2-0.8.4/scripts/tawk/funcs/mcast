@@ -1,0 +1,26 @@
+#!/usr/bin/env awk
+#
+# Returns true if 'ip' is a multicast address
+#   IPv4: 224.0.0.0/4
+#   IPv6: ff00::/8
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk 'mcast($dstIP4)' file.txt
+#   - tawk '!mcast($dstIP4) { print }' file.txt
+
+@include "hdr"
+@include "ip6compress"
+@include "ipinnet"
+@include "isip"
+
+function mcast(ip) {
+    if (hdr()) return __PRIHDR__
+    if (isip(ip)) {
+        return ipinnet(ip, "224.0.0.0/4")
+    } else {
+        return ip6compress(ip) ~ /^ff[0-9a-f]{2}::/ # ff00::/8
+    }
+}

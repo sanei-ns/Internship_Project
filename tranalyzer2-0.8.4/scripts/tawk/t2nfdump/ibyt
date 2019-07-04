@@ -1,0 +1,18 @@
+#!/usr/bin/env awk
+#
+# Input Bytes
+#
+# Dependencies:
+#   - basicStats
+#
+# Example:
+#   - tawk '{ print ibyt() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function ibyt(        _c) {
+    _c = _validate_col("numBytesRcvd", _my_numBytesRcvd)
+    if (hdr()) return "In Byte"
+    return $_c
+}

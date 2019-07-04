@@ -1,0 +1,13 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/smtpDecode
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/smtpDecode.h
+SMTP_SAVE	src/smtpDecode.h
+SMTP_BTFLD	src/smtpDecode.h
+SMTP_RCTXT	src/smtpDecode.h

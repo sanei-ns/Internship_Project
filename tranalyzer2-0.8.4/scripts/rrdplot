@@ -1,0 +1,400 @@
+#!/usr/bin/env bash
+#
+# Plots one or two field(s) out of a rrd database.
+# Use with -h to list the available fields.
+
+source "$(dirname "$0")/t2utils.sh"
+
+check_dependency rrdtool
+
+usage() {
+    printf "Usage:\n"
+    printf "    $SNAME [OPTION...] [FIELD1] [FIELD2]\n\n"
+    printf "Options:\n"
+    printf "    -d name    name of the database to use [default: monitoring.rrd]\n"
+    printf "    -p name    name of the PNG to generate [default: field1[_field2].png]\n"
+    printf "    -r wxh     size of the generated PNG (width x height) [default: 640x480]\n"
+    printf "\n"
+    printf "    -s start   start time of the plot [default: end-10m]\n"
+    printf "               (use special value 'first' to plot from the first record)\n"
+    printf "    -e end     end time of the plot [default: last]\n"
+    printf "               (use special value 'last' to plot until the last record)\n"
+    printf "    -i int     interval to plot [default: 10m (last 10min)]\n"
+    printf "               ([s]econds, [m]inutes, [h]ours, [d]ays, [w]eeks, [mo]nth, [y]ear)\n"
+    printf "    -a         plot the whole database\n"
+    printf "\n"
+    printf "    -U int     update the plot every 'int' seconds [default: 1]\n"
+    printf "    -n         generate a fixed plot for the given interval and exit\n"
+    printf "    -R         real-time: plot regular intervals (see -U option)\n"
+    printf "               [default: plot to the last update]\n"
+    printf "\n"
+    printf "    -f         display Holt-Winters confidence bands\n"
+    printf "    -t win     display the 'win' hour trend\n"
+    printf "\n"
+    printf "    -x         use logarithmic axis\n"
+    printf "    -u max     crop values to 'max'\n"
+    printf "    -l min     crop values to 'min'\n"
+    printf "\n"
+    printf "    -b         do not display the anteater banner\n"
+    printf "\n"
+    printf "    -L         List the fields available in the database and exit\n"
+    printf "    -I         display info about the database and exit\n"
+    printf "\n"
+    printf "    -h         display this help and exit\n"
+
+    if [ ! -z "$FIELDS" ]; then
+        printf "\n    FIELD1 and FIELD2 can be one of the following:\n"
+        print_fields
+    fi
+}
+
+print_fields() {
+    local cnt=0
+    for i in ${FIELDS[@]}; do
+        printf "        %-15s" $i
+        if [ $cnt -eq 2 ]; then
+            cnt=0
+            echo
+        else
+            cnt=$((cnt+1))
+        fi
+    done
+    echo
+}
+
+while getopts ":h?ILU:Rd:p:r:e:s:i:naft:xu:l:b" OPT; do
+    case $OPT in
+        d) DB="$OPTARG";;
+        p) PNG="$OPTARG";;
+        r)
+           WIDTH="$(cut -dx -f1 <<< "$OPTARG")"
+           HEIGHT="$(cut -dx -f2 <<< "$OPTARG")"
+           ;;
+        s)
+            # Discard micro-seconds
+            FSTART="$($AWK -F. '{ print $1 }' <<< "$OPTARG")"
+            ;;
+        e)
+            # Discard micro-seconds
+            FEND="$($AWK -F. '{ print $1 }' <<< "$OPTARG")"
+            ;;
+        i) INTERVAL="$OPTARG";;
+        U) UPDATE_FREQ="$OPTARG";;
+        n) NOUPDATE=1;;
+        R) REALTIME=1;;
+        a) ALL=1;;
+        f) HW=1;;
+        t) WIN=$(($OPTARG*60*60));;
+        x) LOG="--logarithmic";;
+        u) LIMITS="$LIMITS -u $OPTARG";;
+        l) LIMITS="$LIMITS -l $OPTARG";;
+        b) NOBANNER=1;;
+        I) INFO=1;;
+        L) LIST_FIELDS=1;;
+        h|?) HELP=1;;
+        :) abort_missing_arg "$OPTARG";;
+    esac
+done
+shift $((OPTIND-1))
+
+if hash feh 2> /dev/null; then
+    IMAGE_VIEWER="$(which feh) --auto-zoom"
+    [ -z "$NOUPDATE" ] && IMAGE_VIEWER="$IMAGE_VIEWER -R 1"
+else
+    IMAGE_VIEWER="$(which eog)"
+fi
+
+if [ -z "$IMAGE_VIEWER" ]; then
+    printerr "No valid image viewer found."
+    printinf "Install 'feh' or 'eog'."
+    exit 1
+fi
+
+if [ -z "$DB" ]; then
+    DB="monitoring.rrd" # name of the rrd database to use
+fi
+
+if [ -f "$DB" ]; then
+    FIELDS=($(rrdtool info "$DB" | grep "ds\[" | cut -d[ -f2 | cut -d] -f1 | uniq))
+fi
+
+if [ $HELP ]; then
+    usage
+    exit 0
+fi
+
+if [ ! -f "$DB" ]; then
+    printerr "$DB is not a regular file"
+    abort_with_help
+elif [ -z "$FIELDS" ]; then
+    printerr "$DB is not a valid RRD file"
+    abort_with_help
+fi
+
+FIRST="$(rrdtool first "$DB")"
+LAST="$(rrdtool last "$DB")"
+
+if [ $LIST_FIELDS ]; then
+    print_fields
+    exit 0
+elif [ $INFO ]; then
+    printf "Database: $DB\n"
+    printf "First record: $FIRST\n"
+    printf "Last record: $LAST\n"
+    printf "Duration: $(($LAST-$FIRST))\n"
+    printf "Fields: ${#FIELDS[@]}\n"
+    print_fields
+    exit 0
+fi
+
+# which field to plot
+if [ "$1" ]; then
+    FIELD1="$1"
+else
+    FIELD1="numFlows"
+fi
+FIELD2="$2"
+
+# make sure the field(s) exists
+if [ -z "$($AWK "/\<$FIELD1\>/" <<< "${FIELDS[@]}")" ]; then
+    printerr "Field '$FIELD1' does not exist"
+    abort_with_help
+fi
+
+if [ "$FIELD2" ] && [ -z "$($AWK "/\<$FIELD2\>/" <<< "${FIELDS[@]}")" ]; then
+    printerr "Field '$FIELD2' does not exist"
+    abort_with_help
+fi
+
+# name of the output
+if [ -z "$PNG" ]; then
+    if [ -z "$FIELD2" ]; then
+        PNG="${FIELD1}.png"
+    else
+        PNG="${FIELD1}_${FIELD2}.png"
+    fi
+fi
+
+# resolution of the png
+if [ -z "$WIDTH" ] || [ -z "$HEIGHT" ]; then
+    WIDTH=640
+    HEIGHT=480
+fi
+
+if [ -z "$UPDATE_FREQ" ]; then
+    UPDATE_FREQ=1 # update the graph every second
+fi
+
+# Time interval to plot
+if [ -z "$INTERVAL" ]; then
+    INTERVAL="10min"
+fi
+
+if [ "$LIMITS" ]; then
+    LIMITS="$LIMITS --rigid"
+fi
+
+init_colors() {
+    # Standard colors (0: light, 1: dark)
+    RED0="#EA644A"
+    RED1="#CC3118"
+    ORANGE0="#EC9D48"
+    ORANGE1="#CC7016"
+    YELLOW0="#ECD748"
+    YELLOW1="#C9B215"
+    GREEN0="#54EC48"
+    GREEN1="#24BC14"
+    BLUE0="#48C4EC"
+    BLUE1="#1598C3"
+    PINK0="#DE48EC"
+    PINK1="#B415C7"
+    PURPLE0="#7648EC"
+    PURPLE1="#4D18E4"
+    BLACK="#000000"
+}
+
+setup_holt_winters() {
+    if [ $HW ]; then
+        HOLT="DEF:pred=$DB:$FIELD1:HWPREDICT \
+              DEF:dev=$DB:$FIELD1:DEVPREDICT \
+              DEF:fail=$DB:$FIELD1:FAILURES \
+              TICK:fail$YELLOW0:1.0 \
+              AREA:obs$BLUE0 \
+              CDEF:upper=pred,dev,2,*,+ \
+              LINE1:upper$BLACK:\"Holt-Winters Upper Bound\l\""
+
+            if [ ! -z "$FIELD2" ]; then
+                HOLT="$HOLT \
+                    DEF:pred2=$DB:$FIELD2:HWPREDICT \
+                    DEF:dev2=$DB:$FIELD2:DEVPREDICT \
+                    DEF:fail2=$DB:$FIELD2:FAILURES \
+                    CDEF:nfail2=fail2,-1,* \
+                    TICK:nfail2$YELLOW0:1.0 \
+                    AREA:nobs2$RED0 \
+                    CDEF:upper2=pred2,dev2,2,*,+ \
+                    CDEF:nupper2=upper2,-1,* \
+                    LINE1:nupper2$BLACK"
+            fi
+    fi
+}
+
+setup_trend() {
+    if [ $WIN ]; then
+        TREND="CDEF:trend=obs,$WIN,TREND \
+               LINE2:trend$RED1:\"Trend\""
+
+        if [ "$FIELD2" ]; then
+            TREND="$TREND \
+                CDEF:trend2=nobs2,$WIN,TREND \
+                LINE2:trend2$RED1:\"Trend\""
+        fi
+    fi
+}
+
+setup_comments() {
+    if [ "$FIELD2" ]; then
+        COMMENT="COMMENT:\"\\u\""
+    fi
+    if [ $HW ]; then
+        COMMENT="$COMMENT COMMENT:\"\\u\""
+    fi
+    if [ "$WIN" ]; then
+        COMMENT="$COMMENT COMMENT:\"\\u\""
+    fi
+    COMMENT="$COMMENT COMMENT:\"\r\""
+    if [ -z "$NOBANNER" ]; then
+        COMMENT="$COMMENT \
+            COMMENT:\"         @      @         \r\" \
+            COMMENT:\"          |    |          \r\" \
+            COMMENT:\"====vVv==(a    a)==vVv====\r\" \
+            COMMENT:\"==========\    /==========\r\" \
+            COMMENT:\"===========\  /===========\r\" \
+            COMMENT:\"            oo            \r\" \
+            COMMENT:\"\r\" \
+            COMMENT:\"No ants were (h)armed in the making of this chart\r\""
+    else
+        COMMENT="$COMMENT COMMENT:\"\r\""
+    fi
+}
+
+setup_field1() {
+    FIELD1_S="--font DEFAULT:9: \
+              --font TITLE:14: \
+              --title "$FIELD1" \
+              --vertical-label \"# $FIELD1\" \
+              -D -w $WIDTH -h $HEIGHT -a PNG \
+              $LIMITS $LOG \
+              DEF:obs=$DB:$FIELD1:AVERAGE \
+              AREA:obs$BLUE0:\"$FIELD1\" \
+              GPRINT:obs:LAST:\"Last\:%6.0lf%s\" \
+              GPRINT:obs:AVERAGE:\"Avg\:%6.2lf%s\" \
+              GPRINT:obs:MIN:\"Min\:%6.0lf%s\" \
+              GPRINT:obs:MAX:\"Max\:%6.0lf%s\l\""
+}
+
+setup_field2() {
+    if [ "$FIELD2" ]; then
+        FIELD2_S="--title "$FIELD1/$FIELD2" \
+                  --vertical-label \"# $FIELD2/$FIELD1\" \
+                  DEF:obs2=$DB:$FIELD2:AVERAGE \
+                  CDEF:nobs2=obs2,-1,* \
+                  AREA:nobs2$RED0:\"$FIELD2\" \
+                  GPRINT:obs2:LAST:\"Last\:%6.0lf%s\" \
+                  GPRINT:obs2:AVERAGE:\"Avg\:%6.2lf%s\" \
+                  GPRINT:obs2:MIN:\"Min\:%6.0lf%s\" \
+                  GPRINT:obs2:MAX:\"Max\:%6.0lf%s\l\""
+    fi
+}
+
+init_colors
+setup_holt_winters
+setup_trend
+setup_field1
+setup_field2
+setup_comments
+
+# Convert the interval in seconds
+INTERVAL="$($AWK '{
+    l = split($0, t, /[^0-9]+/, seps)
+    v = 0
+    for (i = 1; i <= l; i++) {
+        ti = t[i]
+        switch (tolower(seps[i])) {
+            case /^s/:                                    ; break # seconds
+            case /^m(i|$)/:  ti = ti * 60                 ; break # minutes
+            case /^h/:       ti = ti * 60 * 60            ; break # hours
+            case /^d/:       ti = ti * 24 * 60 * 60       ; break # days
+            case /^w/:       ti = ti * 7 * 24 * 60 * 60   ; break # weeks
+            case /^mo/:      ti = ti * 31 * 24 * 60 * 60  ; break # months
+            case /^y/:       ti = ti * 365 * 24 * 60 * 60 ; break # years
+            default:
+                # unknown time specification
+                break
+        }
+        v += ti
+    }
+    print v
+}' <<< "$INTERVAL")"
+
+if [ "$FSTART" = "first" ]; then
+    FSTART="$FIRST"
+fi
+
+if [ "$FEND" = "last" ]; then
+    FEND="$LAST"
+fi
+
+if [ -n "$ALL" ]; then
+    START="$FIRST"
+    END="$LAST"
+elif [ -n "$FSTART" ] && [ -n "$FEND" ]; then
+    START="$FSTART"
+    END="$FEND"
+    INTERVAL="$(bc -l <<< "$FEND - $FSTART")"
+elif [ -n "$FEND" ]; then
+    END="$FEND"
+    START="$FEND-$INTERVAL"
+elif [ -n "$FSTART" ]; then
+    START="$FSTART"
+    END="$(bc -l <<< "$FSTART + $INTERVAL")"
+else
+    END="$LAST"
+    START="$END-$INTERVAL"
+fi
+
+while [ 1 ]; do
+
+    CMD="rrdtool graph $PNG --start $START"
+    [ "$END" != "end" ] && CMD="$CMD --end $END"
+    CMD="$CMD $FIELD1_S $FIELD2_S $HOLT $TREND $COMMENT"
+
+    # Create the plot
+    sh -c "$CMD" &> /dev/null
+
+    if [ -z "$IMAGE_VIEWER_STARTED" ]; then
+        $IMAGE_VIEWER "$PNG" 2> /dev/null &
+        IMAGE_VIEWER_STARTED=1
+    fi
+
+    if [ "$NOUPDATE" ]; then
+        exit 0
+    fi
+
+    sleep "$UPDATE_FREQ"
+
+    # Update START/END time
+    END="$(bc -l <<< "$END + $UPDATE_FREQ")"
+    if [ -z "$REALTIME" ]; then
+        END="$($AWK -v last_update="$(rrdtool last "$DB")" \
+                '{ print (last_update > $1) ? last_update : $1 }' <<< "$END")"
+    fi
+    if [ -z "$ALL" ]; then
+        START="$(bc -l <<< "$END - $INTERVAL")"
+    fi
+
+    if [ "$(pgrep -P $$ | wc -l)" -eq 1 ]; then
+        # Image viewer process was terminated, exit
+        exit 1
+    fi
+
+done

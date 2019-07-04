@@ -1,0 +1,73 @@
+#!/usr/bin/env awk
+#
+# If val is provided, returns true if the specified flags are set.
+# The flags can be specified in any order. An exclamation mark (!)
+# can be used to search for the absence of a flag, e.g., tcpflags("S!FR") can
+# be used to search for flows with the SYN flag set, but without the FIN or RST
+# flags.
+#
+# If val is omitted, returns a string representation of the TCP flags.
+#
+# The order of the flags and the abbreviations are as follows:
+#
+#   F: FIN
+#   S: SYN
+#   R: RST
+#   P: PSH
+#   A: ACK
+#   U: URG
+#   E: ECE
+#   W: CWR
+#
+# A dot ('.') is used to represent a flag which was not set
+#
+# Dependencies:
+#   - tcpFlags
+#
+# Examples:
+#   - tawk 'tcpflags("SAPF") { print tcpflags() }' file.txt
+#   - tawk 'tcpflags("S!AFRPU")' file.txt # SYN only
+#   - tawk '{ print tcpflags() }' file.txt
+#   - tawk '{ $tcpFlags = tcpflags(); print }' file.txt
+
+@include "hdr"
+@include "_validate_col"
+
+function tcpflags(val,        _c, _f, _n, _s, _vval) {
+    _c = _validate_col("tcpFlags")
+    if (__PRIHDR__ && hdr()) return $_c
+    _f = strtonum($_c)
+    if (!val) {
+        _s = (and(_f, 0x01) ? "F" : ".") _s # FIN
+        _s = (and(_f, 0x02) ? "S" : ".") _s # SYN
+        _s = (and(_f, 0x04) ? "R" : ".") _s # RST
+        _s = (and(_f, 0x08) ? "P" : ".") _s # PSH
+        _s = (and(_f, 0x10) ? "A" : ".") _s # ACK
+        _s = (and(_f, 0x20) ? "U" : ".") _s # URG
+        _s = (and(_f, 0x40) ? "E" : ".") _s # ECE
+        _s = (and(_f, 0x80) ? "W" : ".") _s # CWR
+        return _s
+    } else {
+        _n = split(val, _vval, "!")
+        if (index(_vval[1], "F")) _s = or(_s, 0x01) # FIN
+        if (index(_vval[1], "S")) _s = or(_s, 0x02) # SYN
+        if (index(_vval[1], "R")) _s = or(_s, 0x04) # RST
+        if (index(_vval[1], "P")) _s = or(_s, 0x08) # PSH
+        if (index(_vval[1], "A")) _s = or(_s, 0x10) # ACK
+        if (index(_vval[1], "U")) _s = or(_s, 0x20) # URG
+        if (index(_vval[1], "E")) _s = or(_s, 0x40) # ECE
+        if (index(_vval[1], "W")) _s = or(_s, 0x80) # CWR
+        if (and(_f, _s) != _s) return 0
+        if (_n == 2) {
+            if (index(_vval[2], "F") && and(_f, 0x01)) return 0 # FIN
+            if (index(_vval[2], "S") && and(_f, 0x02)) return 0 # SYN
+            if (index(_vval[2], "R") && and(_f, 0x04)) return 0 # RST
+            if (index(_vval[2], "P") && and(_f, 0x08)) return 0 # PSH
+            if (index(_vval[2], "A") && and(_f, 0x10)) return 0 # ACK
+            if (index(_vval[2], "U") && and(_f, 0x20)) return 0 # URG
+            if (index(_vval[2], "E") && and(_f, 0x40)) return 0 # ECE
+            if (index(_vval[2], "W") && and(_f, 0x80)) return 0 # CWR
+        }
+        return 1
+    }
+}

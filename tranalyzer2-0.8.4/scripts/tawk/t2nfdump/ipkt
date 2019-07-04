@@ -1,0 +1,18 @@
+#!/usr/bin/env awk
+#
+# Input Packets
+#
+# Dependencies:
+#   - basicStats
+#
+# Example:
+#   - tawk '{ print ipkt() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function ipkt(        _c) {
+    _c = _validate_col("numPktsRcvd", _my_numPktsRcvd)
+    if (hdr()) return "In Pkt"
+    return $_c
+}

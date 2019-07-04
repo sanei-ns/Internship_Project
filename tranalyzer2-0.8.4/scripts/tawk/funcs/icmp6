@@ -1,0 +1,27 @@
+#!/usr/bin/env awk
+#
+# Returns true if the protocol number is equal to 58 (ICMPv6)
+#
+# Parameters:
+#   - [p] : the protocol to test [default: $l4Proto]
+#
+# Dependencies:
+#   - basicFlow
+#
+# See Also:
+#   - proto
+#
+# Examples:
+#   - tawk 'icmp6()' file.txt
+#   - tawk 'icmp6() { print $srcIP6 }' file.txt
+#   - tawk 'icmp6($l4Proto)' file.txt
+#   - tawk 'icmp6($l4Proto) { print $srcIP6 }' file.txt
+
+@include "hdr"
+@include "proto"
+
+function icmp6(p) {
+    if (hdr()) return __PRIHDR__
+    if (p) return p == 58
+    else return proto(58)
+}

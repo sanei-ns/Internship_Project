@@ -1,0 +1,43 @@
+#!/usr/bin/env awk
+#
+# Returns true if the source or destination port is equal to 'p' (int or hex)
+# If 'p' is omitted, returns the source and destination port
+#
+# Parameters:
+#   - [p] : the port number(s) to test
+#
+# Dependencies:
+#   - basicFlow
+#
+# See Also:
+#   - dport: destination port
+#   - sport: source port
+#
+# Examples:
+#   - tawk 'port(80)' file.txt           # test for port 80
+#   - tawk 'port("53;80")' file.txt      # test for port 53 or 80
+#   - tawk 'port("6000-6008")' file.txt  # test for port 6000, 6001, ... or 6008
+#   - tawk '{ print port() }' file.txt
+
+@include "hdr"
+@include "_validate_col"
+
+function port(p,        _i, _l, _portnum, _ports, _low, _high, _sp, _dp) {
+    _sp = _validate_col("srcPort", _my_srcPort)
+    _dp = _validate_col("dstPort", _my_dstPort)
+    if (!p || (__PRIHDR__ && hdr())) return $_sp OFS $_dp
+    _sp = strtonum($_sp)
+    _dp = strtonum($_dp)
+    if (match(p, /^(0x[[:xdigit:]]+|[0-9]+)-(0x[[:xdigit:]]+|[0-9]+)$/, _ports)) { # range
+        _low = strtonum(_ports[1])
+        _high = strtonum(_ports[2])
+        return ((_sp >= _low && _sp <= _high) || (_dp >= _low && _dp <= _high))
+    } else if (p ~ /^(0x[[:xdigit:]]+|[0-9]+)(;(0x[[:xdigit:]]+|[0-9]+))*$/) {
+        _l = split(p, _ports, /;/)
+        for (_i = 1; _i <= _l; _i++) {
+            _portnum = strtonum(_ports[_i])
+            if (_sp == _portnum || _dp == _portnum) return 1
+        }
+        return 0
+    }
+}

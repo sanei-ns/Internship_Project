@@ -1,0 +1,4 @@
+SELECT
+    EXTRACT(epoch FROM MIN("timeFirst"))
+FROM
+    flow

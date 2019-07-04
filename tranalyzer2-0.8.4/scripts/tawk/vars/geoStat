@@ -1,0 +1,3 @@
+#H bit | geoStat | Description
+#H =============================================================================
+#W   0 | 0x01    | A string had to be truncated... increase GEOIP_BUFSIZE

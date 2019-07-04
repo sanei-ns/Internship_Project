@@ -1,0 +1,24 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/geoip
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/geoip.h
+GEOIP_LEGACY             src/geoip.h
+GEOIP_SRC                src/geoip.h
+GEOIP_DST                src/geoip.h
+GEOIP_CONTINENT          src/geoip.h
+GEOIP_COUNTRY            src/geoip.h
+GEOIP_CITY               src/geoip.h
+GEOIP_POSTCODE           src/geoip.h
+GEOIP_POSITION           src/geoip.h
+GEOIP_METRO_CODE         src/geoip.h
+GEOIP_TIMEZONE           src/geoip.h
+GEOIP_REGION             src/geoip.h
+GEOIP_AREA_CODE          src/geoip.h
+GEOIP_NETMASK            src/geoip.h
+GEOIP_DB_CACHE           src/geoip.h

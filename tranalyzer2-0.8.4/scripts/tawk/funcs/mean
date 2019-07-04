@@ -1,0 +1,53 @@
+#!/usr/bin/env awk
+#
+# Computes the mean value of a column c.
+# The result can be accessed with get_mean(c) or printed with print_mean([c])
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{
+#         mean(numPktsSnt)
+#     } END {
+#         print_mean(numPktsSnt)
+#     }' file.txt
+#   - tawk '{
+#         mean(numPktsSnt)
+#     } END {
+#         print $0, get_mean(numPktsSnt)
+#     }' file.txt
+#   - tawk '{
+#         mean(numPktsSnt)
+#         mean(numPktsRcvd)
+#     } END {
+#         print_mean()
+#     }' file.txt
+
+@include "COL"
+@include "hdr"
+
+function mean(c) {
+    if (hdr()) next
+
+    if (__NUM_SAMPLES__[COL[c]] == 0) {
+        __MEAN__[COL[c]] = $c
+    } else {
+        __MEAN__[COL[c]] += ($c - __MEAN__[COL[c]]) / (__NUM_SAMPLES__[COL[c]]+1)
+    }
+    __NUM_SAMPLES__[COL[c]]++
+}
+
+function get_mean(c) {
+    return __MEAN__[COL[c]]
+}
+
+function print_mean(c,        _i) {
+    if (!c) {
+        for (_i in __MEAN__) {
+            print _i ": " __MEAN__[_i]
+        }
+    } else {
+        print get_mean(c)
+    }
+}

@@ -1,0 +1,12 @@
+#H bit | tcpFStat | Description
+#H =============================================================================
+     0 | 0x0001   | Packet no good for interdistance assessment
+#W   1 | 0x0002   | Scan detected in flow
+#W   2 | 0x0004   | Successful scan detected in flow
+     3 | 0x0008   | Timestamp option decreasing
+     4 | 0x0010   | TCP option init
+     5 | 0x0020   | ACK packet loss state machine init
+     6 | 0x0040   | Window state machine initialized
+     7 | 0x0080   | Window state machine count up/down
+     9 | 0x0100   | L4 checksum calculation if present
+#E  10 | 0x0200   | UDP-Lite checksum coverage error

@@ -1,0 +1,154 @@
+#!/usr/bin/env awk
+#
+# Returns the string representation of the protocol number 'p'
+#
+# Parameters:
+#   - p: the protocol number to convert
+#
+# Examples:
+#   - tawk '{ $l4Proto = proto2str($l4Proto); print }' file.txt
+#   - tawk '{ print proto2str(6) }' file.txt
+#   - tawk 'proto2str($l4Proto) == "TCP" { print }' file.txt
+
+function proto2str(p) {
+    switch (strtonum(p)) {
+        case   1: return "ICMP"  # Internet Control Message
+        case   2: return "IGMP"  # Internet Group Management
+        case   3: return "GGP"   # Gateway-to-Gateway
+        case   4: return "IPIP"  # IP in IP (encapsulation)
+        case   5: return "ST"    # Stream
+        case   6: return "TCP"   # Transmission Control
+        case   7: return "CBT"   # CBT
+        case   8: return "EGP"   # Exterior Gateway Protocol
+        case   9: return "IGP"   # any private interior gateway (used by Cisco for their IGRP)
+        case  10: return "BBN"   # BBN RCC Monitoring
+        case  11: return "NVPII" # Network Voice Protocol
+        case  12: return "PUP"   # PUP
+        case  13: return "ARGUS" # ARGUS
+        case  14: return "ENCOM" # EMCON
+        case  15: return "XNET"  # Cross Net Debugger
+        case  16: return "CHAOS" # Chaos
+        case  17: return "UDP"   # User Datagram
+        case  18: return "MUX"   # Multiplexing
+        case  19: return "DCN"   # DCN Measurement Subsystems
+        case  20: return "HMP"   # Host Monitoring
+        case  21: return "PRM"   # Packet Radio Measurement
+        case  22: return "XNS"   # XEROX NS IDP
+        case  23: return "Trnk1" # Trunk-1
+        case  24: return "Trnk2" # Trunk-2
+        case  25: return "Leaf1" # Leaf-1
+        case  26: return "Leaf2" # Leaf-2
+        case  27: return "RDP"   # Reliable Data Protocol
+        case  28: return "IRTP"  # Internet Reliable Transaction
+        case  29: return "ISO-4" # ISO Transport Protocol Class 4
+        case  30: return "NETBK" # Bulk Data Transfer Protocol
+        case  31: return "MFESP" # MFE Network Services Protocol
+        case  32: return "MEINP" # MERIT Internodal Protocol
+        case  33: return "DCCP"  # Datagram Congestion Control Protocol
+        case  34: return "3PC"   # Third Party Connect Protocol
+        case  35: return "IDPR"  # Inter-Domain Policy Routing Protocol
+        case  36: return "XTP"   # XTP
+        case  37: return "DDP"   # Datagram Delivery Protocol
+        case  38: return "IDPR"  # IDPR Control Message Transport Proto
+        case  39: return "TP++"  # TP++ Transport Protocol
+        case  40: return "IL"    # IL Transport Protocol
+        case  41: return "IPv6"  # IPv6
+        case  42: return "SDRP"  # Source Demand Routing Protocol
+        case  43: return "Rte6"  # Routing Header for IPv6
+        case  44: return "Frag6" # Fragment Header for IPv6
+        case  45: return "IDRP"  # Inter-Domain Routing Protocol
+        case  46: return "RSVP"  # Reservation Protocol
+        case  47: return "GRE"   # General Routing Encapsulation
+        case  48: return "MHRP"  # Mobile Host Routing Protocol
+        case  49: return "BNA"   # BNA
+        case  50: return "ESP"   # Encap Security Payload
+        case  51: return "AH"    # Authentication Header
+        case  52: return "INLSP" # Integrated Net Layer Security TUBA
+        case  53: return "SWIPE" # IP with Encryption
+        case  54: return "NARP"  # NBMA Address Resolution Protocol
+        case  55: return "MOBIL" # IP Mobility
+        case  56: return "TLSP"  # Transport Layer Security Protocol
+        case  57: return "SKIP"  # SKIP
+        case  58: return "ICMP6" # ICMP for IPv6
+        case  59: return "NOHE6" # No Next Header for IPv6
+        case  60: return "OPTS6" # Destination Options for IPv6
+        case  61: return "HOST"  # any host internal protocol
+        case  62: return "CFTP"  # CFTP
+        case  63: return "NET"   # any local network
+        case  64: return "SATNT" # SATNET and Backroom EXPAK
+        case  65: return "KLAN"  # Kryptolan
+        case  66: return "RVD"   # MIT Remote Virtual Disk Protocol
+        case  67: return "IPPC"  # Internet Pluribus Packet Core
+        case  68: return "FS"    # any distributed file system
+        case  69: return "SATM"  # SATNET Monitoring
+        case  70: return "VISA"  # VISA Protocol
+        case  71: return "IPCV"  # Internet Packet Core Utility
+        case  72: return "CPNX"  # Computer Protocol Network Executive
+        case  73: return "CPHB"  # Computer Protocol Heart Beat
+        case  74: return "WSN"   # Wang Span Network
+        case  75: return "PVP"   # Packet Video Protocol
+        case  76: return "BSATM" # Backroom SATNET Monitoring
+        case  77: return "SUNND" # SUN ND PROTOCOL-Temporary
+        case  78: return "WBMON" # WIDEBAND Monitoring
+        case  79: return "WBEXP" # WIDEBAND EXPAK
+        case  80: return "ISOIP" # ISO Internet Protocol
+        case  81: return "VMTP"  # VMTP
+        case  82: return "SVMTP" # SECURE-VMTP
+        case  83: return "VINES" # VINES
+        case  84: return "TTP"   # TTP
+        case  85: return "NSIGP" # NSFNET-IGP
+        case  86: return "DGP"   # Dissimilar Gateway Protocol
+        case  87: return "TCP"   # TCF
+        case  88: return "EIGRP" # EIGRP
+        case  89: return "OSPF"  # OSPFIGP
+        case  90: return "S-RPC" # Sprite RPC Protocol
+        case  91: return "LARP"  # Locus Address Resolution Protocol
+        case  92: return "MTP"   # Multicast Transport Protocol
+        case  93: return "AX.25" # AX.25 Frames
+        case  94: return "IPIP"  # IP-within-IP Encapsulation Protocol
+        case  95: return "MICP"  # Mobile Internetworking Control Protocol
+        case  96: return "SCCSP" # Semaphore Communications Sec. Protocol
+        case  97: return "ETHIP" # Ethernet-within-IP Encapsulation
+        case  98: return "ENCAP" # Encapsulation Header
+        case  99: return "99"    # any private encryption scheme
+        case 100: return "GMTP"  # GMTP
+        case 101: return "IFMP"  # Ipsilon Flow Management Protocol
+        case 102: return "PNNI"  # PNNI over IP
+        case 103: return "PIM"   # Protocol Independent Multicast
+        case 104: return "ARIS"  # ARIS
+        case 105: return "SCPS"  # SCPS
+        case 106: return "QNX"   # QNX
+        case 107: return "A/N"   # Active Networks
+        case 108: return "IPcmp" # IP Payload Compression Protocol
+        case 109: return "SNP"   # Sitara Networks Protocol
+        case 110: return "CpqPP" # Compaq Peer Protocol
+        case 111: return "IPXIP" # IPX in IP
+        case 112: return "VRRP"  # Virtual Router Redundancy Protocol
+        case 113: return "PGM"   # PGM Reliable Transport Protocol
+        case 114: return "0hop"  # any 0-hop protocol
+        case 115: return "L2TP"  # Layer Two Tunneling Protocol
+        case 116: return "DDX"   # D-II Data Exchange (DDX)
+        case 117: return "IATP"  # Interactive Agent Transfer Protocol
+        case 118: return "STP"   # Schedule Transfer Protocol
+        case 119: return "SRP"   # SpectraLink Radio Protocol
+        case 120: return "UTI"   # UTI
+        case 121: return "SMP"   # Simple Message Protocol
+        case 122: return "SM"    # SM
+        case 123: return "PTP"   # Performance Transparency Protocol
+        case 124: return "ISIS4" # ISIS over IPv4
+        case 125: return "FIRE"  # FIRE
+        case 126: return "CRTP"  # Combat Radio Transport Protocol
+        case 127: return "CRUDP" # Combat Radio User Datagram
+        case 128: return "128"   # SSCOPMCE
+        case 129: return "IPLT"  # IPLP
+        case 130: return "SPS"   # Secure Packet Shield
+        case 131: return "PIPE"  # Private IP Encapsulation within IP
+        case 132: return "SCTP"  # Stream Control Transmission Protocol
+        case 133: return "FC"    # Fibre Channel
+        #case 134: return "134"   # RSVP-E2E-IGNORE
+        case 135: return "MHEAD" # Mobility Header
+        case 136: return "UDP-L" # UDPLite
+        case 137: return "MPLS"  # MPLS-in-IP
+        default : return p
+    }
+}

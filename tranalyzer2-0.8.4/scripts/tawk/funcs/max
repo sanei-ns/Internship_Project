@@ -1,0 +1,49 @@
+#!/usr/bin/env awk
+#
+# Keep track of the max value of a column c.
+# The result can be accessed with get_max(c) or printed with print_max([c])
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{
+#         max(numPktsSnt)
+#     } END {
+#         print_max(numPktsSnt)
+#     }' file.txt
+#   - tawk '{
+#         max(numPktsSnt)
+#     } END {
+#         print get_max(numPktsSnt)
+#     }' file.txt
+#   - tawk '{
+#         max(numPktsSnt)
+#         max(numPktsRcvd)
+#     } END {
+#         print_max()
+#     }' file.txt
+
+@include "COL"
+@include "hdr"
+
+function max(c) {
+    if (hdr()) next
+    if (!(COL[c] in __MAX__) || $c > __MAX__[COL[c]]) {
+        __MAX__[COL[c]] = $c
+    }
+}
+
+function get_max(c) {
+    return __MAX__[COL[c]]
+}
+
+function print_max(c,        _i) {
+    if (!c) {
+        for (_i in __MAX__) {
+            print _i ": " __MAX__[_i]
+        }
+    } else {
+        print get_max(c)
+    }
+}

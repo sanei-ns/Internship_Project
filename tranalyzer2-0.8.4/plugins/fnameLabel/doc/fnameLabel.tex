@@ -1,0 +1,41 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {fnameLabel} % Plugin name
+    {Filename Labeller} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{fnameLabel}\label{s:fnameLabel}
+
+\subsection{Description}
+The fnameLabel plugin tags every flow with the name of the file or interface from which the flow originates.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt FNL\_IDX} & 1 & Use the {\tt `FNL\_IDX'} letter of the filename as label\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The fnameLabel plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt fnLabel} & U8  & {\tt FNL\_IDX} letter of the filename/interface\\
+    {\tt fnHash}  & U64 & Hash of the filename/interface\\
+    {\tt fname}   & S   & Filename\\
+    \bottomrule
+\end{longtable}
+
+\end{document}

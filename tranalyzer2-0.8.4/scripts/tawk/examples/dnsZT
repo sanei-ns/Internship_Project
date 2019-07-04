@@ -1,0 +1,36 @@
+#!/usr/bin/env awk
+#
+# Returns all flows where a DNS zone transfer was performed
+#
+# Dependencies:
+#   - dnsDecode
+#
+# Examples:
+#   - tawk 'dnsZT()' file.txt
+
+@include "bitsallset"
+@include "hdr"
+@include "unquote"
+@include "utc"
+@include "_validate_col"
+
+function dnsZT(        _sa, _da, _sip, _dip, _ts) {
+    _validate_col("dnsStat")
+    _ts  = _validate_col("timeFirst", _my_timeFirst)
+    _sip =_validate_col("srcIP4;srcIP6;srcIP", _my_srcIP)
+    _dip =_validate_col("dstIP4;dstIP6;dstIP", _my_dstIP)
+    _validate_col("dnsQname")
+    _validate_col("flowStat")
+    if (__PRIHDR__ && hdr()) {
+        print "Time", tuple2(), $dnsQname
+    } else if (bitsallset($dnsStat, 0x80)) {
+        if (bitsallset($flowStat, 0x1)) {
+            _sa = $_dip
+            _da = $_sip
+        } else {
+            _sa = $_sip
+            _da = $_dip
+        }
+        print utc($_ts), _sa, _da, unquote($dnsQname)
+    }
+}

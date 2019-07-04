@@ -1,0 +1,13 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/protoStats
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/protoStats.h
+ETH_STAT        src/protoStats.h
+UDPLITE_STAT    src/protoStats.h
+SCTP_STAT       src/protoStats.h

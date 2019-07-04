@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+#
+# Configuration file for jsonSink
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    SOCKET_ON radio "" "Output; 0: file; 1: socket"
+
+    SOCKET_ADDR text  "SOCKET_ON == 1" "Address of the socket"
+
+    SOCKET_PORT range "SOCKET_ON == 1" "Address of the socket: 0 65535"
+
+    GZ_COMPRESS check "" "Compress the output using gzip"
+
+    JSON_SPLIT check "SOCKET_ON == 0" "Split the output (Tranalyzer -W option)"
+
+    JSON_ROOT_NODE check "" "Add a root node (array)"
+
+    SUPPRESS_EMPTY_ARRAY check "" "Output empty fields"
+
+    JSON_NO_SPACES check "" "Suppress unnecessary spaces"
+
+    #JS_BUFFER_SIZE range "" "Maximum size of buffer: 0 65535"
+
+    JSON_SUFFIX text "SOCKET_ON == 0" "Suffix for output file"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

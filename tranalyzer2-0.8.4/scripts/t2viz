@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+
+source "$(dirname "$0")/t2utils.sh"
+
+usage() {
+    echo "Generates a graphviz script which can be loaded into xdot or dotty."
+    echo "Accepts T2 flow or packet files with header description."
+    echo
+    echo "Usage:"
+    echo "    $SNAME [OPTION...] <FILE>"
+    echo
+    echo "Optional arguments:"
+    echo "    -n            Do not plot the generated graph with xdot or dotty"
+    echo "    -w colName    Use 'colName' instead of numBytesSnt as links weight"
+    echo "    -e fields     Extra fields to display above the links, e.g., -e macS,macD"
+    echo
+    echo "    -h, --help    Show this help, then exit"
+}
+
+# Default values
+PLOT=1                # Plot the graph with xdot or dotty
+WEIGHT="numBytesSnt"  # Column to use as links weight
+
+while [ $# -ne 0 ]; do
+    case "$1" in
+        -n|--no-plot) PLOT=0;;
+        -w|--weight)
+            validate_next_arg "$1" "$2"
+            WEIGHT="$2"
+            shift
+            ;;
+        -e|--extra)
+            validate_next_arg "$1" "$2"
+            EXTRA="$2"
+            shift
+            ;;
+        -h|-\?|--help) usage; exit 0;;
+        *)
+            if [ ! -f "$1" ]; then
+                abort_option_unknown "$1"
+            fi
+            INFILE="$1"
+            ;;
+    esac
+    shift
+done
+
+if [ ! -f "$INFILE" ]; then
+    abort_required_file
+fi
+
+check_dependency "dot" "graphviz"
+
+PREFIX="$($AWK -F. 'NF > 1 { NF-- } { print }' <<< "$INFILE")"
+OUTFILE="${PREFIX}.dot"
+
+$TAWK -t -H -v extra="$EXTRA" -v weight="$WEIGHT" '
+    !checked {
+        _validate_col("srcIP")
+        _validate_col("dstIP")
+        _validate_col("srcPort")
+        _validate_col("dstPort")
+        _validate_col("flowStat")
+        _validate_col("srcIPCC")
+        _validate_col("tcpAnomaly")
+        _validate_col("numPktsSnt")
+        _validate_col("numBytesSnt")
+        _weight = _validate_col(weight)
+
+        if (length(extra) > 0) {
+            _nextra = split(extra, _fextra, ",")
+            for (i = 1; i <= _nextra; i++) {
+                _fextra[i] = _validate_col(_fextra[i])
+            }
+        }
+
+        print "digraph net {"
+        print "    graph [fontname = \"fixed\"]"
+        print "    node  [fontname = \"fixed\"]"
+        print "    edge  [fontname = \"fixed\"]"
+        print "    bgcolor = white"
+        print "    ranksep = 5"
+        print "    center  = 1"
+        print "    rankdir = LR"
+        print "    overlap = scale"
+        print "    ratio   = compress"
+
+        checked = 1
+    }
+
+    ip() {
+
+        width = $_weight
+        width = width ? log(width) : 1;
+
+        _dir = bitsanyset($flowStat, 1)
+
+        color = _dir ? "#ff0000" : "#00aacc"
+
+        # Label each links
+        label = _dir "_" $flowInd "_" proto() "_" $srcPort ":" $dstPort
+        for (i = 1; i <= _nextra; i++) {
+            label = label "_" $_fextra[i]
+        }
+
+        # Label each srcIP node
+        if (!ip_map[$srcIP]) {
+            print "\"" $srcIP "\" ["
+            print "    label=\"" $srcIP "\\n" unquote($srcIPWho) "\\n" $srcIPCC "\""
+            print "]"
+            ip_map[$srcIP] = 1
+        }
+
+        # Label each dstIP node
+        if (!ip_map[$dstIP]) {
+            print "\"" $dstIP "\" ["
+            print "    label=\"" $dstIP "\\n" unquote($dstIPWho) "\\n" $dstIPCC "\""
+            print "]"
+            ip_map[$dstIP] = 1
+        }
+
+        # Create the links between srcIP and dstIP
+        print "\"" $srcIP "\" -> \"" $dstIP "\" ["
+        print "    label     = \"" label "\""
+        print "    color     = \"" color "\""
+        print "    weight    = \"" width "\""
+        print "    fontcolor = \"" color "\""
+        print "    style     = \" setlinewidth(" width ")\""
+        print "]"
+    }
+
+    END {
+        if (!checked) exit(1)
+        print "}"
+    }
+' "$INFILE" > "$OUTFILE"
+
+if [ $? -ne 0 ]; then
+    # One of the columns could not be found
+    exit 1
+fi
+
+printok "Successfully generated '$OUTFILE'"
+
+# Save a PNG of the graph
+PNG="${PREFIX}.png"
+dot -Tpng "$OUTFILE" -o "$PNG"
+if [ $? -ne 0 ]; then
+    printerr "Failed to generate '$PNG'"
+    exit 1
+else
+    printok "Successfully generated '$PNG'"
+fi
+
+if [ $PLOT -eq 1 ]; then
+    if hash xdot 2> /dev/null; then
+        xdot "$OUTFILE"
+    elif hash dotty 2> /dev/null; then
+        dotty "$OUTFILE"
+    else
+        printerr "No viewer found for dot files."
+        printinf "Try installing xdot or dotty."
+        exit 1
+    fi
+fi

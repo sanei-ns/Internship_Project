@@ -1,0 +1,53 @@
+#!/usr/bin/env awk
+#
+# Expands an IPv6 address 'ip'
+# If 'trim' is omitted or equal to 0, returns the full IPv6
+# If 'trim' is different from 0, then removes leading zeros
+#
+# Parameters:
+#   - ip  : the IPv6 to expand
+#   - trim: whether or not to remove leading zeros
+#
+# Dependencies:
+#   - None
+
+# See Also:
+#   - ip6compress
+#
+# Examples:
+#   - tawk '{ print ip6expand($srcIP6) }' file.txt
+#   - tawk '{ print ip6expand($srcIP6, 1) }' file.txt
+
+function ip6expand(ip, trim,        _i, _n, _s, _grp, _ngrp, _expanded, _half) {
+    # If IPv6 contains an IPv4, convert it to hex and replace it in 'ip'
+    if (match(ip, /([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/, _grp)) {
+        _expanded = sprintf("%02x%02x:%02x%02x", _grp[1], _grp[2], _grp[3], _grp[4])
+        ip = gensub(/[0-9]{1,3}(\.[0-9]{1,3}){3}$/, _expanded, 1, ip)
+    }
+
+    if (!index(ip, "::")) {
+        # Address is not compressed
+        _expanded = ip
+    } else {
+        # Address is compressed
+        split(ip, _half, "::");
+        # Number of groups present
+        _ngrp = split(_half[1], _grp, ":") + split(_half[2], _grp, ":")
+        _expanded = _half[1]
+        if (_half[1]) _expanded = _expanded ":"
+        # replace missing groups with empty groups
+        for (_i = 1; _i <= 8 - _ngrp; _i++) {
+            _expanded = _expanded ":"
+        }
+        _expanded = _expanded "" _half[2]
+    }
+
+    # Build the expanded IPv6 address
+    _n = split(_expanded, _grp, ":")
+    for (_i = 1; _i <= 8; _i++) {
+        _s = sprintf("%s:%0*x", _s, (trim ? 1 : 4), strtonum("0x"_grp[_i]))
+    }
+    gsub(/^:/, "", _s) # remove leading column
+
+    return _s
+}

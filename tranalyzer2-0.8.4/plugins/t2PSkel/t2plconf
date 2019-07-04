@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+#
+# Configuration file for t2PSkel
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+# No configuration options available
+ITEMS=(none)
+
+#ITEMS=(
+#    # An item can be specified in one line...
+#    T2PSKEL_VAR1 check "" "Description of option" # No dependencies
+#
+#    # Or span multiple lines
+#    T2PSKEL_VAR1 radio "T2PSKEL_VAR1 == 1"
+#           "Description of option; \
+#                   0: description of val 0; \
+#                   1: description of val 1; \
+#                   2: description of val 2"
+#
+#    T2PSKEL_SIZE range "T2PSKEL_VAR1 == 1 || T2PSKEL_VAR2 > 0"
+#           "Description: 0 255" # min=0, max=255
+#
+#    T2PSKEL_STR text
+#           "T2PSKEL_SIZE <= 5 && (T2PSKEL_VAR1 != 0 || T2PSKEL_VAR2 <= 1)"
+#           "Description"
+#)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

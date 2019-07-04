@@ -1,0 +1,199 @@
+#!/usr/bin/env bash
+#
+# Usage: ./rospf FILE_ospfHello.txt
+
+source "$(dirname "$0")/../../../scripts/t2utils.sh"
+
+usage() {
+    printf "Usage:\n"
+    printf "    $SNAME [OPTION...] <FILE_ospfHello.txt>\n"
+    printf "\nOptional arguments:\n"
+    printf "    -w name     output filename\n"
+    printf "    -h          display this help, then exit\n"
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -h|-\?|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            if [ ! -f "$1" ]; then
+                abort_option_unknown "$1"
+            fi
+            INFILE="$1"
+            ;;
+    esac
+    shift
+done
+
+if [ ! -f "$INFILE" ]; then
+    abort_required_file
+fi
+
+# list all the networks and their areas (uncomment the code to get the mask as an int)
+printf "Name\tArea\tNetwork\tNetmask\n"
+$AWK -v OFS="\t" 'NR > 1 { print $1, $4, $3 }' "$INFILE" | sort -u | $AWK -v OFS="\t" '{
+    #i = xor(0xffffffff, strtonum($3))
+    #m = 32
+    #while (i) {
+    #    m -= and(i, 0x1)
+    #    i = rshift(i, 1)
+    #}
+    #print "N" nr++, $1, $2 "/" m, $3
+    print "N" nr++, $1, $2, $3
+}'
+echo
+
+# get the networks
+net=$($AWK -v OFS="\t" 'NR > 1 { print $4, $3 }' "$INFILE" | sort -u | xargs)
+
+# get all the interfaces
+iface=$(
+    for i in $($AWK -v OFS="\t" 'NR > 1 { print $5 }' "$INFILE" | sort -u); do
+        $AWK -v OFS="\t" -v ip="$i" '$5 == ip || $2 == ip { print $2; print $5 }' "$INFILE" | sort -u
+    done | sort -u | xargs
+)
+
+# list all routers and their interfaces
+printf "Router\tInterface_n\tNetwork_n\n"
+routers=$(for i in $iface; do
+    $AWK -v OFS="\t" -v ip="$i" '
+        $2 == ip {
+            print $2, $5
+            print $5, $2
+            print $5, $5
+        }' "$INFILE" | sort -u
+done | sort -u | $AWK -v OFS="\t" -v net="$net" '
+    # Add the network to which each interface belongs to
+    BEGIN {
+        split(net, n, /[[:space:]]*/)
+        for (i in n) {
+            if (i % 2) {
+                split(n[i], ip, ".")
+                m = 0
+                for (j = 1; j <= 4; j++) {
+                    m = or(lshift(m, 8), and(ip[j], 255))
+                }
+                n[i] = m  # net as an int
+            }
+        }
+    }
+    {
+        c[$1]++
+        if ($1 == $2) next
+        if (!a[$1]) a[$1] = $2
+        else a[$1] = a[$1] "\t" $2
+    }
+    END {
+        for (i in a) {
+            if (c[i] == 1) {
+                for (j in a) {
+                    if (c[j] > 1 && j != i) {
+                        s = j "\t" a[j]
+                        if (match(s, i) && match(s, a[i])) {
+                            # record is redundant
+                            c[i] = 0
+                        }
+                    }
+                }
+            }
+
+            if (c[i] > 0) {
+                # convert ip addresses to int
+                split(i, ip, ".")
+                p = 0
+                for (j = 1; j <= 4; j++) {
+                    p = or(lshift(p, 8), and(ip[j], 255))
+                }
+                nn = "?"
+                for (j in n) {
+                    if (j % 2) {
+                        if (and(p, strtonum(n[j+1])) == n[j]) {
+                            nn = (j-1)/2
+                        }
+                    }
+                }
+                split(a[i], aa, /[[:space:]]*/)
+                for (k in aa) {
+                    mm[k] = 0
+                    split(aa[k], ip, ".")
+                    p = 0
+                    for (j = 1; j <= 4; j++) {
+                        p = or(lshift(p, 8), and(ip[j], 255))
+                    }
+                    for (j in n) {
+                        if (j % 2) {
+                            if (and(p, strtonum(n[j+1])) == n[j]) {
+                                # ip belongs to net (j-1)/2
+                                mm[k] = (j-1)/2
+                            }
+                        }
+                    }
+                }
+
+                t = "R" nr++ "\t" i "\tN" nn
+                for (k in aa) {
+                    t = t "\t" aa[k] "\tN" mm[k]
+                }
+                print t
+            }
+        }
+    }')
+
+echo $routers | $AWK -v OFS="\t" '{
+    s = $1
+    for (i = 2; i <= NF; i++) {
+        if (match($i, /^R[[:digit:]]+/)) s = s "\n" $i
+        else s = s "\t" $i
+    }
+    printf s "\n"
+}'
+echo
+
+printf "Router\tConnected Routers\n"
+echo $routers | $AWK -v OFS="\t" '{
+    split($0, l, /R[[:digit:]]+[[:space:]]*/)
+    for (i in l) {
+        if (l[i]) {
+            r++
+            n = 0
+            split(l[i], ll, /[[:space:]]+/)
+            for (j in ll) {
+                if (ll[j] && match(ll[j], /^N[^?]+/)) {
+                    nn[r,++n] = ll[j]
+                }
+            }
+        }
+    }
+
+    for (ij in nn) {
+        split(ij, idx1, SUBSEP)
+        if (!(idx1[1] in t)) t[idx1[1]] = "R" idx1[1]
+        for (kl in nn) {
+            split(kl, idx2, SUBSEP)
+            if (idx2[1] != idx1[1]) { # do not check a router against itself
+                if (nn[idx1[1],idx1[2]] == nn[idx2[1],idx2[2]]) {
+                    t[idx1[1]] = t[idx1[1]] "\tR" idx2[1];
+                }
+            }
+        }
+    }
+
+    for (i = 1; i <= r; i++) {
+        split(t[i], tt, /[[:space:]]+/)
+        s = "R" i-1
+        for (j = 1; j <= r; j++) {
+            if (i != j) {
+                for (k in tt) {
+                    if (tt[k] == "R" j) {
+                        s = s "\tR" j-1
+                        break
+                    }
+                }
+            }
+        }
+        print s
+    }
+}'

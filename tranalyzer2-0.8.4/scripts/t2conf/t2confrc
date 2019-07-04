@@ -1,0 +1,41 @@
+## Format of the file is as follows:
+##
+##     ## Blank lines and lines starting with '##' are ignored
+##
+##     ## on/off: whether the option should be enabled or disabled by default
+##
+##     ## filenames are relative to $T2HOME, e.g., ~/tranalyzer2-0.8.3.
+##
+##     ## Every field (flag_name, new_value, old_value and file) MUST be tab
+##     ## separated.
+##
+##     # Name of the option (how it appears in the menu) [on|off]
+##     FLAG1_NAME <tab> new_value1 <tab> old_value1 <tab> file1
+##     FLAG2_NAME <tab> new_value2 <tab> old_value2 <tab> file2
+##
+
+# Increase hash table size [on]
+HASHTABLE_BASE_SIZE	2097152UL	262144UL	tranalyzer2/src/tranalyzer.h
+HASHCHAINTABLE_BASE_SIZE	1048576UL	131072UL	tranalyzer2/src/tranalyzer.h
+
+# Activate IPv6 dissection [off]
+IPV6_ACTIVATE	1	0	tranalyzer2/src/networkHeaders.h
+
+# Activate Ethernet flows [off]
+ETH_ACTIVATE	1	0	tranalyzer2/src/networkHeaders.h
+
+# Activate plugin report [on]
+PLUGIN_REPORT	1	0	tranalyzer2/src/tranalyzer.h
+
+# Activate fragmentation processing [on]
+FRAGMENTATION	1	0	tranalyzer2/src/tranalyzer.h
+
+# Activate monitoring mode [off]
+MONINTPSYNC	1	0	tranalyzer2/src/main.h
+MONINTTMPCP	1	0	tranalyzer2/src/main.h
+VERBOSE	0	2	tranalyzer2/src/tranalyzer.h
+DIFF_REPORT	1	0	tranalyzer2/src/tranalyzer.h
+MACHINE_REPORT	1	0	tranalyzer2/src/tranalyzer.h
+
+# Activate IO buffering [off]
+ENABLE_IO_BUFFERING	1	0	tranalyzer2/src/ioBuffer.h

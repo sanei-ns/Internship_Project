@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+#
+# This script calculates statistical distributions of selected colums/flows
+# from a flowfile, e.g., the number of packets, packet size or any other value
+# in a flow file. It automatically calculates the bin size and accepts manual
+# entries max_value bin_size. 0 counts can be suppressed in the output and the
+# flow direction can be selected A:0, B:1 or B:both
+
+source "$(dirname "$0")/t2utils.sh"
+
+usage() {
+    echo "Usage:"
+    echo "    $SNAME [OPTION...] <FILE_flows.txt>"
+    echo
+    echo "Optional arguments:"
+    echo "    -c col        Column name or number"
+    echo "    -d dir        Select one flow direction only (A or B)"
+    echo "    -m max        Maximum value to bin (requires -s option)"
+    echo "    -s size       Bin size (requires -m option)"
+    echo "    -0            Suppress 0 counts"
+    echo
+    echo "    -h, --help    Show this help, then exit"
+}
+
+# Default values
+DIR=2
+
+while [ $# -ne 0 ]; do
+    case "$1" in
+        -c)
+            validate_next_arg "$1" "$2"
+            COL="$2"
+            shift
+            ;;
+        -m)
+            validate_next_num "$1" "$2"
+            MAX="$2"
+            shift
+            ;;
+        -s)
+            validate_next_num "$1" "$2"
+            BINSIZE="$2"
+            shift
+            ;;
+        -0) ZERO=1;;
+        -d|--dir)
+            validate_next_arg "$1" "$2"
+            case "$2" in
+                A|0) DIR=0;;
+                B|1) DIR=1;;
+                *)
+                    printerr "Invalid direction '$2'"
+                    abort_with_help
+                    ;;
+            esac
+            shift
+            ;;
+        -h|-\?|--help) usage; exit 0;;
+        *)
+            if [ ! -f "$1" ]; then
+                abort_option_unknown "$1"
+            fi
+            FLOWFILE="$1"
+            ;;
+    esac
+    shift
+done
+
+if [ ! -f "$FLOWFILE" ]; then
+    abort_required_file
+fi
+
+if [ -z "$COL" ]; then
+    printerr "Column name or number is required"
+    abort_with_help
+fi
+
+if [ -n "$BINSIZE" && -z "$MAX" ] || [ -n "$MAX" && -z "$BINSIZE" ]; then
+    printerr "-m and -s options must be used simultaneously"
+    abort_with_help
+fi
+
+$TAWK -v pos="$COL" -v fl="$DIR" -v maxval="$MAX" -v bin="$BINSIZE" -v sup="$ZERO" '
+hdr() {
+    if (pos !~ /^[0-9]+$/) {
+        _validate_col(COL[pos], pos)
+        pos = COL[pos]
+    }
+    next
+}
+fl == 0 &&  bitsanyset($flowStat, 0x01) { next } # Ignore A flows
+fl == 1 && !bitsanyset($flowStat, 0x01) { next } # Ignore B flows
+{
+    i = strtonum($pos)
+    if (!i) next
+    ++a[i]
+    if (i > m) m = i
+    s += i
+    ss++
+}
+END {
+    if (pos !~ /^[0-9]+$/ || !pos) exit 1
+    if (!maxval) {
+        maxval = 10^(int(log(m)/log(10)) + 1)
+        bin = maxval/10
+        #print m, maxval, bin
+    }
+
+    print "bin\tcount\t%"
+    for (i = 0; i < maxval; i += bin) {
+        c = 0;
+        for (j = i; j < i+bin; j++) c += a[j]
+        if (!sup || c) print i "-" i + bin - 1 ", " c ", " 100 * c / ss
+        cm += c * (i + bin + 1) / 2
+    }
+    print "\ntotal col sum, max_col_value, #flows, cent_mass:", m, s, ss, cm/ss
+}' "$FLOWFILE"

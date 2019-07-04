@@ -1,0 +1,18 @@
+#!/usr/bin/env awk
+#
+# Bytes - default input
+#
+# Dependencies:
+#   - basicStats
+#
+# Example:
+#   - tawk '{ print byt() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function byt(        _c) {
+    _c = _validate_col("numBytesRcvd", _my_numBytesRcvd)
+    if (hdr()) return "Bytes"
+    return $_c
+}

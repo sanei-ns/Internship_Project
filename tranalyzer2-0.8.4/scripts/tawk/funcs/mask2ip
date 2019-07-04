@@ -1,0 +1,16 @@
+#!/usr/bin/env awk
+#
+# Converts a network mask (int) to an IPv4 address (int)
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{ print mask2ip(24) }' file.txt
+
+@include "isnum"
+
+function mask2ip(m) {
+    if (!isnum(m) || m > 32 || m < 0) return m
+    return xor(lshift(1, 32) - 1, lshift(1, 32 - m) - 1)
+}

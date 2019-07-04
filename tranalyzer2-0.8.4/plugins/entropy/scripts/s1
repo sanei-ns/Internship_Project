@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+IFS=$'\t'
+declare -A head
+declare j=1
+for i in $(head -n 1 $1); do
+        head+=(["$i"]="$j")
+        let "j=j+1"
+done
+
+rm -rf "$2/*"
+
+IFS=$'\n'
+mkdir $2
+
+cut -f "${head["srcIP"]}","${head["dstIP"]}","${head["srcPort"]}","${head["dstPort"]}","${head["openDPI"]}","${head["entropy_bins"]}","${head["numBytesSnt"]}"  $1 | grep -v unknown | grep ^[0-9]  > tmp
+for f in `cat tmp`; do
+	if [ ! $(echo $f | cut -f 5) -eq 0 ]
+	then
+	echo $f | cut -f 1,2,3,4,5,6 | awk '{print $6"_"$5"_"$1"_"$2"_"$3"_"$4}' > filename
+	echo $f | cut -f 7 | sed "s/_/\n/g" > $2/`cat filename`
+	fi
+done

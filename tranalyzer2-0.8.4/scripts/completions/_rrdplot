@@ -1,0 +1,49 @@
+# Bash/ZSH completion for rrdplot
+
+_rrdplot() {
+    #compdef rrdplot
+    local cur prev
+    if type compdef &> /dev/null; then
+        cur="${words[CURRENT]}"
+        [ $CURRENT -gt 2 ] && prev=${words[CURRENT-1]}
+    else
+        local words cword
+        _init_completion || return
+    fi
+    if [[ "$cur" == -* ]]; then
+        if type compdef &> /dev/null; then
+            _arguments --
+        else
+            COMPREPLY=($(compgen -W "$(_parse_help "$T2HOME/scripts/rrdplot")" -- "$cur"))
+        fi
+    elif [ "$prev" = "-d" ] || [ "$prev" = "-p" ]; then
+        if type compdef &> /dev/null; then
+            _files
+        else
+            _filedir
+        fi
+    else
+        local db="monitoring.rrd"
+        local buf="${COMP_LINE:-$BUFFER}"
+        if [[ "$buf" = *[[:space:]]-d[[:space:]]*.rrd* ]]; then
+            db="$(echo "$buf" | $SED 's/.*-d\s\+//')"
+            db="$(echo "$db" | $SED 's/\.rrd.*/.rrd/')"
+            # replace ~ with $HOME
+            db="$(eval "echo \"$db\" | $SED 's|^~|$HOME|'")"
+        fi
+        if [ -f "$db" ]; then
+            local vars=($(rrdtool info "$db" | grep "ds\[" | cut -d'[' -f2 | cut -d']' -f1 | uniq))
+            if type compdef &> /dev/null; then
+                compadd "${vars[@]}"
+            else
+                COMPREPLY=($(compgen -W "${vars[*]}" -- "$cur"))
+            fi
+        fi
+    fi
+}
+
+if type compdef &> /dev/null; then
+    compdef _rrdplot rrdplot
+else
+    complete -F _rrdplot rrdplot
+fi

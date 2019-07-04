@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#
+# transform packet length , IAT statistics in flow file to gnuplot format
+
+source "$(dirname "$0")/t2utils.sh"
+
+if [ ! -f "$1" ]; then
+    echo "Usage: $SNAME flowfile"
+    exit 1
+fi
+
+$TAWK -t -H '{print $Ps_Iat_Cnt_PsCnt_IatCnt}' $1 | $SED -e "s/;/\n/g" | $AWK '!/^#|^%|.*:.*|^$/{ split($1,A,"_"); printf "%d\t%d\n",A[1],A[4]; }' | sort -n | uniq | $AWK 'begin{sum=0; A=0;} { if (NR==1) {A=$1; print "PL\tCount";} if($1 == A) { sum += $2; A = $1; } else { print A"\t"sum; A=$1; sum=$2; } } END{ print A"\t"sum; A=$1; sum=$2; }' > $1_pl.txt
+
+$TAWK -t -H '{print $Ps_Iat_Cnt_PsCnt_IatCnt}' $1 | $SED -e "s/;/\n/g" | $AWK '!/^#|^%|.*:.*|^$/{ split($1,A,"_"); printf "%d\t%d\n",A[2],A[5]; }' | sort -n | uniq | $AWK 'begin{sum=0; A=0;} { if (NR==1) {A=$1; print "IAT\tCount";} if($1 == A) { sum += $2; A = $1; } else { print A"\t"sum; A=$1; sum=$2; } } END { print A"\t"sum; A=$1; sum=$2; }' > $1_iat.txt
+
+$TAWK -t -H '{print $Ps_Iat_Cnt_PsCnt_IatCnt}' $1 | $SED -e "s/;/\n/g" | $AWK '!/^#|^%|.*:.*|^$/{ split($1,A,"_"); printf "%d\t%d\t%d\n",A[1],A[2],A[3]; }' | sort -n | uniq | $AWK 'begin{ sum=0;A=0;B=0;} { if (NR==1) {A=$1; B=$2; print "PL\tIAT[ms]\tCount";} if($1 == A && $2 == B) { sum += $3;A=$1;B=$2 } else { print A"\t"B"\t"sum; A=$1; B=$2; sum=$3; } } END{print A"\t"B"\t"sum; A=$1; B=$2; sum=$3;}' > $1_pl_iat.txt

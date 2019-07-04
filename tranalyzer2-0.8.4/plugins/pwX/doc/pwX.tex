@@ -1,0 +1,102 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {pwX}
+    {Clear-text Passwords Extractor}
+    {Tranalyzer Development Team} % author(s)
+
+\section{pwX}\label{s:pwX}
+
+\subsection{Description}
+The pwX plugin extracts usernames and passwords from different plaintext protocols.
+This plugin produces only output to the flow file.
+Configuration is achieved by user defined compiler switches in {\tt src/pwX.h}.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Variable} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt PWX\_USERNAME}    & 1 & Defines if username column is printed.\\
+    {\tt PWX\_PASSWORD}    & 1 & Defines if password column is printed.\\\\
+    {\tt PWX\_FTP}         & 1 & Defines if FTP authentication is extracted.\\
+    {\tt PWX\_POP3}        & 1 & Defines if POP3 authentication is extracted.\\
+    {\tt PWX\_IMAP}        & 1 & Defines if IMAP authentication is extracted.\\
+    {\tt PWX\_SMTP}        & 1 & Defines if SMTP authentication is extracted.\\
+    {\tt PWX\_HTTP\_BASIC} & 1 & Defines if HTTP Basic Authorization is extracted.\\
+    {\tt PWX\_HTTP\_PROXY} & 1 & Defines if HTTP Proxy Authorization is extracted.\\
+    {\tt PWX\_HTTP\_GET}   & 1 & Defines if HTTP GET authentication is extracted.\\
+    {\tt PWX\_HTTP\_POST}  & 1 & Defines if HTTP POST authentication is extracted.\\
+    {\tt PWX\_IRC}         & 1 & Defines if IRC authentication is extracted.\\
+    {\tt PWX\_TELNET}      & 1 & Defines if Telnet authentication is extracted.\\
+    {\tt PWX\_LDAP}        & 1 & Defines if LDAP bind request authentication is extracted.\\\\
+    {\tt PWX\_PAP}         & 1 & Defines if Password Authentication Protocol (PAP) is extracted.\\\\
+    {\tt PWX\_STATUS}      & 1 & Whether or not to extract authentication status (success, error, \ldots).\\\\
+    {\tt PWX\_DEBUG}       & 0 & Whether or not to activate debug output.\\
+    \bottomrule
+\end{longtable}
+
+%\subsection{Required files}
+%none
+
+\subsection{Flow File Output}
+The pwX plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Name} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{pwxType}} & U8 & Authentication type\\
+    {\tt pwxUser} & S & Extracted username & {\tt PWX\_USERNAME != 0}\\
+    {\tt pwxPass} & S & Extracted password & {\tt PWX\_PASSWORD != 0}\\
+    {\tt \nameref{pwxStatus}} & U8 & Authentication status & {\tt PWX\_STATUS != 0}\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{pwxType}\label{pwxType}
+The {\tt pwxType} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf pwxType} & {\bf Description}\\
+    \midrule\endhead%
+     0 & No password or username extracted\\
+     1 & FTP authentication\\
+     2 & POP3 authentication\\
+     3 & IMAP authentication\\
+     4 & SMTP authentication\\
+     5 & HTTP Basic Authorization\\
+     6 & HTTP Proxy Authorization\\
+     7 & HTTP GET authentication\\
+     8 & HTTP POST authentication \\
+     9 & IRC authentication \\
+    10 & Telnet authentication \\
+    11 & LDAP authentication \\
+    12 & PAP authentication \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{pwxStatus}\label{pwxStatus}
+The {\tt pwxStatus} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf pwxStatus} & {\bf Description}\\
+    \midrule\endhead%
+    0 & Authentication status is unknown\\
+    1 & Authentication was successful\\
+    2 & Authentication failed\\
+    \bottomrule
+\end{longtable}
+
+%\subsection{Additional Output}
+%none
+
+\subsection{Plugin Report Output}
+The number of passwords extracted is reported.
+
+\end{document}

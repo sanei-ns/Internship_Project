@@ -1,0 +1,64 @@
+#!/usr/bin/env awk
+#
+# Returns all HTTP hosts and a list of the files hosted (sorted alphabetically)
+# If 'f' is greater than 0, prints the number of times a URL was requested.
+#
+# Dependencies:
+#   - httpSniffer
+#
+# Examples:
+#   - tawk 'httpHostsURL()' file.txt
+
+@include "hdr"
+@include "strisempty"
+@include "unquote"
+@include "_validate_col"
+
+function httpHostsURL(f,        _i, _l, _sep, _t, _u) {
+    _validate_col("httpHosts")
+    _validate_col("httpURL")
+    if (hdr() || strisempty($httpURL) || strisempty($httpHosts)) next
+    __HTTP_URL_FREQ__ = f
+    # TODO count number of times host appears
+    _t = __HTTP_HOSTS__[$httpHosts]
+    __HTTP_HOSTS__[$httpHosts] = $httpURL ";" _t
+}
+
+END {
+    # Print hosts in alphabetical order
+    _old = PROCINFO["sorted_in"]
+    PROCINFO["sorted_in"] = "@ind_str_asc"
+    for (_i in __HTTP_HOSTS__) {
+        gsub(/;$/, "", __HTTP_HOSTS__[_i]) # remove trailing semicolon
+        if (__HTTP_HOSTS__[_i] ~ /^".*"$/) _sep = "\";\""
+        else _sep = ";"
+        _l = split(unquote(__HTTP_HOSTS__[_i]), _h, _sep)
+        print unquote(_i)
+        asort(_h)
+        _prev = _h[1]
+        _cnt = 0
+        for (_j = 1; _j <= _l; _j++) {
+            if (_h[_j] == _prev) {
+                _cnt++
+                continue
+            }
+            if (__HTTP_URL_FREQ__ == 0) {
+                print OFS _prev
+            } else {
+                print OFS _prev OFS _cnt
+            }
+            _prev = _h[_j]
+            _cnt = 1
+        }
+        if (_cnt > 0) {
+            if (__HTTP_URL_FREQ__ == 0) {
+                print OFS _prev
+            } else {
+                print OFS _prev OFS _cnt
+            }
+        }
+        # Empty line between hosts
+        printf "\n"
+    }
+    PROCINFO["sorted_in"] = _old
+}

@@ -1,0 +1,18 @@
+#H bit | dnsStat | Description
+#H =============================================================================
+     0 | 0x0001  | DNS ports detected
+     1 | 0x0002  | NetBIOS DNS
+     2 | 0x0004  | DNS TCP aggregated fragmented content
+     3 | 0x0008  | DNS TCP fragmented content state
+#W   4 | 0x0010  | Name truncated
+#W   5 | 0x0020  | ANY: Zone all from a domain or cached server
+#W   6 | 0x0040  | Incremental DNS zone transfer detected
+#W   7 | 0x0080  | DNS zone transfer detected
+#W   8 | 0x0100  | DNS UDP length exceeded
+#W   9 | 0x0200  | Following records ignored
+#W  10 | 0x0400  | Max DNS name records exceeded
+#W  11 | 0x0800  | Max address records exceeded
+#E  12 | 0x1000  | DNS record length error
+#E  13 | 0x2000  | Wrong DNS PTR detected
+#W  14 | 0x4000  | DNS length undercut
+#E  15 | 0x8000  | UDP/TCP DNS header corrupt or TCP packets missing

@@ -1,0 +1,41 @@
+-- Returns a list of hosts requesting DNS zone transfer
+
+SELECT
+    time,
+    sip,
+    dip,
+    query
+
+FROM (
+    -- A flows
+    SELECT
+        "timeFirst" AS time,
+        "srcIP" AS sip,
+        "dstIP" AS dip,
+        "dnsQname" AS query
+    FROM
+        flow
+    WHERE
+        ("dnsStat" & x'80'::INT) != 0::INT
+        AND ("flowStat"::BIGINT & x'1'::BIGINT) = 0::BIGINT
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+
+    UNION ALL
+
+    -- B flows
+    SELECT
+        "timeFirst" AS time,
+        "dstIP" AS sip,
+        "srcIP" AS dip,
+        "dnsQname" AS query
+    FROM
+        flow
+    WHERE
+        ("dnsStat" & x'80'::INT) != 0::INT
+        AND ("flowStat"::BIGINT & x'1'::BIGINT) = 1::BIGINT
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+LIMIT :n

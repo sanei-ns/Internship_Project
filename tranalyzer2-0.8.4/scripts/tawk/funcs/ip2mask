@@ -1,0 +1,32 @@
+#!/usr/bin/env awk
+#
+# Converts an IP address to a network mask (int)
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{ print ip2mask("255.255.255.0") }' file.txt
+#   - tawk '{ print ip2mask(0xffffff00) }' file.txt
+#   - tawk '{ print ip2mask("ffff:ffff:ffff:ffff::") }' file.txt
+
+@include "ip2num"
+
+function ip2mask(mask,        _i, _m, _x) {
+    if (isip(mask)) {
+        _m = 32
+    } else if (isip6(mask)) {
+        _m = 128
+    } else {
+        # Not a valid IP
+        return mask
+    }
+
+    _i = xor(lshift(1, _m) - 1, ip2num(mask))
+    while (_i) {
+        _m -= and(_i, 0x1)
+        _i = rshift(_i, 1)
+    }
+
+    return _m
+}

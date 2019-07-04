@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+#
+# Configuration file for smtpDecode
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    SMTP_SAVE check "" "Save content"
+    SMTP_BTFLD check "" "Bitfield coding of SMTP commands"
+    SMTP_RCTXT check "" "Print response code text"
+
+    SMTP_MXNMLN  range "" "Maximal name length: 0 255"
+    SMTP_MXUNMLN range "" "Maximal user length: 0 255"
+    SMTP_MXPNMLN range "" "Maximal PW length: 0 255"
+
+    MAXCNM range "" "Maximal number of rec,trans codes: 0 255"
+    MAXUNM range "" "Maximal number of Users: 0 255"
+    MAXPNM range "" "Maximal number of PWs: 0 255"
+    MAXSNM range "" "Maximal number of server addresses: 0 255"
+    MAXRNM range "" "Maximal number of rec EMail addresses: 0 255"
+    MAXTNM range "" "Maximal number of trans EMail addresses: 0 255"
+
+    SMTP_F_PATH text "SMTP_SAVE == 1" "Path for emails"
+    SMTP_NON    text "SMTP_SAVE == 1" "No name file name"
+
+    #SMTP_CNT_LEN  range "" "Max # of cnt digits attached to file name (currently not used): 0 255"
+    #SMTP_FNDX_LEN range "" "String length of findex in decimal format: 0 255"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

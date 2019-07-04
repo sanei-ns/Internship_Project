@@ -1,0 +1,10 @@
+#H bit | httpMethods | Description
+#H =============================================================================
+     0 | 0x01        | OPTIONS
+     1 | 0x02        | GET
+     2 | 0x04        | HEAD
+     3 | 0x08        | POST
+     4 | 0x10        | PUT
+     5 | 0x20        | DELETE
+     6 | 0x40        | TRACE
+     7 | 0x80        | CONNECT

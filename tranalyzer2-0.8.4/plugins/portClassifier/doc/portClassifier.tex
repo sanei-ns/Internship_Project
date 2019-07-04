@@ -1,0 +1,47 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {portClassifier}
+    {Classification Based on Port Number}
+    {Tranalyzer Development Team} % author(s)
+
+\section{portClassifier}\label{s:portClassifier}
+
+\subsection{Description}
+The portClassifier plugin classifies the flow according to the destination port meaning. It accepts a default port list {\tt portmap.txt}, automatically installed with the plugin.
+
+\subsection{Dependencies}
+
+\subsubsection{Required Files}
+The file {\tt portmap.txt} is required.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt PBC\_NUM} & 1 & Print string representation of port classification\\
+    {\tt PBC\_STR} & 1 & Print numeric representation of port classification\\
+    {\tt PBC\_CLASSFILE} & {\tt\small "portmap.txt"} & input file for the mapping between ports and applications\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The portClassifier plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt dstPortClassN} & U16 & Port based classification of the destination port number & {\tt PBC\_NUM=0}\\
+    {\tt dstPortClass}  & SC  & Port based classification of the destination port name   & {\tt PBC\_STR=1}\\
+    \bottomrule
+\end{longtable}
+
+\end{document}

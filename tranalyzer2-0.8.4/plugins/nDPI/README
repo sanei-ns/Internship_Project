@@ -1,0 +1,3 @@
+This plugin is just a wrapper around the nDPI library: https://github.com/ntop/nDPI
+
+It classifies flows by protocol based on packet payload.

@@ -1,0 +1,14 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/mongoSink
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+#
+# Flag name     File
+
+# src/mongoSink.h
+BSON_SUPPRESS_EMPTY_ARRAY   src/mongoSink.h
+BSON_DEBUG                  src/mongoSink.h

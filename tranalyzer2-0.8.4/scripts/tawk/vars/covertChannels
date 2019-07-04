@@ -1,0 +1,11 @@
+#H bit | covertChannels | Description
+#H =============================================================================
+     0 | 0x0001         | DNS CC (iodine, dnstunnel, nstx, ...)
+     1 | 0x0002         | ICMP CC: asymmetric flow (hans, itun, loki, icmptx, ...)
+     2 | 0x0004         | ICMP CC: non-whitelisted payload (hans, itun, loki, icmptx, ...)
+     3 | 0x0008         | ICMP CC: bidirectional non-PING flow
+     4 | 0x0010         | HTTP GET URL-encoded CC (hcovert)
+     5 | 0x0020         | TCP timestamp CC (devcc)
+     6 | 0x0040         | IP Identification CC (covert_tcp)
+     7 | 0x0080         | RTP timestamp CC
+     8 | 0x0100         | Skype silent packets CC (SkyDe)

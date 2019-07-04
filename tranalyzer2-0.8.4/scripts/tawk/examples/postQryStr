@@ -1,0 +1,34 @@
+#!/usr/bin/env awk
+#
+# Returns the top N POST requests with query strings
+#
+# Dependencies:
+#   - httpSniffer
+#
+# Examples:
+#   - tawk 'postQryStr()' file.txt
+#   - tawk 'postQryStr(5)' file.txt
+
+@include "aggr"
+@include "bitsallset"
+@include "hdr"
+@include "strisempty"
+@include "tuple2"
+@include "_validate_col"
+
+function postQryStr(n,        _i, _l, _u) {
+    _validate_col("httpAFlags")
+    _validate_col("httpURL")
+    if (__PRIHDR__ && hdr()) {
+        print tuple2(), $httpURL, "Flows"
+    } else if (bitsallset($httpAFlags, 0x1)) {
+        _l = split($httpURL, _u, "\";\"")
+        gsub(/^"/, "", _u[1])  # remove leading quote
+        gsub(/"$/, "", _u[_l]) # remove trailing quote
+        for (_i = 1; _i <= _l; _i++) {
+            if (!strisempty(_u[_i])) {
+                aggr(tuple2() OFS _u[_i], "flows", n)
+            }
+        }
+    }
+}

@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+#
+# Monitors a folder for new files and creates symbolic links with
+# incrementing indexes.
+#
+# Dependencies: inotify-tools
+#
+# Usage: t2dmon [OPTION...] [FOLDER]
+
+source "$(dirname "$0")/t2utils.sh"
+
+check_dependency "inotifywait" "inotify-tools"
+
+# Default option
+FOLDER="."         # folder to monitor
+LNAME="wurst.pcap" # name to use for the symbolic links
+INDEX=0            # start index for the symbolic links
+
+usage() {
+    echo "Usage:"
+    echo "    $SNAME [OPTION...] [FOLDER]"
+    echo
+    echo "Optional arguments:"
+    echo "    FOLDER        Folder to monitor [default: $FOLDER]"
+    echo
+    echo "    -i index      Start indexing symbolic links with 'index' [default: $INDEX]"
+    echo "    -o name       Name to use for symbolic links [default: $LNAME]"
+    echo "    -m max        Maximum numbers of symbolic links to store [default: infinity]"
+    echo
+    echo "    -v            Enable verbose output"
+    echo
+    echo "    -h, --help    Show this help, then exit"
+}
+
+while [ $# -ne 0 ]; do
+    case "$1" in
+        -i)
+            validate_next_num "$1" "$2"
+            INDEX=$2
+            shift
+            ;;
+        -o)
+            validate_next_arg "$1" "$2"
+            LNAME="$2"
+            shift
+            ;;
+        -m)
+            validate_next_num "$1" "$2"
+            LMAX=$2
+            shift
+            ;;
+        -v) VERBOSE=1;;
+        -h|-\?|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            if [ ! -d "$1" ]; then
+                printerr "Unknown option '$1'"
+                abort_with_help
+            fi
+            FOLDER="$1"
+            ;;
+    esac
+    shift
+done
+
+# Make sure there is a trailing slash
+FOLDER="$($AWK '{ if (/\/$/) print; else printf "%s/\n", $0 }' <<< "$FOLDER")"
+
+if [ $VERBOSE ]; then
+    echo "Monitoring folder '$FOLDER'"
+    echo "First symlink will be '$FOLDER$LNAME$INDEX'"
+fi
+
+inotifywait -m -q -e moved_to -e create --format '%f' "$FOLDER" |
+    while read file; do
+        newfile="$FOLDER$file"
+        if [ -f "$newfile" ] && [ ! -L "$newfile" ]; then
+            link="$FOLDER$LNAME$INDEX"
+            if [ $VERBOSE ]; then
+                echo "New file: '$newfile'"
+                echo "New symlink: '$link'"
+            fi
+            ln -f -s "$file" "$link"
+            if [ $LMAX ]; then
+                nlinks=$(find "$FOLDER" -maxdepth 1 -type l | wc -l)
+                if [ $nlinks -gt $LMAX ]; then
+                    oldest="$FOLDER$LNAME$((INDEX-LMAX))"
+                    [ $VERBOSE ] && echo "Too many links. Removing '$oldest'"
+                    rm -f "$oldest"
+                fi
+            fi
+            INDEX=$((INDEX+1))
+        fi
+    done

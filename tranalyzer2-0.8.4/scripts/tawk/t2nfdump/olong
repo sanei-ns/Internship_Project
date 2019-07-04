@@ -1,0 +1,26 @@
+#!/usr/bin/env awk
+#
+# nfdump long output format
+#
+# Dependencies:
+#   - basicFlow
+#   - basicStats
+#   - tcpFlags
+#
+# Example:
+#   - tawk '{ print olong() }' file
+
+@include "byt"
+@include "dap"
+@include "flg"
+@include "pkt"
+@include "pr"
+@include "sap"
+@include "td"
+@include "ts"
+
+function olong() {
+    return ts() OFS td() OFS pr() OFS sap() OFS "->" OFS dap() OFS \
+           flg() OFS pkt() OFS byt()
+           #flg() OFS tos() OFS pkt() OFS byt() OFS fl()
+}

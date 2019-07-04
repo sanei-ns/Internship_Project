@@ -1,0 +1,20 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/dnsDecode
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/dnsDecode.h
+MAL_TEST        src/dnsDecode.h
+DNS_MODE        src/dnsDecode.h
+DNS_HEXON	src/dnsDecode.h
+DNS_REQA        src/dnsDecode.h
+DNS_ANSA        src/dnsDecode.h
+MAL_TEST	src/dnsDecode.h
+MAL_TYPE	src/dnsDecode.h
+
+# src/malsite.h
+MAL_DOMAIN          src/malsite.h

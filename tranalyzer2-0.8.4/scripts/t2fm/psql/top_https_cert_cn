@@ -1,0 +1,21 @@
+-- Top HTTPS certificate Common Name (CN) by number of flows
+
+SELECT
+    cert_cn,
+    COUNT(*) AS cnt
+
+FROM (
+    SELECT
+        UNNEST("sslCSubjectCommonName") AS cert_cn
+    FROM
+        flow
+    WHERE
+        ARRAY_LENGTH("sslCSubjectCommonName", 1) > 0
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+GROUP BY cert_cn
+ORDER BY cnt DESC
+
+LIMIT :n

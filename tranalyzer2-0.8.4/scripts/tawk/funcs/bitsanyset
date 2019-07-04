@@ -1,0 +1,28 @@
+#!/usr/bin/env awk
+#
+# Returns true if one of the bits set in 'mask' is also set in 'val', i.e., (val & mask) > 0
+#
+# Parameters:
+#   - val    : the value to test
+#   - mask   : the mask to apply to val
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - bfeq
+#   - bitsallset
+#
+# Examples:
+#   - tawk 'bitsanyset($icmpStat, 1)' file.txt
+#   - tawk 'bitsanyset($icmpStat, 0x1) { print }' file.txt
+#   - tawk 'bitsanyset($flowStat, 0xc000)' file.txt (IPv4/6 only)
+
+@include "hdr"
+
+function bitsanyset(val, mask,        _m, _v) {
+    if (hdr()) return __PRIHDR__
+    _m = strtonum(mask)
+    _v = and(strtonum(val), _m)
+    return _v
+}

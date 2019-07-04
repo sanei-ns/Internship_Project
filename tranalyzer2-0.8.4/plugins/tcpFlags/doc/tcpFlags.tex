@@ -1,0 +1,342 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {tcpFlags}
+    {tcpFlags}
+    {Tranalyzer Development Team} % author(s)
+
+\section{tcpFlags}\label{s:tcpFlags}
+
+\subsection{Description}
+The tcpFlags plugin contains IP and TCP header information encountered during the lifetime of a flow.
+%All features are a result of practical troubleshooting experience in the field.
+
+%\subsection{Dependencies}
+%
+%\subsubsection{External Libraries}
+%This plugin depends on ...
+%
+%\subsubsection{Other Plugins}
+%This plugin requires the ... plugin.
+%
+%\subsubsection{Required Files}
+%The file ... is required.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    %{\tt SPKTMD\_PKTNO} & 0 & Wireshark packet numbers: 0: off, 1: on ({\tt --s} option)\\
+    %{\tt SPKTMD\_DATE\_TIME} & 0 & Date format. 0: Unix timestamp, 1: Date time Local, 2: Date time UTC ({\tt --s} option)\\
+    %{\tt SPKTMD\_PCNTH}    & 0 & 1: L7 content as hex ({\tt --s} option)\\
+    %{\tt SPKTMD\_PCNTC}    & 1 & 1: L7 content as characters ({\tt --s} option)\\
+    {\tt SPKTMD\_SEQACKREL} & 0 & Seq/Ack Numbers 0: absolute, 1: relative ({\tt --s} option)\\
+    {\tt RTT\_ESTIMATE}     & 1 & Whether (1) or not (0) to estimate Round trip time\\
+    {\tt IPCHECKSUM}        & 2 & 0: No checksums calculation\\
+                            &   & 1: Calculation of L3 (IP) Header Checksum\\
+                            &   & 2: L3/L4 (TCP, UDP, ICMP, IGMP, \ldots) Checksum \\
+    {\tt WINDOWSIZE}        & 1 & Whether (1) or not (0) to output TCP window size parameters\\
+    {\tt SEQ\_ACK\_NUM}     & 1 & Whether (1) or not (0) to output Sequence/Acknowledge Number features\\
+    {\tt FRAG\_ANALYZE}     & 1 & Whether (1) or not (0) to enable fragmentation analysis\\
+    {\tt NAT\_BT\_EST}      & 1 & Whether (1) or not (0) to estimate NAT boot time\\
+    {\tt SCAN\_DETECTOR}    & 1 & Whether (1) or not (0) to enable scan flow detector\\
+    {\tt\nameref{WINMIN}}   & 1 & Minimal window size defining a healthy communication,\\
+                            &   & below packets are counted\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{WINMIN}\label{WINMIN}
+{\tt WINMIN} default 1 setting selects all packets/flow where communication came to a halt due to receiver buffer overflow.
+Literally the number of window size 0 packets to the sender are then counted. {\tt WINMIN} can be set to any value defining
+a healthy communication, which depends on the network and application.
+
+\subsection{Flow File Output}
+The tcpFlags plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{tcpFStat}} & H16 & Status\\
+    {\tt ipMindIPID}         & U16 & IP minimum delta IP ID \\
+    {\tt ipMaxdIPID}         & U16 & IP maximum delta IP ID\\
+    {\tt ipMinTTL}           & U8  & IP minimum TTL\\
+    {\tt ipMaxTTL}           & U8  & IP maximum TTL\\
+    {\tt ipTTLChg}           & U8  & IP TTL Change Count\\
+    {\tt ipTOS}              & H8  & IP Type of Service\\
+    {\tt \nameref{ipFlags}}  & H16 & IP aggregated flags\\
+    {\tt ipOptCnt} & U16 & IP options count & {\tt IPV6\_ACTIVATE=0}\\
+    {\tt \hyperref[ipOptCpClNum]{ipOptCpCl\_Num}} & H8\_H32 & IP aggregated options, copy-class and number & {\tt IPV6\_ACTIVATE=0}\\\\
+    {\tt ip6OptCntHH\_D} & U16\_U16 & IPv6 aggregated hop by hop dest.\ option counts & {\tt IPV6\_ACTIVATE=1}\\
+    {\tt ip6OptHH\_D} & H32\_H32 & IPv6 hop by hop destination options & {\tt IPV6\_ACTIVATE=1}\\\\
+
+    %\multicolumn{4}{l}{If {\tt SEQ\_ACK\_NUM=1}, the following columns are displayed:}\\\\
+
+    {\tt tcpPSeqCnt}            & U16 & TCP packet sequence count       & {\tt SEQ\_ACK\_NUM=1}\\
+    {\tt tcpSeqSntBytes}        & U64 & TCP sent seq diff bytes         & {\tt SEQ\_ACK\_NUM=1}\\
+    {\tt tcpSeqFaultCnt}        & U16 & TCP sequence number fault count & {\tt SEQ\_ACK\_NUM=1}\\
+    {\tt tcpPAckCnt}            & U16 & TCP packet ack count            & {\tt SEQ\_ACK\_NUM=1}\\
+    {\tt tcpFlwLssAckRcvdBytes} & U64 & TCP flawless ack received bytes & {\tt SEQ\_ACK\_NUM=1}\\
+    {\tt tcpAckFaultCnt}        & U16 & TCP ack number fault count      & {\tt SEQ\_ACK\_NUM=1}\\\\
+
+    %\multicolumn{4}{l}{If {\tt WINDOWSIZE=1}, the following columns are displayed:}\\\\
+
+    {\tt tcpInitWinSz}      & U32 & TCP initial effective window size                & {\tt WINDOWSIZE=1}\\
+    {\tt tcpAveWinSz}       &   F & TCP average effective window size                & {\tt WINDOWSIZE=1}\\
+    {\tt tcpMinWinSz}       & U32 & TCP minimum effective window size                & {\tt WINDOWSIZE=1}\\
+    {\tt tcpMaxWinSz}       & U32 & TCP maximum effective window size                & {\tt WINDOWSIZE=1}\\
+    {\tt tcpWinSzDwnCnt}    & U16 & TCP effective window size change down count      & {\tt WINDOWSIZE=1}\\
+    {\tt tcpWinSzUpCnt}     & U16 & TCP effective window size change up count        & {\tt WINDOWSIZE=1}\\
+    {\tt tcpWinSzChgDirCnt} & U16 & TCP effective window size direction change count & {\tt WINDOWSIZE=1}\\
+    {\tt tcpWinSzThRt}       & F   & TCP packet count ratio below window size {\tt WINMIN} & {\tt WINDOWSIZE=1}\\\\
+
+    {\tt \nameref{tcpFlags}}    & H8  & TCP aggregated protocol flags\\
+                                &     & (CWR, ACK, PSH, RST, SYN, FIN)\\
+    {\tt \nameref{tcpAnomaly}}  & H16 & TCP aggregated header anomaly flags\\
+    {\tt tcpOptPktCnt}          & U16 & TCP options packet count\\
+    {\tt tcpOptCnt}             & U16 & TCP options count \\
+    {\tt \nameref{tcpOptions}}  & H32 & TCP aggregated options\\
+    {\tt tcpMSS}                & U16 & TCP Maximum Segment Length\\
+    {\tt tcpWS}                 & U8  & TCP Window Scale\\\\
+
+    %\multicolumn{4}{l}{If {\tt NAT\_BT\_EST=1}, the following four columns are displayed:}\\\\
+
+    {\tt tcpTmS}  & U32 & TCP Time Stamp                  & {\tt NAT\_BT\_EST=1}\\
+    {\tt tcpTmER} & U32 & TCP Time Echo Reply             & {\tt NAT\_BT\_EST=1}\\
+    {\tt tcpEcI}  & F   & TCP Estimated counter increment & {\tt NAT\_BT\_EST=1}\\
+    {\tt tcpBtm}  & TS  & TCP Estimated Boot time         & {\tt NAT\_BT\_EST=1}\\\\
+
+    %\multicolumn{4}{l}{If {\tt RTT\_ESTIMATE=1}, the following columns are displayed:}\\\\
+
+    {\tt tcpSSASAATrip}       & F & (A) TCP Trip Time SYN, SYN-ACK,           & {\tt RTT\_ESTIMATE=1}\\
+                              &   & (B) TCP Trip Time SYN-ACK, ACK            &\\
+    {\tt tcpRTTAckTripMin}    & F & TCP Ack Trip Minimum                      & {\tt RTT\_ESTIMATE=1}\\
+    {\tt tcpRTTAckTripMax}    & F & TCP Ack Trip Maximum                      & {\tt RTT\_ESTIMATE=1}\\
+    {\tt tcpRTTAckTripAve}    & F & TCP Ack Trip Average                      & {\tt RTT\_ESTIMATE=1}\\
+    {\tt tcpRTTAckTripJitAve} & F & TCP Ack Trip Jitter Average               & {\tt RTT\_ESTIMATE=1}\\
+    {\tt tcpRTTSseqAA}        & F & (A) TCP Round Trip Time SYN, SYN-ACK, ACK & {\tt RTT\_ESTIMATE=1}\\
+                              &   & (B) TCP Round Trip Time ACK-ACK RTT       & {\tt RTT\_ESTIMATE=1}\\
+    {\tt tcpRTTAckJitAve}     & F & TCP Ack Round trip average Jitter         & {\tt RTT\_ESTIMATE=1}\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{tcpFStat}\label{tcpFStat}
+The {\tt tcpFStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf tcpFStat} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x0001} & Packet no good for interdistance assessment\\
+    {\tt 0x0002} & Scan detected in flow\\
+    {\tt 0x0004} & Successful scan detected in flow\\
+    {\tt 0x0008} & Timestamp option decreasing\\
+    {\tt 0x0010} & TCP option init\\
+    {\tt 0x0020} & ACK packet loss state machine init\\
+    {\tt 0x0040} & Window state machine initialized\\
+    {\tt 0x0080} & Window state machine count up/down\\
+    {\tt 0x0100} & L4 checksum calculation if present\\
+    {\tt 0x0200} & UDP-Lite checksum coverage error\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{ipFlags}\label{ipFlags}
+The {\tt ipFlags} column is to be interpreted as follows:\\
+\begin{minipage}{.45\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf ipFlags} & {\bf Description}\\
+        \midrule\endhead%
+        {\tt 0x0001} & IP options corrupt\\
+        {\tt 0x0002} & IPv4 packets out of order\\
+        {\tt 0x0004} & IPv4 ID roll over\\
+        {\tt 0x0008} & IP fragment below minimum\\\\
+        {\tt 0x0010} & IP fragment out of range\\
+        {\tt 0x0020} & More Fragment bit\\
+        {\tt 0x0040} & IPv4: Dont Fragment bit\\
+                     & IPv6: reserve bit\\
+        {\tt 0x0080} & Reserve bit\\
+        &\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+\hfill
+\begin{minipage}{.45\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf ipFlags} & {\bf Description}\\
+        \midrule\endhead%
+        {\tt 0x0100} & Fragmentation position error\\
+        {\tt 0x0200} & Fragmentation sequence error\\
+        {\tt 0x0400} & L3 checksum error\\
+        {\tt 0x0800} & L4 checksum error\\\\
+        {\tt 0x1000} & L3 header length snapped\\
+        {\tt 0x2000} & Packet interdistance = 0\\
+        {\tt 0x4000} & Packet interdistance < 0\\
+        {\tt 0x8000} & TCP SYN flag with L7 content\\\\\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+
+\subsubsection{ipOptCpCl\_Num}\label{ipOptCpClNum}%TODO
+The aggregated IP options are coded as a bit field in hexadecimal notation where the bit position denotes the IP options type according to following format: [$2^{\text{Copy-Class}}$]\_[$2^{\text{Number}}$]. If the field reads: {\tt 0x10\_0x00100000} in an ICMP message it is a {\tt 0x94 = 148} router alert. \\
+Refer to RFC for decoding the bitfield: \url{http://www.iana.org/assignments/ip-parameters}.
+
+\subsubsection{tcpFlags}\label{tcpFlags}
+The {\tt tcpFlags} column is to be interpreted as follows:
+\begin{longtable}{rcl}
+    \toprule
+    {\bf tcpFlags} & {\bf Flag} & {\bf Description}\\
+    \midrule\endhead%
+    $2^0$ (={\tt 0x01}) & {\tt FIN} & No more data, finish connection\\
+    $2^1$ (={\tt 0x02}) & {\tt SYN} & Synchronize sequence numbers\\
+    $2^2$ (={\tt 0x04}) & {\tt RST} & Reset connection\\
+    $2^3$ (={\tt 0x08}) & {\tt PSH} & Push data\\
+    $2^4$ (={\tt 0x10}) & {\tt ACK} & Acknowledgement field value valid\\
+    $2^5$ (={\tt 0x20}) & {\tt URG} & Urgent pointer valid\\
+    $2^6$ (={\tt 0x40}) & {\tt ECE} & ECN-Echo\\
+    $2^7$ (={\tt 0x80}) & {\tt CWR} & Congestion Window Reduced flag is set\\
+    \bottomrule
+\end{longtable}
+
+\clearpage
+
+\subsubsection{tcpAnomaly}\label{tcpAnomaly}
+The {\tt tcpAnomaly} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf tcpAnomaly} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x0001} & FIN-ACK flag\\
+    {\tt 0x0002} & SYN-ACK flag\\
+    {\tt 0x0004} & RST-ACK flag\\
+    {\tt 0x0008} & SYN-FIN flag, scan or malicious packet\\
+    {\tt 0x0010} & SYN-FIN-RST flag, potential malicious scan packet or channel\\
+    {\tt 0x0020} & FIN-RST flag, abnormal flow termination\\
+    {\tt 0x0040} & Null flag, potential NULL scan packet, or malicious channel\\
+    {\tt 0x0080} & XMas flag, potential Xmas scan packet, or malicious channel\\
+    {\tt 0x0100} & L4 option field corrupt or not acquired\\
+    {\tt 0x0200} & SYN retransmission\\
+    {\tt 0x0400} & Sequence Number retry\\
+    {\tt 0x0800} & Sequence Number out of order\\
+    {\tt 0x1000} & Sequence mess in flow order due to pcap packet loss\\
+    {\tt 0x2000} & Sequence number jump forward\\
+    {\tt 0x4000} & ACK number out of order\\
+    {\tt 0x8000} & Duplicate ACK\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{tcpOptions}\label{tcpOptions}
+The {\tt tcpOptions} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf tcpOptions} & {\bf Description}\\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x00000001}) & End of Option List\\
+    $2^{1}$  (={\tt 0x00000002}) & No-Operation\\
+    $2^{2}$  (={\tt 0x00000004}) & Maximum Segment Size\\
+    $2^{3}$  (={\tt 0x00000008}) & Window Scale\\\\
+    $2^{4}$  (={\tt 0x00000010}) & SACK Permitted\\
+    $2^{5}$  (={\tt 0x00000020}) & SACK\\
+    $2^{6}$  (={\tt 0x00000040}) & Echo (obsoleted by option 8)\\
+    $2^{7}$  (={\tt 0x00000080}) & Echo Reply (obsoleted by option 8)\\\\
+    $2^{8}$  (={\tt 0x00000100}) & Timestamps\\
+    $2^{9}$  (={\tt 0x00000200}) & Partial Order Connection Permitted (obsolete)\\
+    $2^{10}$ (={\tt 0x00000400}) & Partial Order Service Profile (obsolete)\\
+    $2^{11}$ (={\tt 0x00000800}) & CC (obsolete)\\\\
+    $2^{12}$ (={\tt 0x00001000}) & CC.NEW (obsolete)\\
+    $2^{13}$ (={\tt 0x00002000}) & CC.ECHO (obsolete)\\
+    $2^{14}$ (={\tt 0x00004000}) & TCP Alternate Checksum Request (obsolete)\\
+    $2^{15}$ (={\tt 0x00008000}) & TCP Alternate Checksum Data (obsolete)\\\\
+    $2^{16}$ (={\tt 0x00010000}) & Skeeter\\
+    $2^{17}$ (={\tt 0x00020000}) & Bubba\\
+    $2^{18}$ (={\tt 0x00040000}) & Trailer Checksum Option\\
+    $2^{19}$ (={\tt 0x00080000}) & MD5 Signature Option (obsoleted by option 29)\\\\
+    $2^{20}$ (={\tt 0x00100000}) & SCPS Capabilities\\
+    $2^{21}$ (={\tt 0x00200000}) & Selective Negative Acknowledgements\\
+    $2^{22}$ (={\tt 0x00400000}) & Record Boundaries\\
+    $2^{23}$ (={\tt 0x00800000}) & Corruption experienced\\\\
+    $2^{24}$ (={\tt 0x01000000}) & SNAP\\
+    $2^{25}$ (={\tt 0x02000000}) & Unassigned (released 2000-12-18)\\
+    $2^{26}$ (={\tt 0x04000000}) & TCP Compression Filter\\
+    $2^{27}$ (={\tt 0x08000000}) & Quick-Start Response\\\\
+    $2^{28}$ (={\tt 0x10000000}) & User Timeout Option (also, other known unauthorized use)\\
+    $2^{29}$ (={\tt 0x20000000}) & TCP Authentication Option (TCP-AO)\\
+    $2^{30}$ (={\tt 0x40000000}) & Multipath TCP (MPTCP)\\
+    $2^{31}$ (={\tt 0x80000000}) & all options > 31\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Packet File Output}
+In packet mode ({\tt --s} option), the tcpFlags plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt ipTOS}                & IP Type of Service\\
+    {\tt ipID}                 & IP ID\\
+    {\tt ipIDDiff}             & IP ID diff\\
+    {\tt ipFrag}               & IP fragment\\
+    {\tt ipTTL}                & IP TTL\\
+    {\tt ipHdrChkSum}          & IP header checksum\\
+    {\tt ipCalChkSum}          & IP header computed checksum\\
+    {\tt l4HdrChkSum}          & Layer 4 header checksum\\
+    {\tt l4CalChkSum}          & Layer 4 header computed checksum\\
+    {\tt ipFlags}              & IP flags\\
+    {\tt ipOptLen}             & IP options length\\
+    {\tt ipOpts}               & IP options\\
+    {\tt seq}                  & Sequence number\\
+    {\tt ack}                  & Acknowledgement number\\
+    {\tt seqDiff}              & Sequence number diff           & {\tt SEQ\_ACK\_NUM=1}\\
+    {\tt ackDiff}              & Acknowledgement number diff    & {\tt SEQ\_ACK\_NUM=1}\\
+    {\tt seqPktLen}            & Sequence packet length         & {\tt SEQ\_ACK\_NUM=1}\\
+    {\tt ackPktLen}            & Acknowledgement packet length  & {\tt SEQ\_ACK\_NUM=1}\\
+    {\tt \nameref{tcpFStat}}   & TCP aggregated protocol flags\\
+                               & (CWR, ACK, PSH, RST, SYN, FIN)\\
+    {\tt \nameref{tcpFlags}}   & Flags\\
+    {\tt \nameref{tcpAnomaly}} & TCP aggregated header anomaly flags\\
+    {\tt tcpWin}               & TCP window size\\
+    {\tt tcpOptLen}            & TCP options length\\
+    {\tt tcpOpts}              & TCP options\\
+    \bottomrule
+\end{longtable}
+
+%\subsection{Custom File Output}
+%Non-standard output
+
+%\subsection{Additional Output}
+%Non-standard output:
+%\begin{itemize}
+%    \item {\tt PREFIX\_suffix.txt}: description
+%\end{itemize}
+
+\subsection{Plugin Report Output}
+The aggregated {\tt\nameref{ipFlags}}, {\tt\nameref{tcpAnomaly}} and {\tt tcpWinSzThRt} are reported.
+
+%\subsection{Example}
+%A prominent example is the routing problem by misconfiguration:
+%Anomaly flag shows {\tt 0xXX03} with Flags {\tt 0x1A} indicating perfect data exchange but the received byte count and packet count are zero.
+%Either the return traffic is not captured and/or a routing anomaly exists, such as the traffic returns via an unknown gateway.
+%This was an actual case resolving a firewall misconfiguration combined with unexpected OSPF actions in a large company network.
+
+%\subsection{Known Bugs and Limitations}
+%
+%\subsection{TODO}
+%\begin{itemize}
+%    \item TODO1
+%    \item TODO2
+%\end{itemize}
+
+\subsection{References}
+\begin{itemize}
+    \item \url{http://www.iana.org/assignments/ip-parameters}
+    \item \url{http://www.iana.org/assignments/tcp-parameters/tcp-parameters.xml}
+\end{itemize}
+
+\end{document}

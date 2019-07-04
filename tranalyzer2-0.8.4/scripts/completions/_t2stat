@@ -1,0 +1,32 @@
+# Bash/ZSH completion for t2stat
+
+_t2stat() {
+    #compdef t2stat
+    local cur prev
+    if type compdef &> /dev/null; then
+        cur="${words[CURRENT]}"
+        [ $CURRENT -gt 2 ] && prev=${words[CURRENT-1]}
+    else
+        local words cword
+        _init_completion || return
+    fi
+    local args=(
+        -USR1 -USR2 -INT -TERM -SYS
+        -s --sudo -p --print -l --list -i --interactive
+        -\? -h --help
+    )
+    if [[ "$cur" == -* ]]; then
+        if type compdef &> /dev/null; then
+            _arguments --
+        else
+            COMPREPLY=($(compgen -W "${args[*]}" -- "$cur"))
+        fi
+        return
+    fi
+}
+
+if type compdef &> /dev/null; then
+    compdef _t2stat t2stat
+else
+    complete -F _t2stat t2stat
+fi

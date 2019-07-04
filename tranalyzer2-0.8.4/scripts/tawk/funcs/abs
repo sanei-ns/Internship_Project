@@ -1,0 +1,22 @@
+#!/usr/bin/env awk
+#
+# Returns the absolute value of 'v'
+#
+# Parameters:
+#   - v : the value to return the absolute value of
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{ print abs(-42) }' file.txt
+
+@include "isnum"
+
+function abs(v) {
+    if (isnum(v)) {
+        return (v < 0 ? -v : v)
+    } else {
+        return v
+    }
+}

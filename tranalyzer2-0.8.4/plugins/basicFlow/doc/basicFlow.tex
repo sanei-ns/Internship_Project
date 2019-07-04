@@ -1,0 +1,523 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {basicFlow}
+    {Overall Flow Info + L3/4 addressing}
+    {Tranalyzer Development Team} % author(s)
+
+\section{basicFlow}\label{s:basicFlow}
+
+\subsection{Description}
+The basicFlow plugin provides host identification fields and timing information.
+
+%\section{Dependencies}
+
+%\subsubsection{External Libraries}
+
+%\subsubsection{Required Files}
+
+\subsection{Configuration Flags}
+
+\subsubsection{basicFlow.h}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+    \midrule
+    {\tt\small BFO\_SENSORID}             & 0 & 1: sensorID on / 0: sensorID off\\
+    {\tt\small BFO\_HDRDESC\_PKTCNT}      & 0 & 1: Enables / 0: Disables pkt count for header description\\
+    {\tt\small BFO\_MAC}                  & 1 & 1: Enables / 0: Disables MAC address output\\
+    {\tt\small BFO\_ETHERTYPE}            & 1 & 1: Enables / 0: Disables EtherType output   & {\tt\small IPV6\_ACTIVATE=2||}\\
+                                          &   &                                             & {\tt\small ETH\_ACTIVATE>0}\\
+    {\tt\small BFO\_VLAN}                 & 1 & 0: Do not output VLAN information,\\
+                                          &   & 1: Output VLAN numbers,\\
+                                          &   & 2: Output VLAN headers as hex\\\\
+
+    {\tt\small BFO\_MPLS}                 & 0 & 0: Do not output MPLS information,\\
+                                          &   & 1: Output MPLS labels,\\
+                                          &   & 2: Output MPLS headers as hex,\\
+                                          &   & 3: Output decoded MPLS headers\\\\
+
+    {\tt\small BFO\_L2TP}                 & 0 & 1: Enables L2TP header information\\
+    {\tt\small BFO\_GRE}                  & 0 & 1: Enables GRE header information\\
+    {\tt\small BFO\_PPP}                  & 0 & 1: Enables PPP header information\\
+    {\tt\small BFO\_ETHIP}                & 0 & 1: Enables ETHIP header information\\
+    {\tt\small BFO\_TEREDO}               & 0 & 1: Enables Teredo IP, Port information\\\\
+
+    {\tt\small BFO\_SUBNET\_TEST}         & 1 & 1: Enables subnet test                     & \\
+    {\tt\small BFO\_SUBNET\_TEST\_GRE}    & 0 & 1: Enable subnet test on GRE addresses     & {\tt\small IPV6\_ACTIVATE!=1}\\
+    {\tt\small BFO\_SUBNET\_TEST\_L2TP}   & 0 & 1: Enables subnet test on L2TP addresses   & {\tt\small IPV6\_ACTIVATE!=1}\\
+    {\tt\small BFO\_SUBNET\_TEST\_TEREDO} & 0 & 1: Enables subnet test on Teredo addresses & \\\\
+
+    {\tt\small BFO\_SUBNET\_HEX}          & 0 & Country code and who information representation:\\
+                                          &   & \qquad 0: Two human readable columns\\
+                                          &   & \qquad    (two letters country code and who),\\
+                                          &   & \qquad 1: One column, hex ID output\\
+    {\tt\small BFO\_SUBNET\_ASN}	      & 0 & 1: Autonomous System Numbers on, 0: ASN off\\
+    {\tt\small BFO\_SUBNET\_LL}           & 0 & 1: Latitude, longitude and reliability, 0: no output\\\\
+
+    {\tt\small BFO\_MAX\_HDRDESC}         & 4 & Max. number of headers descriptions to store & {\tt\small T2\_PRI\_HDRDESC=1}\\
+                                          &   & 0: switch off output\\
+    {\tt\small BFO\_MAX\_MAC}             & 2 & Max. number of different MAC addresses to store\\
+                                          &   & 0: switch off output\\
+    {\tt\small BFO\_MAX\_MPLS}            & 3 & Max. number of MPLS Header pointer to store\\
+                                          &   & 0: switch off output\\
+    {\tt\small BFO\_MAX\_VLAN}            & 3 & Max. number of Ethertypes to store\\
+                                          &   & 0: switch off output\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{utils.h}\label{s:bfo:utils.h}
+The following flags can be used to control the output of the plugin:
+\begin{table}[!ht]
+    \centering
+    \begin{tabular}{lcl}
+        \toprule
+        {\bf Name} & {\bf Default} & {\bf Description}\\
+        \midrule
+        {\tt\small SUBRNG} & 0  & Subnet definition 1: Begin - End / 0: CIDR only\\
+        {\tt\small WHOLEN} & 20 & length of WHO record\\
+        \bottomrule
+    \end{tabular}
+\end{table}
+If {\tt SUBRNG} or {\tt WHOEN} is changed, the \tranrefpl{basicFlow} plugin {\bf MUST} be recompiled with {\tt `./autogen.sh -f'}.
+
+\subsubsection{bin2txt.h}
+Additional configuration options can be found in {\tt \$T2HOME/utils/bin2txt.h}.
+Refer to \tranrefpl{tranalyzer2} documentation for more details.
+
+\subsection{Flow File Output}
+The basicFlow plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt dir}                & C   & Flow direction A / B     & \\
+    {\tt \nameref{flowInd}}  & U64 & Flow index               & \\
+    {\tt sensorID}           & U32 & Sensor ID                & {\tt\small BFO\_SENSORID=1}\\
+    {\tt \nameref{flowStat}} & H64 & Flow status and warnings & \\\\
+
+    % Time
+    {\tt timeFirst} & TS      & Date time of first packet\\
+    {\tt timeLast}  & TS      & Date time of last packet\\
+    {\tt duration}  & U64.U32 & Flow duration \\\\
+
+    \multicolumn{4}{l}{If {\tt T2\_PRI\_HDRDESC=1} and {\tt BFO\_HDRDESC\_DEPTH>0}, the following columns are displayed:}\\\\
+
+    {\tt \hyperref[hdrDesc]{numHdrDesc}}      & U8      & Number of different headers descriptions \\
+    {\tt \hyperref[hdrDesc]{numHdrs}}         & RU16    & Number of headers (depth) in {\tt hdrDesc} & {\tt\small BFO\_HDRDESC\_PKTCNT=1}\\
+    {\tt \hyperref[hdrDesc]{hdrDesc\_PktCnt}} & RS\_U64 & Headers description and packet count \\\\
+
+    {\tt srcMac}  & R(MAC) & Source MAC address      & {\tt\small BFO\_MAC=1}\\
+    {\tt dstMac}  & R(MAC) & Destination MAC address & {\tt\small BFO\_MAC=1}\\
+    {\tt ethType} & H16    & Ethernet type           & {\tt\small BFO\_ETHERTYPE=1\&\&}\\
+                  &        &                         & {\tt\small (ETH\_ACTIVATE>0||}\\
+                  &        &                         & {\tt\small IPV6\_ACTIVATE=2)}\\\\
+
+    \\ % Move the following lines to the next page
+
+    % VLAN
+    \multicolumn{4}{l}{If {\tt BFO\_VLAN>0} and {\tt BFO\_MAX\_VLAN\_DEPTH>0}, the following column is displayed:}\\\\
+
+    {\tt ethVlanID}  & U16R & VLAN IDs           & {\tt\small BFO\_VLAN=1}\\
+    {\tt ethVlanHdr} & RH32 & VLAN headers (hex) & {\tt\small BFO\_VLAN=2}\\\\
+
+    % MPLS
+    \multicolumn{4}{l}{If {\tt BFO\_MPLS>0} and {\tt BFO\_MAX\_MPLS\_DEPTH>0}, the following column is displayed:}\\\\
+
+    {\tt mplsLabels}       & RU32           & MPLS labels      & {\tt\small BFO\_MPLS=1}\\
+    {\tt mplsTagsHex}      & RH32           & MPLS tags (hex)  & {\tt\small BFO\_MPLS=2}\\
+    {\tt mplsLabel\_ToS\_} & R(U32\_U8\_    & MPLS tags detail & \\
+    {\tt \qquad S\_TTL}    & \qquad U8\_U8) &                  & {\tt\small BFO\_MPLS=3}\\\\
+
+    % PPP
+    \multicolumn{4}{l}{If {\tt BFO\_PPP=1}, the following column is displayed:}\\\\
+
+    {\tt pppHdr}  & H32 & PPP header & \\\\
+
+    % L2TP
+    \multicolumn{4}{l}{If {\tt BFO\_L2TP=1}, the following columns are displayed:}\\\\
+
+    {\tt l2tpHdr}                        & H16     & L2TP header                           & \\
+    {\tt l2tpTID}                        & U16     & L2TP tunnel ID                        & \\
+    {\tt l2tpSID}                        & U16     & L2TP session ID                       & \\
+    {\tt l2tpCCSID}                      & U32     & L2TP control connection/session ID    & \\
+    {\tt l2tpSrcIP}                      & IP4     & L2TP source IP address                & \\
+    {\tt l2tpSrcIPASN}                   & U32     & L2TP source IP ASN                    & {\tt\small BFO\_SUBNET\_TEST\_L2TP=1\&\&}\\
+                                         &         &                                       & {\tt\small BFO\_SUBNET\_ASN=1}\\
+    {\tt \hyperref[subnet]{l2tpSrcIPCC}} & S/H32   & L2TP source IP country code           & {\tt\small BFO\_SUBNET\_TEST\_L2TP=1}\\
+    {\tt l2tpSrcIPWho}                   & S       & L2TP source IP organisation name      & {\tt\small BFO\_SUBNET\_TEST\_L2TP=1\&\&}\\
+                                         &         &                                       & {\tt\small BFO\_SUBNET\_HEX=0}\\
+    {\tt l2tpSrcIPLat\_}                 & F\_F\_F & L2TP source IP latitude,              & {\tt\small BFO\_SUBNET\_TEST\_L2TP=1\&\&}\\
+    {\tt \qquad Lng\_relP}               &         & \qquad longitude and reliability      & {\tt\small BFO\_SUBNET\_LL=1}\\
+    {\tt l2tpDstIP}                      & IP4     & L2TP destination IP address           & \\
+    {\tt l2tpDstIPASN}                   & U32     & L2TP destination IP ASN               & {\tt\small BFO\_SUBNET\_TEST\_L2TP=1\&\&}\\
+                                         &         &                                       & {\tt\small BFO\_SUBNET\_ASN=1}\\
+    {\tt \hyperref[subnet]{l2tpDstIPCC}} & S/H32   & L2TP destination IP country code      & {\tt\small BFO\_SUBNET\_TEST\_L2TP=1}\\
+    {\tt l2tpDstIPWho}                   & S       & L2TP destination IP organisation name & {\tt\small BFO\_SUBNET\_TEST\_L2TP=1\&\&}\\
+                                         &         &                                       & {\tt\small BFO\_SUBNET\_HEX=0}\\
+    {\tt l2tpDstIPLat\_}                 & F\_F\_F & L2TP destination IP latitude,         & {\tt\small BFO\_SUBNET\_TEST\_L2TP=1\&\&}\\
+    {\tt \qquad Lng\_relP}               &         & \qquad longitude and reliability      & {\tt\small BFO\_SUBNET\_LL=1}\\\\
+
+    % GRE
+    \multicolumn{4}{l}{If {\tt BFO\_GRE=1}, the following columns are displayed:}\\\\
+
+    {\tt greHdr}                        & H32     & GRE header                           & \\
+    {\tt greSrcIP}                      & IP4     & GRE source IP address                & \\
+    {\tt greSrcIPASN}                   & U32     & GRE source IP ASN                    & {\tt\small BFO\_SUBNET\_TEST\_GRE=1\&\&}\\
+                                        &         &                                      & {\tt\small BFO\_SUBNET\_ASN=1}\\
+    {\tt \hyperref[subnet]{greSrcIPCC}} & S/H32   & GRE source IP country code           & {\tt\small BFO\_SUBNET\_TEST\_GRE=1}\\
+    {\tt greSrcIPWho}                   & S       & GRE source IP organisation name      & {\tt\small BFO\_SUBNET\_TEST\_GRE=1\&\&}\\
+                                        &         &                                      & {\tt\small BFO\_SUBNET\_HEX=0}\\
+    {\tt greSrcIPLat\_}                 & F\_F\_F & GRE source IP latitude,              & {\tt\small BFO\_SUBNET\_TEST\_GRE=1\&\&}\\
+    {\tt \qquad Lng\_relP}              &         & \qquad longitude and reliability     & {\tt\small BFO\_SUBNET\_LL=1}\\
+    {\tt greDstIP}                      & IP4     & GRE destination IP address           & \\
+    {\tt greDstIPASN}                   & U32     & GRE destination IP ASN               & {\tt\small BFO\_SUBNET\_TEST\_GRE=1\&\&}\\
+                                        &         &                                      & {\tt\small BFO\_SUBNET\_ASN=1}\\
+    {\tt \hyperref[subnet]{greDstIPCC}} & S/H32   & GRE destination IP country code      & {\tt\small BFO\_SUBNET\_TEST\_GRE=1}\\
+    {\tt greDstIPWho}                   & S       & GRE destination IP organisation name & {\tt\small BFO\_SUBNET\_TEST\_GRE=1\&\&}\\
+                                        &         &                                      & {\tt\small BFO\_SUBNET\_HEX=0}\\
+    {\tt greDstIPLat\_}                 & F\_F\_F & GRE destination IP latitude,         & {\tt\small BFO\_SUBNET\_TEST\_GRE=1\&\&}\\
+    {\tt \qquad Lng\_relP}              &         & \qquad longitude and reliability     & {\tt\small BFO\_SUBNET\_LL=1}\\\\
+
+    % Teredo
+    \multicolumn{4}{l}{If {\tt BFO\_TEREDO=1}, the following columns are displayed:}\\\\
+
+    {\tt trdoDstIP}                      & IP4     & Nxt Teredo Flow: Dest IPv4 address      & \\
+    {\tt trdoDstIPASN}                   & U32     & Teredo destination IP ASN               & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+                                         &         &                                         & {\tt\small BFO\_SUBNET\_ASN=1}\\
+    {\tt \hyperref[subnet]{trdoDstIPCC}} & S/H32   & Teredo destination IP country code      & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1}\\
+    {\tt trdoDstIPWho}                   & S       & Teredo destination IP organisation name & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+                                         &         &                                         & {\tt\small BFO\_SUBNET\_HEX=0}\\
+    {\tt trdoDstIPLat\_}                 & F\_F\_F & Teredo destination IP latitude,         & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+    {\tt \qquad Lng\_relP}               &         & \qquad longitude and reliability        & {\tt\small BFO\_SUBNET\_LL=1}\\
+    {\tt trdoDstPort}                    & U16     & Nxt Teredo Flow: Destination port\\\\
+
+    \multicolumn{4}{l}{If {\tt BFO\_TEREDO=1} and {\tt IPV6\_ACTIVATE>0} then the following lines are displayed:}\\\\
+
+    {\tt \hyperref[trdoFlags]{trdo6SrcFlgs}}  & H8      & Teredo IPv6 source address decode:     & \\
+                                              &         & \qquad Flags                           & \\
+    {\tt trdo6SrcSrvIP4}                      & IP4     & Teredo IPv6 source address decode:     & \\
+                                              &         & \qquad Server IPv4                     & \\
+    {\tt trdo6SrcSrvIP4ASN}                   & U32     & Teredo IPv6 source address decode:     & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+                                              &         & \qquad Server IPv4 ASN                 & {\tt\small BFO\_SUBNET\_ASN=1}\\
+    {\tt \hyperref[subnet]{trdo6SrcSrvIP4CC}} & S/H32   & Teredo IPv6 source address decode:     & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1}\\
+                                              &         & \qquad Server IPv4 country code        & \\
+    {\tt trdo6SrcSrvIP4Who}                   & S       & Teredo IPv6 source address decode:     & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+                                              &         & \qquad Server IPv4 who                 & {\tt\small BFO\_SUBNET\_HEX=0}\\
+    {\tt trdo6SrcSrvIP4Lat\_}                 & F\_F\_F & Teredo IPv6 source address decode:     & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+    {\tt \qquad Lng\_relP}                    &         & \qquad Server IPv4 latitude,           & {\tt\small BFO\_SUBNET\_LL=1}\\
+                                              &         & \qquad\qquad longitude and reliability & \\
+    {\tt trdo6SrcCPIP4}                       & IP4     & Teredo IPv6 source address decode:     & \\
+                                              &         & \qquad Client Public IPv4              & \\
+    {\tt trdo6SrcCPIP4ASN}                    & U32     & Teredo IPv6 source address decode:     & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+                                              &         & \qquad Client Public IPv4 ASN          & {\tt\small BFO\_SUBNET\_ASN=1}\\
+    {\tt \hyperref[subnet]{trdo6SrcCPIP4CC}}  & S/H32   & Teredo IPv6 source address decode:     & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1}\\
+                                              &         & \qquad Client Public IPv4 country code & \\
+    {\tt trdo6SrcCPIP4Who}                    & S       & Teredo IPv6 source address decode:     & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+                                              &         & \qquad Client Public IPv4 who          & {\tt\small BFO\_SUBNET\_HEX=0}\\
+    {\tt trdo6SrcCPIP4Lat\_}                  & F\_F\_F & Teredo IPv6 source address decode:     & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+    {\tt \qquad Lng\_relP}                    &         & \qquad Client Public IPv4 latitude,    & {\tt\small BFO\_SUBNET\_LL=1}\\
+                                              &         & \qquad\qquad longitude and reliability & \\
+    {\tt trdo6SrcCPPort}                      & U16     & Teredo IPv6 source address decode:     & \\
+                                              &         & \qquad Client Public Port              & \\
+
+    {\tt \hyperref[trdoFlags]{trdo6DstFlgs}}  & H8      & Teredo IPv6 dest. address decode:       & \\
+                                              &         & \qquad Flags                            & \\
+    {\tt trdo6DstSrvIP4}                      & IP4     & Teredo IPv6 dest. address decode:       & \\
+                                              &         & \qquad Server IPv4                      & \\
+    {\tt trdo6DstSrvIP4ASN}                   & U32     & Teredo IPv6 dest. address decode:       & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+                                              &         & \qquad Server IPv4 ASN                  & {\tt\small BFO\_SUBNET\_ASN=1}\\
+    {\tt \hyperref[subnet]{trdo6DstSrvIP4CC}} & S/H32   & Teredo IPv6 dest. address decode:       & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1}\\
+                                              &         & \qquad Server IPv4 country code         & \\
+    {\tt trdo6DstSrvIP4Who}                   & S       & Teredo IPv6 dest. address decode:       & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+                                              &         & \qquad Server IPv4 who                  & {\tt\small BFO\_SUBNET\_HEX=0}\\
+    {\tt trdo6DstSrvIP4Lat\_}                 & F\_F\_F & Teredo IPv6 dest. address decode:       & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+    {\tt \qquad Lng\_relP}                    &         & \qquad Server IPv4 latitude,            & {\tt\small BFO\_SUBNET\_LL=1}\\
+                                              &         & \qquad\qquad longitude and reliability  & \\
+    {\tt trdo6DstCPIP4}                       & IP4     & Teredo IPv6 dest. address decode:       & \\
+                                              &         & \qquad Client Public IPv4               & \\
+    {\tt trdo6DstCPIP4ASN}                    & U32     & Teredo IPv6 dest. address decode:       & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+                                              &         & \qquad Client Public IPv4 ASN           & {\tt\small BFO\_SUBNET\_ASN=1}\\
+    {\tt \hyperref[subnet]{trdo6DstCPIP4CC}}  & S/H32   & Teredo IPv6 dest. address decode:       & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1}\\
+                                              &         & \qquad Client Public IPv4 country code  & \\
+    {\tt trdo6DstCPIP4Who}                    & S       & Teredo IPv6 dest. address decode:       & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+                                              &         & \qquad Client Public IPv4 who           & {\tt\small BFO\_SUBNET\_HEX=0}\\
+    {\tt trdo6DstCPIP4Lat\_}                  & F\_F\_F & Teredo IPv6 dest. address decode:       & {\tt\small BFO\_SUBNET\_TEST\_TEREDO=1\&\&}\\
+    {\tt \qquad Lng\_relP}                    &         & \qquad Client Public IPv4 latitude,     & {\tt\small BFO\_SUBNET\_LL=1}\\
+                                              &         & \qquad\qquad longitude and reliability  & \\
+    {\tt trdo6DstCPPort}                      & U16     & Teredo IPv6 dest. address decode:       & \\
+                                              &         & \qquad Client Public Port               & \\\\
+
+    % IP
+    \multicolumn{4}{l}{Standard six tuple output including geolabeling:}\\\\
+
+    {\tt srcIP}                      & IP      & Source IP address                & \\
+    {\tt srcIPASN}                   & U32     & Source IP ASN                    & {\tt\small BFO\_SUBNET\_TEST=1\&\&}\\
+                                     &         &                                  & {\tt\small BFO\_SUBNET\_ASN=1}\\
+    {\tt \hyperref[subnet]{srcIPCC}} & S/H32   & Source IP country code           & {\tt\small BFO\_SUBNET\_TEST=1}\\
+    {\tt srcIPWho}                   & S       & Source IP organisation name      & {\tt\small BFO\_SUBNET\_TEST=1\&\&}\\
+                                     &         &                                  & {\tt\small BFO\_SUBNET\_HEX=0}\\
+    {\tt srcIPLat\_Lng\_relP}        & F\_F\_F & Source IP latitude,              & {\tt\small BFO\_SUBNET\_TEST=1\&\&}\\
+                                     &         & \qquad longitude and reliability & {\tt\small BFO\_SUBNET\_LL=1}\\
+    {\tt srcPort}                    & U16     & Source Port                      & \\\\
+
+    {\tt dstIP4}                     & IP      & Destination IP address           & \\
+    {\tt dstIPASN}                   & U32     & Destination IP ASN               & {\tt\small BFO\_SUBNET\_TEST=1\&\&}\\
+                                     &         &                                  & {\tt\small BFO\_SUBNET\_ASN=1}\\
+    {\tt \hyperref[subnet]{dstIPCC}} & S/H32   & Destination IP country code      & {\tt\small BFO\_SUBNET\_TEST=1}\\
+    {\tt dstIPWho}                   & S       & Destination IP organisation name & {\tt\small BFO\_SUBNET\_TEST=1}\\
+                                     &         &                                  & {\tt\small BFO\_SUBNET\_HEX=0}\\
+    {\tt dstIPLat\_Lng\_relP}        & F\_F\_F & Destination IP latitude,         & {\tt\small BFO\_SUBNET\_TEST=1\&\&}\\
+                                     &         & \qquad longtable and reliability & {\tt\small BFO\_SUBNET\_LL=1}\\
+    {\tt dstPort}                    & U16     & Destination port                 & \\\\
+
+    {\tt l4Proto}                    & U8      & Layer 4 protocol                 & \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{flowInd}\label{flowInd}
+It is useful to identify flows when post processing operations, such as sort or
+filters are applied to a flow file and only a {\tt B} or an {\tt A} flow is selected. Moreover a packet
+file generated with the {\tt --s} option supplies the flow index which simplifies the mapping of singular
+packets to the appropriate flow.
+
+\subsubsection{flowStat}\label{flowStat}
+The {\tt flowStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf flowStat} & {\bf Description}\\
+    \midrule\endhead%
+    $2^{00}$ (={\tt 0x00000000 0000000\textcolor{magenta}{1}}) & Inverted Flow, did not initiate connection\\
+    $2^{01}$ (={\tt 0x00000000 0000000\textcolor{magenta}{2}}) & No Ethernet header\\
+    $2^{02}$ (={\tt 0x00000000 0000000\textcolor{magenta}{4}}) & Pure L2 Flow\\
+    $2^{03}$ (={\tt 0x00000000 0000000\textcolor{magenta}{8}}) & Point to Point Protocol over Ethernet Discovery (PPPoED)\\
+    \\
+    $2^{04}$ (={\tt 0x00000000 000000\textcolor{magenta}{1}0}) & Point to Point Protocol over Ethernet Service (PPPoES)\\
+    $2^{05}$ (={\tt 0x00000000 000000\textcolor{magenta}{2}0}) & Link Layer Discovery Protocol (LLDP)\\
+    $2^{06}$ (={\tt 0x00000000 000000\textcolor{magenta}{4}0}) & ARP\\
+    $2^{07}$ (={\tt 0x00000000 000000\textcolor{magenta}{8}0}) & Reverse ARP\\
+    \\
+    $2^{08}$ (={\tt 0x00000000 00000\textcolor{magenta}{1}00}) & VLANs\\
+    $2^{09}$ (={\tt 0x00000000 00000\textcolor{magenta}{2}00}) & MPLS unicast\\
+    $2^{10}$ (={\tt 0x00000000 00000\textcolor{magenta}{4}00}) & MPLS multicast\\
+    $2^{11}$ (={\tt 0x00000000 00000\textcolor{magenta}{8}00}) & L2TP v2/3\\
+    \\
+    $2^{12}$ (={\tt 0x00000000 0000\textcolor{magenta}{1}000}) & GRE v1/2\\
+    $2^{13}$ (={\tt 0x00000000 0000\textcolor{magenta}{2}000}) & PPP header after L2TP or GRE\\
+    $2^{14}$ (={\tt 0x00000000 0000\textcolor{magenta}{4}000}) & IPv4\\
+    $2^{15}$ (={\tt 0x00000000 0000\textcolor{magenta}{8}000}) & IPv6\\
+    \\
+    $2^{16}$ (={\tt 0x00000000 000\textcolor{magenta}{1}0000}) & IPvX bogus packets\\
+    $2^{17}$ (={\tt 0x00000000 000\textcolor{magenta}{2}0000}) & IPv4/6 in IPv4/6\\
+    $2^{18}$ (={\tt 0x00000000 000\textcolor{magenta}{4}0000}) & Ethernet over IP\\
+    $2^{19}$ (={\tt 0x00000000 000\textcolor{magenta}{8}0000}) & Teredo tunnel\\
+    \\
+    $2^{20}$ (={\tt 0x00000000 00\textcolor{magenta}{1}00000}) & Anything in Anything (AYIYA) Tunnel\\
+    $2^{21}$ (={\tt 0x00000000 00\textcolor{magenta}{2}00000}) & GPRS Tunneling Protocol (GTP)\\
+    $2^{22}$ (={\tt 0x00000000 00\textcolor{magenta}{4}00000}) & Virtual eXtensible Local Area Network (VXLAN)\\
+    $2^{23}$ (={\tt 0x00000000 00\textcolor{magenta}{8}00000}) & Control and Provisioning of Wireless Access Points (CAPWAP),\\
+                                                               & Lightweight Access Point Protocol (LWAPP)\\
+    \\
+    $2^{24}$ (={\tt 0x00000000 0\textcolor{magenta}{1}000000}) & Stream Control Transmission Protocol (SCTP)\\
+    $2^{25}$ (={\tt 0x00000000 0\textcolor{magenta}{2}000000}) & SSDP/UPnP\\
+    $2^{26}$ (={\tt 0x00000000 0\textcolor{magenta}{4}000000}) & Encapsulated Remote Switch Packet ANalysis (ERSPAN)\\
+    $2^{27}$ (={\tt 0x00000000 0\textcolor{magenta}{8}000000}) & Cisco Web Cache Communication Protocol (WCCP)\\
+    \\
+    $2^{28}$ (={\tt 0x00000000 \textcolor{magenta}{1}0000000}) & SIP/RTP\\
+    $2^{29}$ (={\tt 0x00000000 \textcolor{magenta}{2}0000000}) & Generic Network Virtualization Encapsulation (GENEVE)\\
+    $2^{30}$ (={\tt 0x00000000 \textcolor{magenta}{4}0000000}) & Authentication Header (AH)\\
+    $2^{31}$ (={\tt 0x00000000 \textcolor{magenta}{8}0000000}) & ---\\
+    \\
+    $2^{32}$ (={\tt 0x0000000\textcolor{magenta}{1} 00000000}) & Acquired packet length < minimal L2 datagram\\
+    $2^{33}$ (={\tt 0x0000000\textcolor{magenta}{2} 00000000}) & Acquired packet length < packet length in L3 header\\
+    $2^{34}$ (={\tt 0x0000000\textcolor{magenta}{4} 00000000}) & Acquired packet length < minimal L3 Header\\
+    $2^{35}$ (={\tt 0x0000000\textcolor{magenta}{8} 00000000}) & Acquired packet length < minimal L4 Header\\
+    \\
+    $2^{36}$ (={\tt 0x000000\textcolor{magenta}{1}0 00000000}) & IPv4 fragmentation present\\
+    $2^{37}$ (={\tt 0x000000\textcolor{magenta}{2}0 00000000}) & IPv4 fragmentation error (refer to the \tranrefpl{tcpFlags} plugin for more details)\\
+    $2^{38}$ (={\tt 0x000000\textcolor{magenta}{4}0 00000000}) & IPv4 1.\ fragment out of sequence or missing\\
+    $2^{39}$ (={\tt 0x000000\textcolor{magenta}{8}0 00000000}) & Fragmentation sequence not completed when flow timeout\\
+    \\
+    $2^{40}$ (={\tt 0x00000\textcolor{magenta}{1}00 00000000}) & Flow timeout instead of protocol termination\\
+    $2^{41}$ (={\tt 0x00000\textcolor{magenta}{2}00 00000000}) & Alarm mode: remove this flow instantly\\
+    $2^{42}$ (={\tt 0x00000\textcolor{magenta}{4}00 00000000}) & Autopilot: Flow removed to free space in main hash map\\
+    $2^{43}$ (={\tt 0x00000\textcolor{magenta}{8}00 00000000}) & Stop dissecting, error or not capable to do e.g. IPv4/6 config\\
+    \\
+    $2^{44}$ (={\tt 0x0000\textcolor{magenta}{1}000 00000000}) & PPPL3 header not readable, compressed\\
+    $2^{45}$ (={\tt 0x0000\textcolor{magenta}{2}000 00000000}) & ---\\
+    $2^{46}$ (={\tt 0x0000\textcolor{magenta}{4}000 00000000}) & ---\\
+    $2^{47}$ (={\tt 0x0000\textcolor{magenta}{8}000 00000000}) & ---\\
+    \\
+    $2^{48}$ (={\tt 0x000\textcolor{magenta}{1}0000 00000000}) & Header description overrun\\
+    $2^{49}$ (={\tt 0x000\textcolor{magenta}{2}0000 00000000}) & \tranrefpl{pcapd} and {\tt PD\_ALARM=1}: if set dumps the packets from this flow to a new pcap\\
+    $2^{50}$ (={\tt 0x000\textcolor{magenta}{4}0000 00000000}) & Land attack: same srcIP \&\& dstIP \&\& srcPort \&\& dstPort\\
+    $2^{51}$ (={\tt 0x000\textcolor{magenta}{8}0000 00000000}) & Time slip possibly due to NTP operations on the capture machine\\
+    \\
+    $2^{52}$ (={\tt 0x00\textcolor{magenta}{1}00000 00000000}) & \tranrefpl{liveXtr}: if set dumps the packets from this flow to a new pcap\\
+    \\
+    $2^{56}$ (={\tt 0x0\textcolor{magenta}{1}000000 00000000}) & Tor address detected\\
+    $2^{57}$ (={\tt 0x0\textcolor{magenta}{2}000000 00000000}) & A packet had a priority tag (VLAN tag with ID 0)\\
+    \\
+    $2^{63}$ (={\tt 0x\textcolor{magenta}{8}0000000 00000000}) & PCAP packet length > {\tt MAX\_MTU} in {\em ioBuffer.h}, caplen reduced\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{hdrDesc}\label{hdrDesc}
+The {\tt hdrDesc} column describes the protocol stack in the flow in a human readable way.
+Note that it gives the user a lookahead of what is to be expected, even if not in the appropriate IPv4/6 mode.
+For example, in IPv4 several different headers stacks can be displayed by one flow if Teredo or different fragmentation is involved.
+T2 then dissects only to the last header above the said protocol and sets the {\em Stop dissecting} bit in the flow status ($2^{41}$ (={\tt 0x00000400 00000000})).
+
+\subsubsection{trdoFlags}\label{trdoFlags}
+The {\tt trdoFlags} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf trdoFlags} & {\bf Description}\\
+    \midrule\endhead%
+    $2^{0}$ (={\tt 0x0\textcolor{magenta}{1}}) & Group/individual\\
+    $2^{1}$ (={\tt 0x0\textcolor{magenta}{2}}) & Universal/local\\
+    $2^{2}$ (={\tt 0x0\textcolor{magenta}{4}}) & 0\\
+    $2^{3}$ (={\tt 0x0\textcolor{magenta}{8}}) & 0\\
+    $2^{4}$ (={\tt 0x\textcolor{magenta}{1}0}) & 0\\
+    $2^{5}$ (={\tt 0x\textcolor{magenta}{2}0}) & 0\\
+    $2^{6}$ (={\tt 0x\textcolor{magenta}{4}0}) & Currently Unassigned\\
+    $2^{7}$ (={\tt 0x\textcolor{magenta}{8}0}) & Behind Nat, new version do not set this bit anymore\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{Geo labeling}\label{subnet}
+The country coding scheme is defined in {\tt utils/cntrycd.txt}.
+The special values {\tt [0-9][0-9]} are used to represent private addresses or special address ranges such as teredo or multicast:
+
+\begin{minipage}{.45\textwidth}
+    \begin{center}
+        \begin{itemize}
+            %\item {\tt 00}: 0.0.0.0/8 (Current network)
+            %\item {\tt 01}: 10.0.0.0/8 (Private network)
+            %\item {\tt 02}: 100.64.0.0/10 (Shared address space)
+            %\item {\tt 03}: 127.0.0.0/8 (Loopback address)
+            %\item {\tt 04}: 169.254.0.0/16 (Link-local address)
+            %\item {\tt 05}: 172.16.0.0/12 (Private network)
+            %\item {\tt 06}: 192.0.0.0/24 (Private network)
+            %\item {\tt 07}: 192.0.2.0/24 (TEST-NET-1)
+            %\item {\tt 08}: 192.88.99.0/24 (Reserved (formerly used for IPv6 to IPv4 relay))
+            %\item {\tt 09}: 192.168.0.0/16 (Private network)
+            %\item {\tt 10}: 198.18.0.0/15 (Private network)
+            %\item {\tt 11}: 198.51.100.0/16 (TEST-NET-2)
+            %\item {\tt 12}: 203.0.113.0/24 (TEST-NET-3)
+            %\item {\tt 13}: 224.0.0.0/4 (Multicast)
+            %\item {\tt 14}: 240.0.0.0/4 (Reserved)
+            %\item {\tt 15}: 255.255.255.255/32 (Broadcast)
+            \item {\tt 00}: 10.0.0.0/8 (private)
+            \item {\tt 01}: 172.16.0.0/16 (private)
+            \item {\tt 02}: 192.168.0.0/16 (private)
+            \item {\tt 03}: 169.254.0.0/16 (link-local)
+            \item {\tt 04}: 224.0.0.0/8 (multicast)
+            \item[]
+        \end{itemize}
+    \end{center}
+\end{minipage}
+\hfill
+\begin{minipage}{.45\textwidth}
+    \begin{center}
+        \begin{itemize}
+            \item {\tt 01}: fe80::/10 (link local)
+            \item {\tt 02}: fc00::/7 (private)
+            \item {\tt 03}: ::ffff:0.0.0.0/96
+            \item {\tt 04}: ff00::/8 (multicast)
+            \item {\tt 10}: 2001::/32 (teredo)
+            %\item {\tt 00}: ::/0 (Default route)
+            %\item {\tt 01}: ::/128 (Unspecified address)
+            %\item {\tt 02}: ::1/128 (Loopback address)
+            %\item {\tt 03}: ::ffff:0:0/96 (IPv4 mapped address)
+            %\item {\tt 04}: ::ffff:0:0:0/96 (IPv4 translated address)
+            %\item {\tt 05}: 64:ff9b::/96 (IPv4/IPv6 translation)
+            %\item {\tt 06}: 100::/64 (Discard prefix)
+            %\item {\tt 07}: 2001::/32 (Teredo tunneling)
+            %\item {\tt 08}: 2001:20::/28 (ORCHIDv2)
+            %\item {\tt 09}: 2001:db8::/32 (Address used in documentation and example source code)
+            %\item {\tt 10}: 2002::/16 (The 6to4 addressing scheme (now deprecated))
+            %\item {\tt 11}: fc00::/7 (Unique local address)
+            %\item {\tt 12}: fe80::/10 (Link-local address)
+            %\item {\tt 13}: ff00::/8 (Multicast address)
+            \item[]
+        \end{itemize}
+    \end{center}
+\end{minipage}
+
+%This definition is supplied in the file {\tt subnets4.txt} and {\tt subnets6.txt} which are automatically converted into a binary compressed version readable by
+%the \tranrefpl{basicFlow} plugin during the compilation sequence. If no subnet file exists in {\em \textasciitilde{}/.tranalyzer/plugins}, then the binary file is automatically copied.
+The text format of the {\tt subnets4.txt} and {\tt subnets6.txt} files is defined as follows:
+\begin{figure}[!ht]
+\centering
+\begin{small}
+\begin{lstlisting}
+#       3       20190114
+# prefix/mask   seMask  start_ip-end_ip coCode  asn     probability     long    lat     country_code    organisation
+10.0.0.0/8      8       10.0.0.0-10.255.255.255 0x01003690      0       1.000000        666.000000      666.000000      00      private_reserved
+172.16.0.0/12   12      172.16.0.0-172.31.255.255       0x01003690      0       1.000000        666.000000      666.000000      01      private_reserved
+192.168.0.0/16  16      192.168.0.0-192.168.255.255     0x01003690      0       1.000000        666.000000      666.000000      02      private_reserved
+169.254.0.0/16  16      169.254.0.0-169.254.255.255     0x01003690      0       1.000000        666.000000      666.000000      03      private_reserved
+224.0.0.0/8     8       224.0.0.0-224.255.255.255       0x01002c68      0       1.000000        666.000000      666.000000      04      Multicast
+1.0.0.0/24      24      1.0.0.0-1.0.0.255       0x0e000000      0       0.980000        145.179990      -37.700000      au      regional internet registry for the asia-pacific region
+1.0.1.0/24      24      1.0.1.0-1.0.1.255       0x31000000      0       0.970000        666.000000      666.000000      cn      chinanet fujian province network
+1.0.1.0/24      22      1.0.1.0-1.0.3.255       0x31000000      0       0.980000        119.309990      26.059990       cn      chinanet fujian province network
+1.0.100.0/22    22      1.0.100.0-1.0.103.255   0x73000000      0       0.980000        133.050000      35.470000       jp      --
+-	22      9.111.0.15-9.112.2.116   0x54000000      0       0.980000        13.050000      225.470000       us     IBM
+......
+\end{lstlisting}
+\end{small}
+\end{figure}
+
+A {\tt `--'} in the first column ({\tt prefix/mask}) denotes a non-CIDR range.
+In this case, Tranalyzer reads the 2nd column instead of the 1st when {\tt SUBRNG=1} in \nameref{s:bfo:utils.h}.
+If {\tt SUBRNG=0}, the 2nd column is ignored and only CIDR ranges are accepted.\\
+
+The text files {\tt subnets4.txt} and {\tt subnets6.txt} can be edited and manually converted as follows:
+\begin{center}
+{\tt ./utils/subconv --4 subnets4.txt} and
+{\tt ./utils/subconv --6 subnets6.txt}
+\end{center}
+
+\subsection{Packet File Output}
+In packet mode ({\tt --s} option), the basicFlow plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{flowInd}}  & Flow index \\
+    {\tt \nameref{flowStat}} & Flow status \\
+    {\tt time}               & Time \\
+    {\tt relTime}            & Duration since start of pcap or interface sniffing\\
+    {\tt pktIAT}             & Packet inter-arrival time \\
+    {\tt flowDuration}       & Flow duration \\
+    {\tt \hyperref[hdrDesc]{numHdrs}}
+                             & Number of headers (depth) in {\tt hdrDesc} & {\tt T2\_PRI\_HDRDESC=1}\\
+    {\tt \hyperref[hdrDesc]{hdrDesc}}
+                             & Headers description                        & {\tt T2\_PRI\_HDRDESC=1}\\
+    {\tt ethVlanID}          & VLAN number (inner VLAN) \\
+    {\tt srcMac}             & Source MAC address \\
+    {\tt dstMac}             & Destination MAC address \\
+    {\tt ethType}            & Ethernet type \\
+    {\tt srcIP}              & Source IP address\\
+    {\tt \hyperref[subnet]{srcIPCC}}
+                             & Source IP country code                     & {\tt BFO\_SUBNET\_TEST=1}\\
+    {\tt srcIPWho}           & Source IP organisation name                & {\tt BFO\_SUBNET\_TEST=1}\\
+    {\tt srcPort}            & Source port \\
+    {\tt dstIP}              & Destination IP address \\
+    {\tt \hyperref[subnet]{dstIPCC}}
+                             & Destination IP country code                & {\tt BFO\_SUBNET\_TEST=1}\\
+    {\tt dstIPWho}           & Destination IP organisation name           & {\tt BFO\_SUBNET\_TEST=1}\\
+    {\tt dstPort}            & Destination port \\
+    {\tt l4Proto}            & Layer 4 protocol \\
+    \bottomrule
+\end{longtable}
+
+\end{document}

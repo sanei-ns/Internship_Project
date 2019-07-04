@@ -1,0 +1,1506 @@
+#!/usr/bin/env bash
+#
+# Generates a PDF/LaTeX report from a PCAP, Tranalyzer flow file or database
+# (Mongo or PostgreSQL).
+#
+# Usage: t2fm [OPTION...] <INPUT>
+#
+# Required plugins:
+#   basicFlow
+#   basicStats
+#   txtSink
+#
+# Optional plugins:
+#   arpDecode
+#   dnsDecode
+#   #geoip
+#   httpSniffer     (HTTP_SAVE_*=1)
+#   nDPI            (NDPI_OUTPUT_STR=1)
+#   portClassifier  (PBC_NUM=1 &&/|| PBC_STR=1)
+#   pwX
+#   sshDecode
+#   sslDecode
+#
+# TODO
+#   - split top protocols over non-standard ports by bytes, packets and flows
+#
+#   - db backend: add options to choose hostname, port, username, password and table name
+#     (or option to pass db.cfg file?)
+#
+#   - merge -o/-w options?
+#
+#   - check for pdflatex (_check_dependencies_*)
+#   - Add elapsed time
+#   - add link to virustotal for exe
+#   - passwords: show/hide passwords
+#   - More info in summary (number of A, B, total flows, ...)
+
+T2FMDIR="$(dirname "$0")"
+
+source "$T2FMDIR/../t2utils.sh"
+
+T2FMDIR="$($READLINK -f "$T2FMDIR")"
+
+REQUIRED_PLUGINS=(
+    basicFlow
+    basicStats
+    txtSink
+)
+
+OPTIONAL_PLUGINS=(
+    arpDecode
+    dnsDecode
+    #geoip # deprecated by basicFlow
+    httpSniffer
+    nDPI
+    portClassifier
+    pwX
+    sshDecode
+    sslDecode
+)
+
+REQUIRED_COLS=(
+    # basicFlow
+    dir
+    flowStat
+    timeFirst
+    timeLast
+    duration
+    srcIP,srcIP4,srcIP6
+    dstIP,dstIP4,dstIP6
+    srcPort
+    dstPort
+    l4Proto
+
+    # basicStats
+    numPktsSnt
+    numPktsRcvd
+    numBytesSnt
+    numBytesRcvd
+)
+
+OPTIONAL_COLS=(
+    # arpDecode
+    #arpStat
+
+    # basicFlow
+    #srcIPCC     # If present, favoured over geoip
+    #dstIPCC     # If present, favoured over geoip
+
+    # dnsDecode
+    #dnsAname
+    #dnsQname
+    #dnsStat
+    #dns4Aaddress
+    #dns6Aaddress
+
+    # geoip
+    #srcIpCountry
+    #dstIpCountry
+
+    # httpSniffer
+    #httpUsrAg
+    #httpHosts
+    #httpServ
+    #httpRSCode
+
+    # nDPI
+    #nDPIclass
+
+    # portClassifier
+    #dstPortClass
+    #dstPortClassN
+
+    # pwX
+    #pwxType
+    #pwxUser
+    #pwxPass
+
+    # sshDecode
+    #sshVersion
+
+    # sslDecode
+    #sslServerName
+    #sslCSubjectCommonName
+    #sslJA3Hash
+    #sslJA3Desc
+)
+
+# Settings
+HRNUM=0     # 0: human readable, 1: raw and human readable, 2: raw
+CHART_N=5   # Number of values to display in charts
+TABLE_N=10  # Number of values to display in tables
+LOGAXIS=1   # Whether to use logarithmic Y axis
+
+# Colors (cyan, red, orange, gray!25, ...)
+TABLE_ODD_COLOR="gray!15"           # Background color for odd rows
+TABLE_EVEN_COLOR="white"            # Background color for even rows
+CHART_COLOR="\\\\altrowcolorodd"    # Charts color
+
+AUTHOR="Tranalyzer Development Team"
+TITLE="Tranalyzer Report"
+COPYRIGHT="2008-2018 by Tranalyzer Development Team"
+WATERMARK="Tranalyzer"
+
+# Sections (uncomment to disable the section)
+#NOCOUNTRIES=1
+#NODNS=1
+#NOHTTP=1
+#NOHTTPS=1
+#NONNONSTDPORTS=1
+#NOPASSWORDS=1
+#NOWARNINGS=1
+
+usage() {
+    printf "Usage:\n"
+    printf "    $SNAME [OPTION...] <INPUT>\n"
+    printf "\nInput:\n"
+    printf "    -i iface            Interface to capture traffic from\n"
+    printf "    -r pcap             PCAP file to analyse\n"
+    printf "    -R list             List of PCAP files to analyse\n"
+    printf "    -F file             Flow file to analyse\n"
+    printf "    -m dbname           Mongo database name\n"
+    printf "    -p dbname           PostgreSQL database name\n"
+    #printf "    -u username         Database username\n"
+    #printf "    -p password         Database password\n"
+    #printf "    -H address          Database address\n"
+    #printf "    -P port             Database port\n"
+    #printf "    -T name             Database table name\n"
+    printf "\nOptional arguments:\n"
+    printf "    -T from to          Only consider data between from and to [-m and -p only]\n"
+    printf "    -b                  Configure and build Tranalyzer2 and the plugins\n\n"
+    printf "    -A                  Automatically open the generated PDF\n\n"
+    printf "    -f factor           Hash table multiplication factor\n"
+    printf "    -o folder           Output folder\n"
+    printf "    -w prefix           Output prefix\n\n"
+    printf "    -t title            Set the report title\n"
+    printf "    -a author           Set the report author\n"
+    printf "    -C color            Set the charts color (red, orange, gray!25, ...)\n"
+    printf "    -L                  Do not use logarithmic scale for axis\n"
+    printf "    -H                  Output raw numbers instead of human readable\n"
+    printf "    -HH                 Output raw and human readable numbers\n"
+    printf "    -n num              Compute top num statistics for tables [default: $TABLE_N]\n"
+    printf "    -c num              Compute top num statistics for charts [default: $CHART_N]\n\n"
+    printf "    --copyright [text]  Print a copyright notice at the bottom of every page\n"
+    printf "    --watermark [text]  Print a watermark on every page\n\n"
+    printf "    -?, -h, --help      Show help options and exit\n"
+}
+
+_build_t2() {
+    # Patch tranalyzer and the plugins
+    $T2CONF -x --patch "$T2FMDIR/t2fm.patch" || exit 1
+    # Build tranalyzer and the plugins
+    $T2BUILD -b "$T2FMDIR/t2fm.load" || exit 1
+}
+
+_check_t2_plugins() {
+    for i in ${REQUIRED_PLUGINS[@]}; do
+        if [ ! -f "$HOME/.tranalyzer/plugins/"[0-9][0-9][0-9]_${i}.so ]; then
+            printerr "Plugin '$i' is required"
+            exit 1
+        fi
+    done
+}
+
+_check_colnames() {
+    local cols="$1"
+    for i in ${REQUIRED_COLS[@]}; do
+        i="$($SED 's/,/\\|/g' <<< "$i")"
+        if [ -z "$(grep -w "$i" <<< $cols)" ]; then
+            printerr "Column '$i' not found."
+            exit 1
+        fi
+    done
+}
+
+_cleanup() {
+    if [ -z "$1" ]; then
+        printerr "cleanup: missing return code (cleanup retcode)"
+        exit 1
+    fi
+
+    local ret=$1
+
+    #printinf "Cleaning temporary files"
+    for i in ${TEMP[@]}; do
+        rm -f $i
+    done
+
+    if [ "$(pgrep -P $$ | wc -l)" -gt 1 ]; then
+        printinf "Killing all subprocesses..."
+        kill -- -$$
+    fi
+
+    exit $ret
+}
+
+# $1: number of columns
+# $2: text, e.g., N/A: nDPI plugin required
+_to_tex_table_empty() {
+    $AWK -v n="$TABLE_N" -v c="$1" -v text="$2" '
+        BEGIN {
+            mid = n/2 - 1
+            for (i = 0; i < n; i++) {
+                printf "\\rowcolor{\\altrowcoloreven}"
+                if (i == mid) {
+                    printf "\\multicolumn{%s}{c}{%s}\\\\\n", c, text
+                } else {
+                    for (j = 1; j < c; j++) {
+                        printf "&"
+                    }
+                    print "\\\\"
+                }
+            }
+        }'
+}
+
+# $1: field name (No 'field name' detected)
+_to_tex_table_str_str_num() {
+    if [ -z "$1" ]; then
+        printerr "Usage: _to_tex_table_str_str_num field_name"
+        exit 1
+    fi
+    $TAWK -v field_name="$1" '
+        NR > n {
+            printf "%%"
+        }
+        {
+            print texscape($1) " & " texscape($2) " & " hrnum($3, hrnum_mode) "\\\\"
+        }
+        END {
+            if (NR >= 1) {
+                for (i = NR; i < n; i++) {
+                    print "\\rowcolor{\\altrowcoloreven}&&\\\\"
+                }
+            } else {
+                mid = n/2 - 1
+                for (i = 0; i < n; i++) {
+                    printf "\\rowcolor{\\altrowcoloreven}"
+                    if (i == mid) {
+                        printf "\\multicolumn{3}{c}{No %s detected}\\\\\n", field_name
+                    } else {
+                        print "&&\\\\"
+                    }
+                }
+            }
+        }'
+}
+
+# $1: field name (No 'field name' detected)
+_to_tex_table_str_num() {
+    if [ -z "$1" ]; then
+        printerr "Usage: _to_tex_table_str_num field_name"
+        exit 1
+    fi
+    $TAWK -v field_name="$1" '
+        NR > n {
+            printf "%%"
+        }
+        {
+            print texscape($1) " & " hrnum($2, hrnum_mode) "\\\\"
+        }
+        END {
+            if (NR >= 1) {
+                for (i = NR; i < n; i++) {
+                    print "\\rowcolor{\\altrowcoloreven}&\\\\"
+                }
+            } else {
+                mid = n/2 - 1
+                for (i = 0; i < n; i++) {
+                    printf "\\rowcolor{\\altrowcoloreven}"
+                    if (i == mid) {
+                        printf "\\multicolumn{2}{c}{No %s detected}\\\\\n", field_name
+                    } else {
+                        print "&\\\\"
+                    }
+                }
+            }
+        }'
+}
+
+_to_tex_chart() {
+    $AWK -v n="$CHART_N" '  # Overwrite n=$TABLE_N
+        {
+            a[NR, "name"] = $1
+            a[NR, "count"] = $2
+        }
+        END {
+            vmax = NR < n ? NR : n
+            for (i = 1; i < vmax; i++) {
+                printf "%s,", a[i, "name"]
+            }
+            printf "%s}]\n", a[i, "name"]
+            print "\\addplot[fill=\\chartcolor] coordinates {"
+            for (i = 1; i <= vmax; i++) {
+                printf "(%s,%s)\n", a[i, "name"], a[i, "count"]
+            }
+        }'
+}
+
+_setup_mongo() {
+    DBTYPE="Mongo"
+    SCRIPTS="$T2FMDIR/mongo"
+    CMD=(mongo --quiet "$DBNAME")
+
+    "${CMD[@]}" --eval 'db.getName()' &> /dev/null
+    if [ $? -ne 0 ]; then
+        printerr "${DBTYPE}DB server is not running"
+        exit 1
+    fi
+
+    local count
+    count="$("${CMD[@]}" --eval 'db.flow.count()')"
+    if [ "$count" -eq 0 ]; then
+        printerr "${DBTYPE}DB collection 'flow' from DB '$DBNAME' is empty"
+        exit 1
+    fi
+
+    # XXX this assumes all fields are present in the first row
+    COLS="$("${CMD[@]}" --eval 'const row = db.flow.findOne(); for (var key in row) print(key)')"
+    if [ -z "$TIME_FROM" ]; then
+        TIME_FROM="$("${CMD[@]}" "$SCRIPTS/min_time")"
+        TIME_FROM_MONGO="$($TAWK '{ print utc($1) }' <<< "$TIME_FROM")"
+    fi
+    if [ -z "$TIME_TO" ]; then
+        TIME_TO="$("${CMD[@]}" "$SCRIPTS/max_time")"
+        TIME_TO_MONGO="$($TAWK '{ print utc($1) }' <<< "$TIME_TO")"
+    fi
+    CMD+=(
+        --eval "const n = $TOP_N, \
+                      time_from = new ISODate('$TIME_FROM_MONGO'), \
+                      time_to = new ISODate('$TIME_TO_MONGO');"
+    )
+}
+
+_setup_psql() {
+    DBTYPE="PostgreSQL"
+    SCRIPTS="$T2FMDIR/psql"
+    CMD=(psql -U postgres)
+
+    local tables
+    tables="$("${CMD[@]}" -l 2> /dev/null)"
+    if [ $? -ne 0 ]; then
+        printerr "$DBTYPE server is not running"
+        exit 1
+    fi
+
+    if [ -z "$($AWK -F'|' "\$1 ~ /^\s*$DBNAME\s*$/" <<< "$tables")" ]; then
+        printerr "$DBTYPE table '$DBNAME' not found"
+        exit 1
+    fi
+
+    CMD+=(-d "$DBNAME" -A)
+    COLS="$("${CMD[@]}" -c 'select * from flow limit 0' | head -1)"
+    CMD+=(-t -F $'\t')
+    if [ -z "$TIME_FROM" ]; then
+        TIME_FROM="$("${CMD[@]}" -f "$SCRIPTS/min_time")"
+    fi
+    if [ -z "$TIME_TO" ]; then
+        TIME_TO="$("${CMD[@]}" -f "$SCRIPTS/max_time")"
+    fi
+    CMD+=(-v n="$TOP_N" -v time_from="$TIME_FROM" -v time_to="$TIME_TO" -f)
+}
+
+_setup_tawk() {
+    SCRIPTS="$T2FMDIR/tawk"
+    COLS="$($TAWK -l "$FLOWFILE")"
+    CMD=($TAWK -I "$FLOWFILE" -v n="$TOP_N" -f)
+}
+
+# Load tawk examples
+TAWK="$TAWK -t"
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -b|--build)
+            BUILD_T2=1
+            ;;
+        -A|--open-pdf)
+            OPENPDF=1
+            ;;
+        -T)
+            validate_next_arg "$1" "$2"
+            validate_next_arg "$1" "$3"
+            TIME_FROM="$($TAWK '{ print timestamp($1) }' <<< "$2")"
+            TIME_TO="$($TAWK '{ print timestamp($1) }' <<< "$3")"
+            shift  # TIME_FROM
+            shift  # TIME_TO
+            ;;
+        -f|--hash-factor)
+            validate_next_num "$1" "$2"
+            HASHFACTOR="-f $2"
+            shift
+            ;;
+        -m|--mongo)
+            validate_next_arg "$1" "$2"
+            MONGODB="$2"
+            shift
+            ;;
+        -p|--postgres)
+            validate_next_arg "$1" "$2"
+            PSQLDB="$2"
+            shift
+            ;;
+        -i|--iface)
+            validate_next_arg "$1" "$2"
+            IFACE="$2"
+            shift
+            ;;
+        -r|--pcap)
+            validate_next_pcap "$1" "$2"
+            PCAP="$2"
+            shift
+            ;;
+        -R|--caplist)
+            validate_next_file "$1" "$2"
+            PCAPLIST="$2"
+            shift
+            ;;
+        -F|--flow-file)
+            validate_next_file "$1" "$2"
+            FLOWFILE="$2"
+            shift
+            ;;
+        -o|--output-folder)
+            validate_next_arg "$1" "$2"
+            ODIR="$2"
+            shift
+            ;;
+        -w|--output-prefix)
+            validate_next_arg "$1" "$2"
+            OPREF="$2"
+            shift
+            ;;
+        -C|--color)
+            validate_next_arg "$1" "$2"
+            COLOR="$2"
+            shift
+            ;;
+        -L|--no-log-axis)
+            LOGAXIS=0
+            ;;
+        --copyright)
+            SHOW_COPYRIGHT=1
+            if [ "$2" ] && [ $(arg_is_option "$2") -ne 0 ]; then
+                COPYRIGHT="$2"
+                shift
+            fi
+            ;;
+        --watermark)
+            SHOW_WATERMARK=1
+            if [ "$2" ] && [ $(arg_is_option "$2") -ne 0 ]; then
+                WATERMARK="$2"
+                shift
+            fi
+            ;;
+        -a|--author)
+            validate_next_arg "$1" "$2"
+            AUTHOR="$2"
+            shift
+            ;;
+        -t|--title)
+            validate_next_arg "$1" "$2"
+            TITLE="$2"
+            shift
+            ;;
+        -n|--table-n)
+            validate_next_num "$1" "$2"
+            TABLE_N="$2"
+            shift
+            ;;
+        -c|--chart-n)
+            validate_next_num "$1" "$2"
+            CHART_N="$2"
+            shift
+            ;;
+        -H|--raw-numbers)
+            HRNUM=2
+            ;;
+        -HH|--raw-and-hrnum)
+            HRNUM=1
+            ;;
+        -\?|-h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            abort_option_unknown "$1"
+            ;;
+    esac
+    shift
+done
+
+TAWK="$TAWK -v n=$TABLE_N -v hrnum_mode=$HRNUM"
+
+DBNAME="$MONGODB$PSQLDB"
+INFILE="$FLOWFILE$PCAP$PCAPLIST"
+INPUT="$IFACE$INFILE$DBNAME"
+
+if [ -z "$INPUT" ]; then
+    printerr "One of -d, -F, -i, -r or -R option is required"
+    abort_with_help
+fi
+
+if [ "$INPUT" != "$IFACE" ] &&
+   [ "$INPUT" != "$PCAP" ] &&
+   [ "$INPUT" != "$PCAPLIST" ] &&
+   [ "$INPUT" != "$FLOWFILE" ] &&
+   [ "$INPUT" != "$MONGODB" ] &&
+   [ "$INPUT" != "$PSQLDB" ];
+then
+    printerr "Cannot use -F, -i, -m, -p, -r and -R options at the same time"
+    abort_with_help
+fi
+
+if [ -n "$ODIR" ] && [ ! -d "$ODIR" ]; then
+    read -p "Output folder '$ODIR' does not exist... create it? " ans
+    case $ans in
+        N|n) exit 0
+    esac
+    mkdir -p "$ODIR"
+    printf "Folder '$ODIR' created\n"
+fi
+
+if [ $LOGAXIS -eq 1 ]; then
+    AXIS="semilogyaxis"
+    LOG=" [log]"
+else
+    AXIS="axis"
+    LOG=""
+fi
+
+if [ -n "$BUILD_T2" ]; then
+    _build_t2
+fi
+
+if [ -n "$FLOWFILE" ]; then
+    HDRFILE="$($SED 's/_flows.txt/_headers.txt/' <<< "$FLOWFILE")"
+    if [ ! -f "$HDRFILE" ]; then
+        printwrn "Header file not found"
+    else
+        CMDLINE="$(grep -F 'Command line: ' "$HDRFILE")"
+        if [ -n "$(grep -F -- -r <<< "$CMDLINE")" ]; then
+            PCAP="$(perl -pe 's/.*-r\s+([^[:space:]]+)\s+.*$/\1/'<<< "$CMDLINE")"
+        fi
+    fi
+elif [ -z "$DBNAME" ]; then
+    _check_t2_plugins
+
+    # Output folder
+    if [ -z "$ODIR" ]; then
+        ODIR="$(dirname "$INPUT")"
+    fi
+    if [ -n "$OPREF" ]; then
+        PREFIX="$OPREF"
+    else
+        PREFIX="$(basename "$INPUT" | $AWK -F'.' -v OFS='.' 'NF > 1 { NF-- } { print }')"
+    fi
+    if [ -z "$PREFIX" ]; then
+        PREFIX="$INPUT"
+    fi
+    PREFIX="$ODIR/$PREFIX"
+
+    FLOWFILE="$($AWK '{ printf "%s_flows.txt\n", $0 }' <<< "$PREFIX")"
+    if [ -n "$PCAPLIST" ]; then
+        T2OPTS="-R"
+    elif [ -n "$IFACE" ]; then
+        T2OPTS="-i"
+    else
+        T2OPTS="-r"
+    fi
+    printinf "Running Tranalyzer"
+    $T2 $T2OPTS "$INPUT" -w "$PREFIX" -l $HASHFACTOR
+    if [ $? -ne 0 ]; then
+        printwrn "Failed to run Tranalyzer"
+        printinf "Trying to generate the report anyway..."
+    else
+        printinf "Generating report..."
+    fi
+fi
+
+if [ ! -f "$FLOWFILE" ] && [ -z "$DBNAME" ]; then
+    printerr "Flow file '$FLOWFILE' does not exist"
+    exit 1
+fi
+
+# TODO query a bit more than required (will be commented out in the report)
+TOP_N="$(($TABLE_N > $CHART_N ? $TABLE_N : $CHART_N))"
+
+if [ -n "$MONGODB" ]; then
+    _setup_mongo
+elif [ -n "$PSQLDB" ]; then
+    _setup_psql
+else
+    _setup_tawk
+fi
+
+_check_colnames "$COLS"
+
+if [ -n "$DBNAME" ]; then
+    [ -z "$OPREF" ] && OPREF="${DBNAME}_$($AWK -F'/' '{ print $NF }' <<< "$SCRIPTS")"
+    [ -z "$ODIR" ] && ODIR="/tmp/"
+else
+    [ -z "$OPREF" ] && OPREF="$(basename "$FLOWFILE" | $SED 's/_flows\.[^\.]\+$//')"
+    [ -z "$ODIR" ] && ODIR="$(dirname "$FLOWFILE")"
+fi
+
+# Build output filename
+OFILE="$($READLINK -f "$ODIR/${OPREF}.tex")"
+PDFFILE="$($SED 's/\.tex/.pdf/' <<< "$OFILE")"
+
+# Copy the template
+cp "$T2FMDIR/t2fm_template.tex" "$OFILE"
+
+# Setup signal handler to take care of temporary files
+trap "trap - SIGTERM && _cleanup 1" HUP INT QUIT TERM
+trap "_cleanup \$?" EXIT
+
+################################################################################
+# Check for optional plugins and delete unnecessary LaTeX code
+################################################################################
+
+# $1: name, e.g., DNS for __BEGIN_DNS__, __END_DNS__
+_delete_begin_end() {
+    if [ -z "$1" ]; then
+        printerr "Usage: _delete_begin_end name"
+        exit 1
+    fi
+    $SED -i "/%__BEGIN_${1}__/,/%__END_${1}__/d" "$OFILE"
+}
+
+# $1: plugin name
+_insert_plugin_required() {
+    if [ -z "$1" ]; then
+        printerr "Usage: _insert_plugin_required pluginName"
+        exit 1
+    fi
+    local pName="$1"
+    local pNameUpper="$(tr '[a-z]' '[A-Z]' <<< "$1")"
+    local marker="${pNameUpper}_REQUIRED"
+    $SED -i "s;\(%__BEGIN_${marker}__\);N/A: $pName plugin required\n\1;" "$OFILE"
+    _delete_begin_end "${marker}"
+}
+
+# Summary (DB or FILE)
+if [ -n "$DBNAME" ]; then
+    _delete_begin_end "FILE_REQUIRED"
+else
+    _delete_begin_end "DB_REQUIRED"
+fi
+
+# Remove unwanted sections
+[ "$NOCOUNTRIES" ]    && _delete_begin_end "COUNTRIES"
+[ "$NODNS" ]          && _delete_begin_end "DNS"
+[ "$NOHTTP" ]         && _delete_begin_end "HTTP"
+[ "$NOHTTPS" ]        && _delete_begin_end "HTTPS"
+[ "$NONNONSTDPORTS" ] && _delete_begin_end "NON_STD_PORTS"
+[ "$NOPASSWORDS" ]    && _delete_begin_end "PASSWORDS"
+[ "$NOWARNINGS" ]     && _delete_begin_end "WARNINGS"
+
+# arpDecode
+if [ -z "$NOWARNINGS" ] && [ -z "$(grep -Fw arpStat <<< "$COLS")" ]; then
+    NOARPDECODE=1
+    _insert_plugin_required "arpDecode"
+fi
+
+# dnsDecode
+if [ -z "$NODNS" ] && [ -z "$(grep -Fw dnsStat <<< "$COLS")" ]; then
+    NODNS=1
+    _insert_plugin_required "dnsDecode"
+fi
+
+# httpSniffer
+if [ -z "$NOHTTP" ] && [ -z "$(grep -Fw httpStat <<< "$COLS")" ]; then
+    NOHTTP=1
+    _insert_plugin_required "httpSniffer"
+fi
+
+# nDPI
+if [ -z "$(grep -Fw nDPIclass <<< "$COLS")" ]; then
+    NONDPI=1
+    #_insert_plugin_required "nDPI"
+fi
+
+# portClassifier
+if [ -z "$(grep -E "\<dstPortClassN?\>" <<< "$COLS")" ]; then
+    NOPORTCLASSIFIER=1
+    _insert_plugin_required "portClassifier"
+fi
+
+# pwX
+if [ -z "$NOPASSWORDS" ] && [ -z "$(grep -Fw pwxType <<< "$COLS")" ]; then
+    NOPASSWORDS=1
+    _insert_plugin_required "pwX"
+fi
+
+# sshDecode
+if [ -z "$NOWARNINGS" ] && [ -z "$(grep -Fw sshVersion <<< "$COLS")" ]; then
+    NOSSHDECODE=1
+    _insert_plugin_required "sshDecode"
+fi
+
+# sslDecode
+if [ -z "$NOHTTPS" ] && [ -z "$(grep -Fw sslStat <<< "$COLS")" ]; then
+    NOHTTPS=1
+    _insert_plugin_required "sslDecode"
+fi
+
+################################################################################
+# Temporary files
+################################################################################
+
+# Summary
+FIRST_LAST_DUR_NPKTS_NBYTES=$(mktemp) ; TEMP+=($FIRST_LAST_DUR_NPKTS_NBYTES)
+MD5SUM=$(mktemp)                      ; TEMP+=($MD5SUM)
+
+# Source IP
+SHOST_CN_FLOWS=$(mktemp) ; TEMP+=($SHOST_CN_FLOWS)
+SHOST_CN_PKTS=$(mktemp)  ; TEMP+=($SHOST_CN_PKTS)
+SHOST_CN_BYTES=$(mktemp) ; TEMP+=($SHOST_CN_BYTES)
+
+# Destination IP
+DHOST_CN_FLOWS=$(mktemp) ; TEMP+=($DHOST_CN_FLOWS)
+DHOST_CN_PKTS=$(mktemp)  ; TEMP+=($DHOST_CN_PKTS)
+DHOST_CN_BYTES=$(mktemp) ; TEMP+=($DHOST_CN_BYTES)
+
+if [ -z "$NOCOUNTRIES" ]; then
+    # Source Countries
+    SRC_CC_FLOWS=$(mktemp) ; TEMP+=($SRC_CC_FLOWS)
+    SRC_CC_PKTS=$(mktemp)  ; TEMP+=($SRC_CC_PKTS)
+    SRC_CC_BYTES=$(mktemp) ; TEMP+=($SRC_CC_BYTES)
+
+    # Destination Countries
+    DST_CC_FLOWS=$(mktemp) ; TEMP+=($DST_CC_FLOWS)
+    DST_CC_PKTS=$(mktemp)  ; TEMP+=($DST_CC_PKTS)
+    DST_CC_BYTES=$(mktemp) ; TEMP+=($DST_CC_BYTES)
+fi
+
+# TCP Source Ports
+TCP_SPORT_FLOWS=$(mktemp) ; TEMP+=($TCP_SPORT_FLOWS)
+TCP_SPORT_PKTS=$(mktemp)  ; TEMP+=($TCP_SPORT_PKTS)
+TCP_SPORT_BYTES=$(mktemp) ; TEMP+=($TCP_SPORT_BYTES)
+
+# TCP Destination Ports
+TCP_DPORT_FLOWS=$(mktemp) ; TEMP+=($TCP_DPORT_FLOWS)
+TCP_DPORT_PKTS=$(mktemp)  ; TEMP+=($TCP_DPORT_PKTS)
+TCP_DPORT_BYTES=$(mktemp) ; TEMP+=($TCP_DPORT_BYTES)
+
+# UDP Source Ports
+UDP_SPORT_FLOWS=$(mktemp) ; TEMP+=($UDP_SPORT_FLOWS)
+UDP_SPORT_PKTS=$(mktemp)  ; TEMP+=($UDP_SPORT_PKTS)
+UDP_SPORT_BYTES=$(mktemp) ; TEMP+=($UDP_SPORT_BYTES)
+
+# UDP Destination Ports
+UDP_DPORT_FLOWS=$(mktemp) ; TEMP+=($UDP_DPORT_FLOWS)
+UDP_DPORT_PKTS=$(mktemp)  ; TEMP+=($UDP_DPORT_PKTS)
+UDP_DPORT_BYTES=$(mktemp) ; TEMP+=($UDP_DPORT_BYTES)
+
+# Protocols
+PROTO_FLOWS=$(mktemp) ; TEMP+=($PROTO_FLOWS)
+PROTO_PKTS=$(mktemp)  ; TEMP+=($PROTO_PKTS)
+PROTO_BYTES=$(mktemp) ; TEMP+=($PROTO_BYTES)
+
+# Applications
+APP_FLOWS=$(mktemp) ; TEMP+=($APP_FLOWS)
+APP_PKTS=$(mktemp)  ; TEMP+=($APP_PKTS)
+APP_BYTES=$(mktemp) ; TEMP+=($APP_BYTES)
+
+if [ -z "$NONNONSTDPORTS" ]; then
+    # Protocols over non-standard ports
+    NON_STDPORTS=$(mktemp)       ; TEMP+=($NON_STDPORTS)
+    #NON_STDPORTS_FLOWS=$(mktemp) ; TEMP+=($NON_STDPORTS_FLOWS)
+    #NON_STDPORTS_PKTS=$(mktemp)  ; TEMP+=($NON_STDPORTS_PKTS)
+    #NON_STDPORTS_BYTES=$(mktemp) ; TEMP+=($NON_STDPORTS_BYTES)
+fi
+
+if [ -z "$NOPASSWORDS" ]; then
+    PASSWORDS=$(mktemp)          ; TEMP+=($PASSWORDS)
+fi
+
+if [ -z "$NODNS" ]; then
+    # DNS
+    DNSA=$(mktemp)   ; TEMP+=($DNSA)
+    DNSQ=$(mktemp)   ; TEMP+=($DNSQ)
+    DNSIP4=$(mktemp) ; TEMP+=($DNSIP4)
+    DNSIP6=$(mktemp) ; TEMP+=($DNSIP6)
+    DNSSLD=$(mktemp) ; TEMP+=($DNSSLD)
+    DNSTLD=$(mktemp) ; TEMP+=($DNSTLD)
+fi
+
+if [ -z "$NOHTTP" ]; then
+    # HTTP
+    HTTP_UA=$(mktemp)               ; TEMP+=($HTTP_UA)
+    HTTP_HOSTS=$(mktemp)            ; TEMP+=($HTTP_HOSTS)
+    HTTP_SERVERS=$(mktemp)          ; TEMP+=($HTTP_SERVERS)
+    HTTP_CONTENT_TYPES=$(mktemp)    ; TEMP+=($HTTP_CONTENT_TYPES)
+    HTTP_CONTENT_SUBTYPES=$(mktemp) ; TEMP+=($HTTP_CONTENT_SUBTYPES)
+    HTTP_STATUS=$(mktemp)           ; TEMP+=($HTTP_STATUS)
+    HTTP_EXEDL=$(mktemp)            ; TEMP+=($HTTP_EXEDL)
+fi
+
+if [ -z "$NOHTTPS" ]; then
+    # HTTPS
+    HTTPS_SNI=$(mktemp)         ; TEMP+=($HTTPS_SNI)
+    HTTPS_CERT_CN=$(mktemp)     ; TEMP+=($HTTPS_CERT_CN)
+    #HTTPS_JA3=$(mktemp)         ; TEMP+=($HTTPS_JA3)
+    HTTPS_JA3_KNOWN=$(mktemp)   ; TEMP+=($HTTPS_JA3_KNOWN)
+    #HTTPS_JA3_UNKNOWN=$(mktemp) ; TEMP+=($HTTPS_JA3_UNKNOWN)
+    #HTTPS_CERT_BL=$(mktemp)     ; TEMP+=($HTTPS_CERT_BL)
+fi
+
+if [ -z "$NOWARNINGS" ]; then
+    # Warnings
+    ARPSPOOF=$(mktemp) ; TEMP+=($ARPSPOOF)
+    if [ -z "$NODNS" ]; then
+        DNSZT=$(mktemp)    ; TEMP+=($DNSZT)
+    fi
+    SSH=$(mktemp)      ; TEMP+=($SSH)
+fi
+
+################################################################################
+# File stat
+################################################################################
+
+if [ -n "$DBNAME" ]; then
+    FILENAME="$DBNAME"
+    FULLNAME="$FILENAME"
+    PERIOD="$($TAWK -F, '{ print utc($1) " -- " utc($2) }' <<< "$TIME_FROM,$TIME_TO")"
+elif [ -f "$PCAP" ]; then
+    FULLNAME="$PCAP" # $($SED 's/_/\\_/g' <<< "$PCAP")"
+    FILENAME="$($AWK -F/ '{print $NF}' <<< "$FULLNAME")"
+    FILESIZE="$(du -h "$PCAP" | $AWK '{ print $1 }')"
+    if [ "$(uname)" = "Darwin" ]; then
+        md5 -q "$PCAP" > $MD5SUM &
+    else
+        md5sum "$PCAP" | $AWK '{ print $1 }' > $MD5SUM &
+    fi
+else
+    #printwrn "PCAP file $PCAP not found"
+    FULLNAME="N/A"
+    FILENAME="$INPUT" # $($SED 's/_/\\_/g' <<< "$FLOWFILE")"
+    FILESIZE="N/A"
+    echo "N/A" > $MD5SUM
+fi
+
+################################################################################
+# Summary
+################################################################################
+
+"${CMD[@]}" "$SCRIPTS/summary" | $TAWK '{
+    if (!$3) $3 = 0
+    if (!$4) $4 = 0
+    print $1, $2, $2 - $1, hrnum($3, 1), hrnum($4, 1)
+}' > $FIRST_LAST_DUR_NPKTS_NBYTES
+
+HOSTS="$("${CMD[@]}" "$SCRIPTS/unique_ips")"
+
+if [ -z "$HOSTS" ]; then
+    DISTINCTIP=0
+    DISTINCTPRIVIP=0
+    DISTINCTPUBIP=0
+    DISTINCTIP4=0
+    DISTINCTIP6=0
+else
+    DISTINCTIP="$(wc -l <<< "$HOSTS" | $TAWK '{ print hrnum($1, 1) }')"
+    DISTINCTPRIVIP="$($TAWK 'privip($1) { i++ } END { print hrnum(i, 1) }' <<< "$HOSTS")"
+    DISTINCTPUBIP="$($TAWK '!privip($1) { i++ } END { print hrnum(i, 1) }' <<< "$HOSTS")"
+    DISTINCTIP6="$($TAWK -v i=0 '/:/ { i++ } END { print hrnum(i, 1) }' <<< "$HOSTS")"
+    DISTINCTIP4="$($TAWK '{ print hrnum($1 - $2, 1) }' <<< "$DISTINCTIP\t$DISTINCTIP6")"
+fi
+
+################################################################################
+# Top Source/Destination IP addresses
+################################################################################
+
+#if [ ! -f "$SCRIPTS/top_srcIP_flows" ]; then
+#    _to_tex_table_empty 3 "N/A: {\\\\tt $SCRIPTS/top\\\\_srcIP\\\\_flows} script not found" > $SHOST_CN_FLOWS &
+#else
+"${CMD[@]}" "$SCRIPTS/top_srcIP_flows" | _to_tex_table_str_str_num "Source IP" > $SHOST_CN_FLOWS &
+"${CMD[@]}" "$SCRIPTS/top_srcIP_pkts"  | _to_tex_table_str_str_num "Source IP" > $SHOST_CN_PKTS  &
+"${CMD[@]}" "$SCRIPTS/top_srcIP_bytes" | _to_tex_table_str_str_num "Source IP" > $SHOST_CN_BYTES &
+
+"${CMD[@]}" "$SCRIPTS/top_dstIP_flows" | _to_tex_table_str_str_num "Destination IP" > $DHOST_CN_FLOWS &
+"${CMD[@]}" "$SCRIPTS/top_dstIP_pkts"  | _to_tex_table_str_str_num "Destination IP" > $DHOST_CN_PKTS  &
+"${CMD[@]}" "$SCRIPTS/top_dstIP_bytes" | _to_tex_table_str_str_num "Destination IP" > $DHOST_CN_BYTES &
+
+################################################################################
+# Top Source/Destination countries
+################################################################################
+
+if [ -z "$NOCOUNTRIES" ]; then
+    "${CMD[@]}" "$SCRIPTS/top_srcCC_flows" | _to_tex_table_str_num "Source IP" > $SRC_CC_FLOWS &
+    "${CMD[@]}" "$SCRIPTS/top_srcCC_pkts"  | _to_tex_table_str_num "Source IP" > $SRC_CC_PKTS  &
+    "${CMD[@]}" "$SCRIPTS/top_srcCC_bytes" | _to_tex_table_str_num "Source IP" > $SRC_CC_BYTES &
+
+    "${CMD[@]}" "$SCRIPTS/top_dstCC_flows" | _to_tex_table_str_num "Destination IP" > $DST_CC_FLOWS &
+    "${CMD[@]}" "$SCRIPTS/top_dstCC_pkts"  | _to_tex_table_str_num "Destination IP" > $DST_CC_PKTS  &
+    "${CMD[@]}" "$SCRIPTS/top_dstCC_bytes" | _to_tex_table_str_num "Destination IP" > $DST_CC_BYTES &
+fi
+
+################################################################################
+# Top TCP Source/Destination Ports
+################################################################################
+
+"${CMD[@]}" "$SCRIPTS/top_tcp_srcPort_flows" | _to_tex_chart > $TCP_SPORT_FLOWS &
+"${CMD[@]}" "$SCRIPTS/top_tcp_srcPort_pkts"  | _to_tex_chart > $TCP_SPORT_PKTS  &
+"${CMD[@]}" "$SCRIPTS/top_tcp_srcPort_bytes" | _to_tex_chart > $TCP_SPORT_BYTES &
+
+"${CMD[@]}" "$SCRIPTS/top_tcp_dstPort_flows" | _to_tex_chart > $TCP_DPORT_FLOWS &
+"${CMD[@]}" "$SCRIPTS/top_tcp_dstPort_pkts"  | _to_tex_chart > $TCP_DPORT_PKTS  &
+"${CMD[@]}" "$SCRIPTS/top_tcp_dstPort_bytes" | _to_tex_chart > $TCP_DPORT_BYTES &
+
+################################################################################
+# Top UDP Source/Destination Ports
+################################################################################
+
+"${CMD[@]}" "$SCRIPTS/top_udp_srcPort_flows" | _to_tex_chart > $UDP_SPORT_FLOWS &
+"${CMD[@]}" "$SCRIPTS/top_udp_srcPort_pkts"  | _to_tex_chart > $UDP_SPORT_PKTS  &
+"${CMD[@]}" "$SCRIPTS/top_udp_srcPort_bytes" | _to_tex_chart > $UDP_SPORT_BYTES &
+
+"${CMD[@]}" "$SCRIPTS/top_udp_dstPort_flows" | _to_tex_chart > $UDP_DPORT_FLOWS &
+"${CMD[@]}" "$SCRIPTS/top_udp_dstPort_pkts"  | _to_tex_chart > $UDP_DPORT_PKTS  &
+"${CMD[@]}" "$SCRIPTS/top_udp_dstPort_bytes" | _to_tex_chart > $UDP_DPORT_BYTES &
+
+################################################################################
+# Protocols
+################################################################################
+
+"${CMD[@]}" "$SCRIPTS/top_proto_flows" | $TAWK '{ print proto2str($1), $2 }' | _to_tex_chart > $PROTO_FLOWS &
+"${CMD[@]}" "$SCRIPTS/top_proto_pkts"  | $TAWK '{ print proto2str($1), $2 }' | _to_tex_chart > $PROTO_PKTS  &
+"${CMD[@]}" "$SCRIPTS/top_proto_bytes" | $TAWK '{ print proto2str($1), $2 }' | _to_tex_chart > $PROTO_BYTES &
+
+################################################################################
+# Applications
+################################################################################
+
+# TODO add percentage?
+if [ -n "$NONDPI" ]; then
+    _to_tex_table_empty 2 "N/A: nDPI plugin required" > $APP_FLOWS &
+    _to_tex_table_empty 2 "N/A: nDPI plugin required" > $APP_PKTS  &
+    _to_tex_table_empty 2 "N/A: nDPI plugin required" > $APP_BYTES &
+else
+    "${CMD[@]}" "$SCRIPTS/top_appl_flows" | _to_tex_table_str_num "application" > $APP_FLOWS &
+    "${CMD[@]}" "$SCRIPTS/top_appl_pkts"  | _to_tex_table_str_num "application" > $APP_PKTS  &
+    "${CMD[@]}" "$SCRIPTS/top_appl_bytes" | _to_tex_table_str_num "application" > $APP_BYTES &
+fi
+
+################################################################################
+# Protocols Over Non-Standard Ports
+################################################################################
+
+if [ -z "$NONNONSTDPORTS" ]; then
+    if [ -n "$NONDPI" ] || [ -n "$NOPORTCLASSIFIER" ]; then
+        $SED -i "s;\(%__BEGIN_NDPI_AND_PORTCLASSIFIER_REQUIRED__\);N/A: nDPI and portClassifier plugins required\n\1;" "$OFILE"
+        _delete_begin_end "NDPI_AND_PORTCLASSIFIER_REQUIRED"
+    else
+        "${CMD[@]}" "$SCRIPTS/top_proto_over_nonstd_ports" | $TAWK '
+            {
+                if (NR > n) printf "%%"
+                #if (NF == 5) {
+                #    portnum = $2
+                #    stats = hrnum($3, hrnum_mode) " & " hrnum($4, hrnum_mode) " & " hrnum($5, hrnum_mode)
+                #} else {
+                    portnum = texscape($3) " (" $2 ")"
+                    stats = hrnum($4, hrnum_mode) " & " hrnum($5, hrnum_mode) " & " hrnum($6, hrnum_mode)
+                #}
+                print texscape($1) " & " portnum " & " stats "\\\\"
+            }
+            END {
+                if (NR < 1) {
+                    mid = n/2 - 1
+                    for (i = 0; i < n; i++) {
+                        printf "\\rowcolor{\\altrowcoloreven}"
+                        if (i == mid) {
+                            print "\\multicolumn{5}{c}{No protocols over non-standard ports detected}\\\\"
+                        } else {
+                            print "&&&&\\\\"
+                        }
+                    }
+                }
+            }' > $NON_STDPORTS &
+    fi
+fi
+
+################################################################################
+# Cleartext Passwords
+################################################################################
+
+if [ -z "$NOPASSWORDS" ]; then
+    "${CMD[@]}" "$SCRIPTS/top_passwords" | $TAWK '
+        BEGIN {
+            tabhdr = sprintf("\\begin{longtable}{*{5}{l}r}\n\\toprule\\rowcolor{\\altrowcoloreven}")
+            l = split("Client,Server,Proto,Username,Password,Flows", h, ",")
+            for (i = 1; i < l; i++) tabhdr = tabhdr "\n" sprintf("{\\bf %s} & ", h[i])
+            tabhdr = tabhdr "\n" sprintf("{\\bf %s}\\\\\n\\midrule\\endhead%\n", h[i])
+        }
+        {
+            # ignore empty username and passwords
+            if ((strisempty($4) && strisempty($5)) ||
+                (streq($4, "(null)") && streq($5, "(null)")))
+            {
+                next
+            }
+            if (tabhdr) {
+                print tabhdr
+                tabhdr = ""
+            }
+            if (NR > n) printf "%%"
+            for (i = 1; i < NF; i++) printf "%s & ", texscape(unquote($i))
+            printf "%s\\\\\n", hrnum($NF, hrnum_mode)
+        }
+        END {
+            if (tabhdr) printf "No cleartext passwords detected\n"
+            else printf "\\bottomrule\n\\end{longtable}\n"
+        }' > $PASSWORDS &
+fi
+
+################################################################################
+# DNS
+################################################################################
+
+if [ -z "$NODNS" ]; then
+    "${CMD[@]}" "$SCRIPTS/top_dns_queries" | _to_tex_table_str_num "DNS query"        > $DNSQ   &
+    "${CMD[@]}" "$SCRIPTS/top_dns_answers" | _to_tex_table_str_num "DNS answer"       > $DNSA   &
+    "${CMD[@]}" "$SCRIPTS/top_dns_ipv4"    | _to_tex_table_str_num "DNS IPv4 address" > $DNSIP4 &
+    "${CMD[@]}" "$SCRIPTS/top_dns_ipv6"    | _to_tex_table_str_num "DNS IPv6 address" > $DNSIP6 &
+    "${CMD[@]}" "$SCRIPTS/top_dns_tld"     | _to_tex_table_str_num "DNS query"        > $DNSTLD &
+    "${CMD[@]}" "$SCRIPTS/top_dns_sld"     | _to_tex_table_str_num "DNS query"        > $DNSSLD &
+fi
+
+################################################################################
+# HTTP
+################################################################################
+
+if [ -z "$NOHTTP" ]; then
+
+    "${CMD[@]}" "$SCRIPTS/top_http_user_agent"      | _to_tex_table_str_num "HTTP User-Agent"   > $HTTP_UA               &
+    "${CMD[@]}" "$SCRIPTS/top_http_host"            | _to_tex_table_str_num "HTTP Host"         > $HTTP_HOSTS            &
+    "${CMD[@]}" "$SCRIPTS/top_http_server"          | _to_tex_table_str_num "HTTP Server"       > $HTTP_SERVERS          &
+    "${CMD[@]}" "$SCRIPTS/top_http_content_type"    | _to_tex_table_str_num "HTTP Content-Type" > $HTTP_CONTENT_TYPES    &
+    "${CMD[@]}" "$SCRIPTS/top_http_content_subtype" | _to_tex_table_str_num "HTTP Content-Type" > $HTTP_CONTENT_SUBTYPES &
+
+    "${CMD[@]}" "$SCRIPTS/top_http_rscode" | _to_tex_chart > "$HTTP_STATUS" &
+
+    #---------------------------------------------------------------------------
+    # EXE Downloads
+    #---------------------------------------------------------------------------
+
+    if [ -n "$DBNAME" ]; then
+        echo "N/A: EXE downloads detection not implemented in DB backends yet" > $HTTP_EXEDL
+    else
+        #$TAWK -H -e 'exeDL(n+10)' "$FLOWFILE" | $TAWK '
+        "${CMD[@]}" "$SCRIPTS/top_exe_dl" | $TAWK '
+            NR == 1 {
+                print "\\begin{scriptsize}"
+                print "\\begin{center}"
+                #print "\\begin{tabularx}{\\textwidth}{lllLll}"
+                #print "{\\bf SrcIP4} & {\\bf DstIP4} & {\\bf Filename} & {\\bf Size} & {\\bf MD5}\\\\"
+                print "\\begin{tabularx}{\\textwidth}{lllLll}"
+                print "\\toprule"
+                #print "\\begin{longtable}{llllll}"
+                #print "\\toprule\\rowcolor{\\altrowcoloreven}"
+                print "{\\bf SrcIP4} & {\\bf DstIP4} & {\\bf Advertised Mime} & {\\bf Filename} & {\\bf Size} & {\\bf MD5}\\\\"
+                print "\\midrule%\\endhead%"
+            }
+            {
+                # Do not display packet/flow information
+                fname = gensub(/^([^?]+)(\?.*)?_[0-9]+_[0-9]+_[0-9]+_[0-9]+$/, "\\1", "g", unquote($4))
+                if (NR > n) printf "%%"
+                #print $1 " & " $2 " & " texscape(fname) " & " $5 " & " $6"\\\\ % " unquote($4)
+                print $1 " & " $2 " & " texscape(unquote($3)) " & \\textnhtt{" texscape(fname) "} & " $5 " & {\\tt " $6 "}\\\\ % " unquote($4)
+            }
+            END {
+                if (NR < 1) {
+                    print "No EXE download detected"
+                } else {
+                    print "\\bottomrule"
+                    #print "\\end{longtable}"
+                    print "\\end{tabularx}"
+                    print "\\end{center}"
+                    print "\\end{scriptsize}"
+                }
+            }' > $HTTP_EXEDL &
+    fi
+fi
+
+################################################################################
+# HTTPS
+################################################################################
+
+# TODO
+#   - Top cert. issuer?
+#   - Split Top JA3 into Top known/unknown JA3 signatures?
+#   - Blacklisted cert?
+
+if [ -z "$NOHTTPS" ]; then
+    "${CMD[@]}" "$SCRIPTS/top_https_sni"         | _to_tex_table_str_num     "HTTPS SNI"                     > $HTTPS_SNI         &
+    "${CMD[@]}" "$SCRIPTS/top_https_cert_cn"     | _to_tex_table_str_num     "HTTPS certificate Common Name" > $HTTPS_CERT_CN     &
+    #"${CMD[@]}" "$SCRIPTS/top_https_cert_bl"     | _to_tex_table_str_num     "HTTPS certificate fingerprint" > $HTTPS_CERT_BL     &
+    "${CMD[@]}" "$SCRIPTS/top_https_ja3_known"   | _to_tex_table_str_str_num "HTTPS JA3 signature"           > $HTTPS_JA3_KNOWN   &
+    #"${CMD[@]}" "$SCRIPTS/top_https_ja3"         | _to_tex_table_str_str_num "HTTPS JA3 signature"           > $HTTPS_JA3         &
+    #"${CMD[@]}" "$SCRIPTS/top_https_ja3_unknown" | _to_tex_table_str_num     "HTTPS JA3 signature"           > $HTTPS_JA3_UNKNOWN &
+fi
+
+################################################################################
+# Warnings
+################################################################################
+
+if [ -z "$NOWARNINGS" ]; then
+
+    #-------------------------------------------------------------------------------
+    # ARP Spoofing
+    #-------------------------------------------------------------------------------
+
+    if [ -z "$NOARPDECODE" ]; then
+        "${CMD[@]}" "$SCRIPTS/arp_spoofing" | sort -u | $TAWK '
+            {
+                _ip_mac[$2] = _ip_mac[$2] "\t" $1
+            }
+            END {
+                for (_ip in _ip_mac) {
+                    _l = split(lstrip(_ip_mac[_ip]), _mac, "\t")
+                    if (_l > 1) {
+                        print _ip OFS join(_mac, OFS)
+                    }
+                }
+            }' | $TAWK '
+                NR == 1 {
+                    print "ARP spoofing detected for:"
+                    print "\\begin{multicols}{3}"
+                    print "\\begin{itemize}"
+                }
+                NR <= n+10 {
+                    if (NR > n) printf "%%"
+                    print "\\item " $1
+                    if (NR > n) printf "%%"
+                    print "    \\begin{itemize}"
+                    for (i = 2; i <= NF; i++) {
+                        if (i > n || NR > n) printf "%%"
+                        print "    \\item " $i
+                    }
+                    if (NR > n) printf "%%"
+                    print "    \\end{itemize}"
+                    next
+                }
+                NR > n+10 {
+                    exit
+                }
+                END {
+                    if (NR == 0) {
+                        print "No ARP spoofing detected"
+                    } else {
+                        print "\\end{itemize}"
+                        print "\\end{multicols}"
+                    }
+                }' > $ARPSPOOF &
+    fi
+
+    #-------------------------------------------------------------------------------
+    # DNS Zone Transfers
+    #-------------------------------------------------------------------------------
+
+    if [ -z "$NODNS" ]; then
+        if [ -n "$MONGODB" ]; then
+            echo "N/A: DNS zone transfer detection not implemented in MongoDB yet" > $DNSZT
+        else
+            "${CMD[@]}" "$SCRIPTS/dns_zone_transfer" | $TAWK '
+                NR == 1 {
+                    print "\\begin{longtable}{llll}"
+                    print "\\toprule\\rowcolor{\\altrowcoloreven}"
+                    print "{\\bf Time} & {\\bf Client} & {\\bf Server} & {\\bf Query}\\\\"
+                    print "\\midrule\\endhead%"
+                }
+                {
+                    if (NR > n) printf "%%"
+                    print $1 " & " $2 " & " $3 " & " texscape($4) "\\\\"
+                }
+                NR > n+10 {
+                    exit
+                }
+                END {
+                    if (NR >= 1) print "\\bottomrule\n\\end{longtable}"
+                    else print "No DNS zone transfer detected"
+                }' > $DNSZT &
+        fi
+    fi
+
+    #-------------------------------------------------------------------------------
+    # SSH connections
+    #-------------------------------------------------------------------------------
+
+    # TODO
+    #   - multiple tables (top 10 by duration, bytes, packets, flows, ...)?
+    #   - group by source IP? destination IP?
+    #   - change section header to reflect that only the top N connections are displayed
+
+    if [ -z "$NOSSHDECODE" ]; then
+        "${CMD[@]}" "$SCRIPTS/ssh" | $TAWK 't2sort(6, 0, "num")' | $TAWK '
+            NR == 1 {
+                tabhdr = "\\begin{small}\n"
+                tabhdr = tabhdr "\\begin{tabularx}{\\textwidth}{*{6}{l}L}\n\\toprule"
+                #tabhdr = tabhdr "\\begin{longtable}{*{7}{l}}\n"
+                l = split("DateFirstSeen,Duration,srcIP,dstIP,SPkts,SBytes,sshVersion", h, ",")
+                for (i = 1; i < l; i++) tabhdr = tabhdr "\n" sprintf("{\\bf %s} & ", h[i])
+                tabhdr = tabhdr sprintf("{\\bf %s}\\\\\n\\midrule\n%\\endhead%\n", h[i])
+                print tabhdr
+            }
+            {
+                if (NR > n) printf "%%"
+                gsub(/\.[0-9]+/, "", $1) # ignore microseconds
+                printf "%s & ", utc($1)
+                gsub(/^00:(00:)?0?/, "", $2) # ignore leading zeroes
+                printf "%s & ", $2
+                for (i = 3; i < NF-2; i++) {
+                    printf "%s & ", $i
+                }
+                printf "%s & %s & ", hrnum($5, hrnum_mode), hrnum($6, hrnum_mode) # sPkts and SBytes
+                printf "%s\\\\\n", texscape(unquote($NF)) # ssh version
+            }
+            END {
+                if (NR == 0) {
+                    print "No SSH connection detected"
+                } else {
+                    print "\\bottomrule"
+                    print "\\end{tabularx}"
+                    #print "\\end{longtable}"
+                    print "\\end{small}"
+                }
+            }' > $SSH &
+    fi
+fi
+
+################################################################################
+# Wait for all the queries to finish
+################################################################################
+
+wait < <(jobs -p)
+
+################################################################################
+# Format some of the output
+################################################################################
+
+FILENAME="$($TAWK '{ print texscape($0) }' <<< "$FILENAME" | $SED 's/\\/\\\\/g')"
+FULLNAME="$($TAWK '{ print texscape($0) }' <<< "$FULLNAME" | $SED 's/\\/\\\\/g')"
+COPYRIGHT="$($TAWK '{ print texscape($0) }' <<< "$COPYRIGHT" | $SED 's/\\/\\\\/g')"
+WATERMARK="$($TAWK '{ print texscape($0) }' <<< "$WATERMARK" | $SED 's/\\/\\\\/g')"
+FIRST="$($AWK -F'\t' '{ print $1 }' $FIRST_LAST_DUR_NPKTS_NBYTES)"
+LAST="$($AWK -F'\t' '{ print $2 }' $FIRST_LAST_DUR_NPKTS_NBYTES)"
+DURATION="$($AWK -F'\t' '{ print $3 }' $FIRST_LAST_DUR_NPKTS_NBYTES)"
+NUMPKTS="$($AWK -F'\t' '{ print $4 }' $FIRST_LAST_DUR_NPKTS_NBYTES)"
+NUMBYTES="$($AWK -F'\t' '{ print $5 }' $FIRST_LAST_DUR_NPKTS_NBYTES)"
+if [ -z "$FIRST" ] || [ -z "$LAST" ]; then
+    UTCFIRST="N/A"
+    UTCLAST="N/A"
+elif [ "$(uname)" != "Darwin" ]; then
+    UTCFIRST="$(date -u -d @$FIRST)"
+    UTCLAST="$(date -u -d @$LAST)"
+else
+    FIRST="$($SED 's/\.[0-9]*$//' <<< "$FIRST")"
+    LAST="$($SED 's/\.[0-9]*$//' <<< "$LAST")"
+    UTCFIRST="$(date -u -j -r $FIRST)"
+    UTCLAST="$(date -u -j -r $LAST)"
+fi
+DURSTR="$($AWK -v s="$DURATION" '
+    BEGIN {
+        days  = int(s / 3600. / 24.)
+        hours = int(s / 3600. - days * 24)
+        mins  = int(s / 60. - hours * 60 - days * 24 * 60)
+        secs  = s % 60
+        if (days + hours + mins) {
+            printf "("
+            if (days)  printf "%s days", days
+            if (hours) printf "%s%s hours", days ? " " : "", hours
+            if (mins)  printf "%s%s minutes", days || hours ? " " : "", mins
+            if (secs)  printf "%s%s seconds", days || hours || mins ? " " : "", secs
+            printf ")\n"
+        }
+    }')"
+
+################################################################################
+# Fill in the placeholders
+################################################################################
+
+[ $LOGAXIS -eq 0 ] && $SED -i "s/logaxistrue/logaxisfalse/" "$OFILE"
+
+[ "$SHOW_COPYRIGHT" ] && $SED -i "s/copyrightfalse/copyrighttrue/" "$OFILE"
+[ "$SHOW_WATERMARK" ] && $SED -i "s/watermarkfalse/watermarktrue/" "$OFILE"
+
+[ -n "$PERIOD" ] && $SED -i "s;__PERIOD__;$PERIOD;" "$OFILE"
+[ -n "$DBTYPE" ] && $SED -i "s/__DBTYPE__/$DBTYPE/" "$OFILE"
+
+$SED -i "s/__CHART_COLOR__/$CHART_COLOR/"           "$OFILE"
+$SED -i "s/__TABLE_ODD_COLOR__/$TABLE_ODD_COLOR/"   "$OFILE"
+$SED -i "s/__TABLE_EVEN_COLOR__/$TABLE_EVEN_COLOR/" "$OFILE"
+
+$SED -i "s/__AUTHOR__/$AUTHOR/"       "$OFILE"
+$SED -i "s/__TITLE__/$TITLE/"         "$OFILE"
+$SED -i "s/__COPYRIGHT__/$COPYRIGHT/" "$OFILE"
+$SED -i "s/__WATERMARK__/$WATERMARK/" "$OFILE"
+$SED -i "s/__TABLE_N__/$TABLE_N/g"    "$OFILE"
+$SED -i "s/__CHART_N__/$CHART_N/g"    "$OFILE"
+
+$SED -i "s;__FILENAME__;$FILENAME;"      "$OFILE"
+$SED -i "s;__FULLNAME__;$FULLNAME;"      "$OFILE"
+$SED -i "s;__FILESIZE__;$FILESIZE;"      "$OFILE"
+$SED -i "s;__MD5SUM__;$(cat "$MD5SUM");" "$OFILE"
+
+$SED -i "s;__FIRSTPKT__;$UTCFIRST;" "$OFILE"
+$SED -i "s;__LASTPKT__;$UTCLAST;"   "$OFILE"
+$SED -i "s/__SECONDS__/$DURATION/"  "$OFILE"
+$SED -i "s/__DURSTR__/$DURSTR/"     "$OFILE"
+$SED -i "s/__NUMPKTS__/$NUMPKTS/"   "$OFILE"
+$SED -i "s/__NUMBYTES__/$NUMBYTES/" "$OFILE"
+
+$SED -i "s/__DISTIP__/$DISTINCTIP/"     "$OFILE"
+$SED -i "s/__PRIVIP__/$DISTINCTPRIVIP/" "$OFILE"
+$SED -i "s/__PUBIP__/$DISTINCTPUBIP/"   "$OFILE"
+$SED -i "s/__DISTIP4__/$DISTINCTIP4/"   "$OFILE"
+$SED -i "s/__DISTIP6__/$DISTINCTIP6/"   "$OFILE"
+
+#-------------------------------------------------------------------------------
+# Top Source/Destination IP addresses
+#-------------------------------------------------------------------------------
+
+$SED -i "/__SRCIP_CN_FLOWS__/r$SHOST_CN_FLOWS" "$OFILE"
+$SED -i "/__SRCIP_CN_PKTS__/r$SHOST_CN_PKTS"   "$OFILE"
+$SED -i "/__SRCIP_CN_BYTES__/r$SHOST_CN_BYTES" "$OFILE"
+
+$SED -i "/__DSTIP_CN_FLOWS__/r$DHOST_CN_FLOWS" "$OFILE"
+$SED -i "/__DSTIP_CN_PKTS__/r$DHOST_CN_PKTS"   "$OFILE"
+$SED -i "/__DSTIP_CN_BYTES__/r$DHOST_CN_BYTES" "$OFILE"
+
+#-------------------------------------------------------------------------------
+# Top Source/Destination IP countries
+#-------------------------------------------------------------------------------
+
+if [ -z "$NOCOUNTRIES" ]; then
+    $SED -i "/__SRC_CC_FLOWS__/r$SRC_CC_FLOWS" "$OFILE"
+    $SED -i "/__SRC_CC_PKTS__/r$SRC_CC_PKTS"   "$OFILE"
+    $SED -i "/__SRC_CC_BYTES__/r$SRC_CC_BYTES" "$OFILE"
+
+    $SED -i "/__DST_CC_FLOWS__/r$DST_CC_FLOWS" "$OFILE"
+    $SED -i "/__DST_CC_PKTS__/r$DST_CC_PKTS"   "$OFILE"
+    $SED -i "/__DST_CC_BYTES__/r$DST_CC_BYTES" "$OFILE"
+fi
+
+#-------------------------------------------------------------------------------
+# Top TCP Source/Destination Ports
+#-------------------------------------------------------------------------------
+
+$SED -i "/__TCP_SPORT_FLOWS__/r$TCP_SPORT_FLOWS" "$OFILE"
+$SED -i "/__TCP_SPORT_PKTS__/r$TCP_SPORT_PKTS"   "$OFILE"
+$SED -i "/__TCP_SPORT_BYTES__/r$TCP_SPORT_BYTES" "$OFILE"
+
+$SED -i "/__TCP_DPORT_FLOWS__/r$TCP_DPORT_FLOWS" "$OFILE"
+$SED -i "/__TCP_DPORT_PKTS__/r$TCP_DPORT_PKTS"   "$OFILE"
+$SED -i "/__TCP_DPORT_BYTES__/r$TCP_DPORT_BYTES" "$OFILE"
+
+#-------------------------------------------------------------------------------
+# Top UDP Source/Destination Ports
+#-------------------------------------------------------------------------------
+
+$SED -i "/__UDP_SPORT_FLOWS__/r$UDP_SPORT_FLOWS" "$OFILE"
+$SED -i "/__UDP_SPORT_PKTS__/r$UDP_SPORT_PKTS"   "$OFILE"
+$SED -i "/__UDP_SPORT_BYTES__/r$UDP_SPORT_BYTES" "$OFILE"
+
+$SED -i "/__UDP_DPORT_FLOWS__/r$UDP_DPORT_FLOWS" "$OFILE"
+$SED -i "/__UDP_DPORT_PKTS__/r$UDP_DPORT_PKTS"   "$OFILE"
+$SED -i "/__UDP_DPORT_BYTES__/r$UDP_DPORT_BYTES" "$OFILE"
+
+#-------------------------------------------------------------------------------
+# Protocols and Applications
+#-------------------------------------------------------------------------------
+
+$SED -i "/__PROTO_FLOWS__/r$PROTO_FLOWS" "$OFILE"
+$SED -i "/__PROTO_PKTS__/r$PROTO_PKTS"   "$OFILE"
+$SED -i "/__PROTO_BYTES__/r$PROTO_BYTES" "$OFILE"
+
+$SED -i "/__APP_FLOWS__/r$APP_FLOWS" "$OFILE"
+$SED -i "/__APP_PKTS__/r$APP_PKTS"   "$OFILE"
+$SED -i "/__APP_BYTES__/r$APP_BYTES" "$OFILE"
+
+if [ -z "$NONNONSTDPORTS" ]; then
+    $SED -i "/__NON_STD_PORTS__/r$NON_STDPORTS" "$OFILE"
+    #$SED -i "/__NON_STD_PORTS_FLOWS__/r$NON_STDPORTS_FLOWS" "$OFILE"
+    #$SED -i "/__NON_STD_PORTS_PKTS__/r$NON_STDPORTS_PKTS"   "$OFILE"
+    #$SED -i "/__NON_STD_PORTS_BYTES__/r$NON_STDPORTS_BYTES" "$OFILE"
+fi
+
+if [ -z "$NOPASSWORDS" ]; then
+    $SED -i "/__PASSWORDS__/r$PASSWORDS" "$OFILE"
+fi
+
+#-------------------------------------------------------------------------------
+# DNS
+#-------------------------------------------------------------------------------
+
+if [ -z "$NODNS" ]; then
+    $SED -i "/__DNS_A__/r$DNSA"           "$OFILE"
+    $SED -i "/__DNS_Q__/r$DNSQ"           "$OFILE"
+    $SED -i "/__DNS_IP4__/r$DNSIP4"       "$OFILE"
+    $SED -i "/__DNS_IP6__/r$DNSIP6"       "$OFILE"
+    $SED -i "/__DNS_SLD_FLOWS__/r$DNSSLD" "$OFILE"
+    $SED -i "/__DNS_TLD_FLOWS__/r$DNSTLD" "$OFILE"
+    $SED -i "/__DNS_ZT__/r$DNSZT"         "$OFILE"
+fi
+
+#-------------------------------------------------------------------------------
+# HTTP
+#-------------------------------------------------------------------------------
+
+if [ -z "$NOHTTP" ]; then
+    $SED -i "/__HTTP_USRAG__/r$HTTP_UA"                         "$OFILE"
+    $SED -i "/__HTTP_HOSTS__/r$HTTP_HOSTS"                      "$OFILE"
+    $SED -i "/__HTTP_SERVERS__/r$HTTP_SERVERS"                  "$OFILE"
+    $SED -i "/__HTTP_CONTENT_TYPE__/r$HTTP_CONTENT_TYPES"       "$OFILE"
+    $SED -i "/__HTTP_CONTENT_SUBTYPE__/r$HTTP_CONTENT_SUBTYPES" "$OFILE"
+    $SED -i "/__HTTP_STATUS__/r$HTTP_STATUS"                    "$OFILE"
+    $SED -i "/__HTTP_EXE_DL__/r$HTTP_EXEDL"                     "$OFILE"
+fi
+
+#-------------------------------------------------------------------------------
+# HTTPS
+#-------------------------------------------------------------------------------
+
+if [ -z "$NOHTTPS" ]; then
+    $SED -i "/__HTTPS_SNI__/r$HTTPS_SNI"                 "$OFILE"
+    $SED -i "/__HTTPS_CERT_CN__/r$HTTPS_CERT_CN"         "$OFILE"
+    #$SED -i "/__HTTPS_JA3__/r$HTTPS_JA3"                 "$OFILE"
+    $SED -i "/__HTTPS_JA3_KNOWN__/r$HTTPS_JA3_KNOWN"     "$OFILE"
+    #$SED -i "/__HTTPS_JA3_UNKNOWN__/r$HTTPS_JA3_UNKNOWN" "$OFILE"
+    #$SED -i "/__HTTPS_CERT_BL__/r$HTTPS_CERT_BL"         "$OFILE"
+fi
+
+#-------------------------------------------------------------------------------
+# Warnings
+#-------------------------------------------------------------------------------
+
+if [ -z "$NOWARNINGS" ]; then
+    [ -z "$NOARPDECODE" ] && $SED -i "/__ARP_SPOOF__/r$ARPSPOOF" "$OFILE"
+    [ -z "$NOSSHDECODE" ] && $SED -i "/__SSH_CONN__/r$SSH"       "$OFILE"
+fi
+
+################################################################################
+# Build and display the report
+################################################################################
+
+printinf "LaTeX report generated"
+printinf "Building the PDF..."
+
+PDFLATEX="pdflatex -output-directory=$ODIR"
+
+$PDFLATEX -halt-on-error -interaction=nonstopmode "$OFILE" > /dev/null && \
+    $PDFLATEX "$OFILE" &> /dev/null && \
+    $PDFLATEX "$OFILE" > /dev/null
+
+if [ $? -ne 0 ]; then
+    printerr "Failed to generate '$PDFFILE'"
+    exit 1
+fi
+
+printok "Successfully generated '$PDFFILE'" #in X seconds.
+
+# Open the generated file
+[ -n "$OPENPDF" ] && $OPEN "$PDFFILE"
+
+exit 0

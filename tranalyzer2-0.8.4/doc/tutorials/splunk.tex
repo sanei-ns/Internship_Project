@@ -1,0 +1,163 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {Importing Tranalyzer Flows in Splunk}
+    {Type of Import: JSON Stream} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{Importing Tranalyzer Flows in Splunk}\label{splunk_tutorial}
+
+\subsection{Prerequisites}
+\begin{itemize}
+    \item Tranalyzer version 0.6.x is installed with standard/default plugins,
+    \item Splunk 6.5.x is installed, Splunk account exists,
+    \item At least one network interface (Ethernet or WLAN) has network traffic.
+\end{itemize}
+
+\subsection{Select Network Interface}
+
+Determine the network interface name by entering the following command:
+\begin{verbatim}
+ifconfig
+\end{verbatim}
+at the terminal command line. In the output look for the interface
+name which has the IP address where the network traffic should be
+collected from:
+\begin{verbatim}
+en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST>
+mtu 1500 inet 10.20.6.79 netmask 0xfffffc00 broadcast 10.20.7.255
+\end{verbatim}
+
+\subsection{Configure Tranalyzer jsonSink Plugin}
+
+Go to {\em tranalyzer2-0.6.XlmY/trunk/jsonSink/src/jsonSink.h} and
+set the configuration parameters as needed:
+\begin{verbatim}
+#define SOCKET_ON             1 // Whether to output to a socket (1) or file (0)
+#define SOCKET_ADDR "127.0.0.1" // address of the socket
+#define SOCKET_PORT        5000 // port of the socket
+\end{verbatim}
+Set {\tt SOCKET\_ON} to {\tt 1} to configure the output to a socket. Set the
+IP address of the destination server which should receive the data
+stream. If the localhost will be the destination, leave the default setting
+{\tt "127.0.0.1"}. Set the socket server port of the destination.
+
+\subsection{Recompile the jsonSink Plugin}
+
+Enter the following command:
+\begin{verbatim}
+tranalyzer2-0.6.8lm4/trunk/jsonSink/autogen.sh
+\end{verbatim}
+Make sure that the plugin is compiled successfully. In this case the
+following message will be shown at the command line:
+\begin{verbatim}
+Plugin jsonSink copied into USER_DIRECTORY/.tranalyzer/plugins
+\end{verbatim}
+
+\subsection{Start Tranalyzer2}
+
+Start generating flow records by launching Tranalyzer2 with the interface
+name determined on the previous step and setting a file name as the
+command line arguments by entering the command:
+\begin{verbatim}
+tranalyzer -i en0 -w test1 &
+\end{verbatim}
+
+Note that the file name is optional for JSON stream import, if file
+name is not indicated the records will be shown in the standard output
+(besides being streamed over the configured TCP socket).
+
+\subsubsection{Check File Output}
+
+Check that the flow records are written to the file by entering the
+command:
+\begin{verbatim}
+tail -f test1_flows.txt
+\end{verbatim}
+Flow records should be shown in the terminal.
+
+\subsubsection{Collect Traffic}
+
+Let Tranalyzer2 run and collect network traffic.
+
+\subsection{Start Splunk}
+
+Start Splunk by entering the following command:
+\begin{verbatim}
+splunk start
+\end{verbatim}
+in the directory where Splunk is installed. Wait for the confirmation
+message that Splunk is up and running:
+\begin{verbatim}
+The Splunk web interface is at http://splunk_hostname:8000
+\end{verbatim}
+
+\subsection{Login to Splunk, Import and Search Data }
+
+\begin{figure}[!ht]
+    \centering
+    \tranimg[width=.98\textwidth]{splunk/CapturFiles-07-42-2016_03-42-46}
+    \caption{Select ``Add Data''.}
+\end{figure}
+
+\begin{figure}[!ht]
+    \centering
+    \tranimg[width=.98\textwidth]{splunk/CapturFiles-07-43-2016_03-43-12}
+    \caption{Select ``TCP/UDP'' and set protocol to ``TCP'' and set the correct
+             port number (same as in the Tranalyzer2 plugin configuration file,
+             in this example --- 5000).}
+\end{figure}
+
+\begin{figure}[!ht]
+    \centering
+    \tranimg[width=.98\textwidth]{splunk/CapturFiles-07-43-2016_03-43-50}
+    \caption{Select ``\_json'' as Source Type and proceed to ``Review''.}
+\end{figure}
+
+\begin{figure}[!ht]
+    \centering
+    \tranimg[width=.98\textwidth]{splunk/CapturFiles-07-44-2016_03-44-28}
+    \caption{Select ``Start Searching'' to make sure that the data is being received by Splunk.}
+\end{figure}
+
+\begin{figure}[!ht]
+    \centering
+    \tranimg[width=.98\textwidth]{splunk/CapturFiles-07-48-2016_03-48-05}
+    \caption{Note that the data is being received, but the Tranalyzer2 specific
+        data record field are not shown yet.}
+\end{figure}
+
+\begin{figure}[!ht]
+    \centering
+    \tranimg[width=.98\textwidth]{splunk/CapturFiles-07-52-2016_03-52-46}
+    \caption{Go to ``Settings''->''DATA''->''Source Types'' and click on
+        ``\_json'' data source type to edit it.}
+\end{figure}
+
+\begin{figure}[!ht]
+    \centering
+    \tranimg[width=.98\textwidth]{splunk/CapturFiles-07-02-2016_04-02-20}
+    \caption{Change option ``KV\_MODE'' from ``none'' to ``json'' and save
+        the changes.}
+\end{figure}
+
+\begin{figure}[!ht]
+    \centering
+    \tranimg[width=.98\textwidth]{splunk/CapturFiles-07-54-2016_03-54-33}
+    \caption{Return to the Search window and make sure that the Tranalyzer2
+             specific fields are recognized by Splunk.}
+\end{figure}
+
+\begin{figure}[!ht]
+    \centering
+    \tranimg[width=.98\textwidth]{splunk/CapturFiles-07-55-2016_03-55-15}
+    \caption{Query data, e.g. show top destination IP addresses by number of the records.}
+\end{figure}
+
+\end{document}

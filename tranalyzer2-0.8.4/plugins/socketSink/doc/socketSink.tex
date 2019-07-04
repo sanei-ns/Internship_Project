@@ -1,0 +1,125 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {socketSink}
+    {Output Into a TCP/UDP Socket}
+    {Tranalyzer Development Team}
+
+\section{socketSink}\label{s:socketSink}
+
+\subsection{Description}
+This plugin is a socket interface of Tranalyzer. The idea is to interface one or many distributed Tranalyzer instances
+with a central server post-processing and visualising its data. The plugin also implements the Alarm Mode being activated
+by {\tt ALARM\_MODE=1} in the core {\em tranalyzer.h} file. Prepending information such as data length, checksum, or an id is controlled by the
+{\tt BUF\_DATA\_SHFT} variable in the Tranalyzer core: {\em outputBuffer.h}. The user needs to configure the destination port, socket type
+and whether host info is transmitted in the first record. Otherwise the socketSink plugin requires no dependencies
+and produces output directly into the ETHERNET interface.
+
+\subsection{Dependencies}
+
+\subsubsection{External Libraries}
+If gzip compression is activated ({\tt GZ\_COMPRESS=1}), then {\bf zlib} must be installed.
+
+\paragraph{Kali/Ubuntu:} {\tt sudo apt-get install zlib1g-dev}
+\paragraph{Arch:} {\tt sudo pacman -S zlib}
+\paragraph{Fedora/Red Hat:} {\tt sudo yum install zlib-devel}
+\paragraph{Gentoo:} {\tt sudo emerge zlib}
+\paragraph{OpenSUSE:} {\tt sudo zypper install zlib-devel}
+\paragraph{Mac OS X:} {\tt brew install zlib}\footnote{Brew is a packet manager for Mac OS X that can be found here: \url{https://brew.sh}}
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+
+%\subsection{socketSink.h}
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt SERVADD}       & 127.0.0.1 & destination address \\
+    {\tt DPORT}         & 6666      & destination port (host order)\\
+    {\tt SOCKTYP}       & 1         & Socket type: 0: UDP; 1: TCP \\
+    {\tt GZ\_COMPRESS}  & 0         & Whether or not to compress the output (gzip) & {\tt SOCKTYP=1}\\
+    {\tt CONTENT\_TYPE} & 1         & 0: binary; 1: text; 2: json \\
+    {\tt HOST\_INFO}    & 0         & 0: no info; 1: all info about host & {\tt CONTENT\_TYPE=1}\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{bin2txt.h}
+{\tt bin2txt.h} controls the conversion from internal binary format to standard text output.
+
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Variable} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt HEX\_CAPITAL}          & 0 & Hex number representation: 0: lower case, 1: upper case\\
+    {\tt IP4\_NORMALIZE}        & 0 & IPv4 addresses representation: 0: normal, 1: normalized (padded with 0)\\
+    {\tt IP6\_COMPRESS}         & 1 & IPv6 addresses representation: 1: compressed, 0: full 128 bit length \\
+    {\tt TFS\_EXTENDED\_HEADER} & 0 & Whether or not to print an extended header in the flow file\\
+                                &   & (number of rows, columns, columns type)\\
+    {\tt B2T\_LOCALTIME}        & 0 & Time representation: 0: UTC, 1: localtime\\
+    {\tt B2T\_TIME\_IN\_MICRO\_SECS} & 1 & Time precision: 0: nanosecs, 1: microsecs\\
+    {\tt HDR\_CHR} & {\tt "\%"} & start character of comments in flow file\\
+    {\tt SEP\_CHR} & {\tt "\textbackslash{}t"} & character to use to separate the columns in the flow file\\
+    \bottomrule
+\end{longtable}
+
+%\subsection{Required files}
+%none
+%
+%\subsection{flags}
+%none
+
+\subsection{Additional Output}
+The output buffer normally being written to the flow file will be directed to the socket.\\
+
+If {\tt HOST\_INFO=1} then the following header is transmitted as a prelude.
+
+\begin{longtable}{rll}
+    \toprule
+    {\bf Parameter} & {\bf Type} & {\bf Description} \\
+    \midrule\endhead%
+    1 & U32     & Message length, if BUF\_DATA\_SHFT > 0 \\
+    2 & U32     & Checksum, if BUF\_DATA\_SHFT > 1 \\
+    3 & U32     & Sensor ID \\
+    4 & U64.U32 & Present Unix timestamp \\
+    5 & RS;     & OS;Machine Name;built;OS type;HW;\\
+      & RS;     & Ethername1(address1)Ethername2(address2)\ldots; \\
+      & RS;     & IPInterfacename1(address1/netmask1)IPInterfacename2(address2/netmask2)\ldots; \\
+    \bottomrule
+\end{longtable}
+
+After the prelude all flow based binary buffer will be directed to the socket interface according to the format shown in the following table:
+
+\begin{longtable}{rll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} \\
+    \midrule\endhead%
+    1 & U32  & Message length, if BUF\_DATA\_SHFT > 0 \\
+    2 & U32  & Checksum, if BUF\_DATA\_SHFT > 1 \\
+    3 & RU32 & Binary buffer output \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Example}
+\begin{enumerate}
+    \item Open a socket, e.g., with netcat: {\tt nc -l 127.0.0.1 6666}
+    \item Start T2 with the socketSink plugin, e.g., {\tt t2 -r file.pcap}
+    \item You should now see the flows on your netcat terminal
+\end{enumerate}
+
+To simulate a server collecting data from many T2 or save the transmitted flows into a file, use the following command:
+{\tt nc -l 127.0.0.1 6666 > flowfile.txt}
+
+%\subsection{TODO}
+%
+%\begin{itemize}
+%   \item
+%\end{itemize}
+
+\end{document}

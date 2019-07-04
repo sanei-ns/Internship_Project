@@ -1,0 +1,25 @@
+#!/usr/bin/env awk
+#
+# Returns true if 'v' is an IPv4 address in hexadecimal, numerical or
+# dotted decimal notation
+#
+# Parameters:
+#   - v : the value to test
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk 'isip($dstIP4)' file.txt
+#   - tawk 'isip($srcIP4) { print }' file.txt
+#   - tawk '{ print isip("0x01020304") }' file.txt
+#   - tawk '{ print isip("1.2.3.4") }' file.txt
+#   - tawk '{ print isip(16909060) }' file.txt
+
+@include "isiphex"
+@include "isipnum"
+@include "isipstr"
+
+function isip(v) {
+    return (isiphex(v) || isipnum(v) || isipstr(v))
+}

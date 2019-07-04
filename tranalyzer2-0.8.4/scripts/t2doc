@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+
+source "$(dirname "$0")/t2utils.sh"
+
+usage() {
+    echo "Usage:"
+    echo "    $SNAME [OPTION...]"
+    echo
+    echo "Optional arguments:"
+    echo "    name         A valid plugin name or faq, tranalyzer2, scripts, t2fm or tawk"
+    echo
+    echo "    -f           Force rebuilding the PDF"
+    echo "    -y           Answer yes to all questions"
+    echo "    -v           Print the name of the file modified after the PDF was created"
+    echo
+    echo "    -h           Show help options and exit"
+}
+
+while [ $# -ne 0 ]; do
+    case "$1" in
+        -f|--force)
+            FORCE=1
+            ;;
+        -y|--yes)
+            YES=1
+            ;;
+        -v|--verbose)
+            VERBOSE=1
+            ;;
+        -h|-\?|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            NAMES+=("$1")
+            ;;
+    esac
+    shift
+done
+
+CMD="${OPEN}"
+: ${CMD:="$(which evince)"}
+if [ -z "$CMD" ]; then
+    printerr "No PDF viewer found"
+    exit 1
+fi
+
+if [ "$(uname)" = "Darwin" ]; then
+    STAT_OPTS=(-f "%m")
+else
+    STAT_OPTS=(-c "%Y")
+fi
+
+rebuild_pdf() {
+    local dir="$1"
+    local name="$2"
+    [ "$name" = "faq" ] && local target="$name"
+    make -C "$dir" $target || {
+        printerr "Failed to build documentation for '$name'"
+        exit 1
+    }
+}
+
+open_pdf() {
+    local pdffile="$1"
+    $CMD "$pdffile" 2>/dev/null &
+}
+
+[ -z "$NAMES" ] && NAMES=(documentation)
+
+for name in ${NAMES[@]}; do
+
+    # Setup the folder and prefix (for error reporting)
+    if [ "$name" = "documentation" ]; then
+        folder="$T2HOME/doc"
+        prefix="Tranalyzer documentation"
+    elif [ "$name" = "faq" ]; then
+        folder="$T2HOME/doc"
+        prefix="Tranalyzer FAQ"
+    elif [ "$name" = "tranalyzer2" ] || [ "$name" = "scripts" ]; then
+        folder="$T2HOME/$name/doc"
+        prefix="Documentation for '$name'"
+    elif [ "$name" = "t2fm" ] || [ "$name" = "tawk" ]; then
+        folder="$T2HOME/scripts/$name/doc"
+        prefix="Documentation for '$name'"
+    elif [ -f "$T2PLHOME/$name/doc/$name.tex" ]; then
+        folder="$T2PLHOME/$name/doc"
+        prefix="Documentation for plugin '$name'"
+    else
+        printerr "Plugin '$name' not found"
+        continue
+    fi
+
+    pdffile="$folder/$name.pdf"
+    if [ $FORCE ]; then
+        rebuild_pdf "$folder" "$name"
+        open_pdf "$pdffile"
+        continue
+    fi
+
+    # If the PDF file exists, make sure it is up to date
+    if [ -f "$pdffile" ]; then
+        texfile="$folder/$name.tex"
+        modif_pdf="$(stat ${STAT_OPTS[*]} "$pdffile")"
+        # Find all files involved in the creation of the PDF
+        FILES=("$texfile" "$T2HOME/doc/t2doc.cls")
+        for i in traninput subfile traninclude input include; do
+            FILES+=("$(grep "^[^%]*\\\\$i{" "$texfile" | $SED "s|^.*\\\\$i{\\([^}]*\\)}.*$|$folder\\/\\1|")")
+        done
+        # Check their modification time
+        for texfile in ${FILES[@]}; do
+            [ -z "$(grep -e '\.tex$' -e '\.cls$' <<< $texfile)" ] && texfile="$texfile.tex"
+            [ -f "$texfile" ] && modif_tex="$(stat ${STAT_OPTS[*]} "$texfile")"
+            if [ ! -f "$texfile" ] || [ $modif_pdf -lt $modif_tex ]; then
+                [ $VERBOSE ] && printinf "$texfile was modified after the PDF was created"
+                printf "${ORANGE}$prefix is outdated... rebuild it (Y/n)?${NOCOLOR} "
+                if [ -z "$YES" ]; then
+                    read ans
+                else
+                    ans="yes"
+                    echo "$ans"
+                fi
+                case $ans in
+                    [Nn]|[Nn][Oo]) ;;
+                    *) rebuild_pdf "$folder" "$name";;
+                esac
+                break
+            fi
+        done
+    fi
+
+    if [ ! -f "$pdffile" ]; then
+        printf "${ORANGE}$prefix does not exist... build it (Y/n)?${NOCOLOR} "
+        if [ -z "$YES" ]; then
+            read ans
+        else
+            ans="yes"
+            echo "$ans"
+        fi
+        case $ans in
+            N|n) continue
+        esac
+        rebuild_pdf "$folder" "$name"
+    fi
+
+    open_pdf "$pdffile"
+done

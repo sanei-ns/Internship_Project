@@ -1,0 +1,79 @@
+#
+# Run the ../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/tranalyzer2
+# ../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/hashTable.h
+#HASHTABLE_DEBUG      src/hashTable.h
+
+# src/loadPlugins.h
+#USE_PLLIST          src/loadPlugins.h
+
+# src/ioBuffer.h
+#ENABLE_IO_BUFFERING src/ioBuffer.h
+
+# src/main.h
+MONINTTHRD          src/main.h
+MONINTBLK           src/main.h
+MONINTPSYNC         src/main.h
+MONINTTMPCP         src/main.h
+MONINTTMPCP_ON      src/main.h
+MONINTV             src/main.h
+#MONPROTMD           src/main.h
+#MIN_MAX_ESTIMATE    src/main.h
+
+# src/networkHeaders.h
+IPV6_ACTIVATE       src/networkHeaders.h
+ETH_ACTIVATE        src/networkHeaders.h
+SCTP_ACTIVATE       src/networkHeaders.h
+SCTP_STATFINDEX     src/networkHeaders.h
+MULTIPKTSUP         src/networkHeaders.h
+T2_PRI_HDRDESC      src/networkHeaders.h
+
+# src/outputBuffer.h
+#BUF_DATA_SHFT       src/outputBuffer.h
+
+# src/packetCapture.h
+#PACKETLENGTH        src/packetCapture.h
+#FRGIPPKTLENVIEW     src/packetCapture.h
+#NOLAYER2            src/packetCapture.h
+
+# src/tranalyzer.h
+#RROP                src/tranalyzer.h
+#POLLTM              src/tranalyzer.h
+#MFPTMOUT            src/tranalyzer.h
+#REPSUP              src/tranalyzer.h
+#PID_FNM_ACT         src/tranalyzer.h
+#DEBUG               src/tranalyzer.h
+#VERBOSE             src/tranalyzer.h
+#NON_BLOCKING_MODE   src/tranalyzer.h
+ALARM_MODE          src/tranalyzer.h
+ALARM_AND           src/tranalyzer.h
+FORCE_MODE          src/tranalyzer.h
+#BLOCK_BUF           src/tranalyzer.h
+#PLUGIN_REPORT       src/tranalyzer.h
+#DIFF_REPORT         src/tranalyzer.h
+#MACHINE_REPORT      src/tranalyzer.h
+#REPORT_HIST         src/tranalyzer.h
+#AYIYA               src/tranalyzer.h
+#GTP                 src/tranalyzer.h
+#VXLAN               src/tranalyzer.h
+#GENEVE              src/tranalyzer.h
+#CAPWAP              src/tranalyzer.h
+#CAPWAP_SWAP_FC      src/tranalyzer.h
+#LWAPP               src/tranalyzer.h
+#LWAPP_SWAP_FC       src/tranalyzer.h
+L2TP                src/tranalyzer.h
+TEREDO              src/tranalyzer.h
+#GRE                 src/tranalyzer.h
+#IPIP                src/tranalyzer.h
+#ETHIP               src/tranalyzer.h
+#HASH_AUTOPILOT      src/tranalyzer.h
+FRAGMENTATION       src/tranalyzer.h
+FRAG_HLST_CRFT      src/tranalyzer.h
+FRAG_ERROR_DUMP     src/tranalyzer.h
+#RELTIME             src/tranalyzer.h
+#FDURLIMIT           src/tranalyzer.h

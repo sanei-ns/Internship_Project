@@ -1,0 +1,83 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {Advanced Performance Enhancements with PF\_RING}
+    {High-Speed Packet Capture, Filtering and Analysis} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{Advanced Performance Enhancements with PF\_RING}
+Under certain circumstances, e.g., large quantities of small packets, the kernel might drop packets. This happens due to the normal kernel dispatching which is known to be inefficient for packet capture operations. The capturing process can be devised more efficiently by changing the kernel as in packet\_mmap, but then a patched libpcap is required which is not available yet.\footnote{See \url{https://www.kernel.org/doc/Documentation/networking/packet\_mmap.txt} for more information}
+Another option is pf\_ring. Its kernel module passes the incoming packets in a different way to the user process.\footnote{See \url{http://www.ntop.org/products/pf_ring/}}
+
+\subsection*{Requirements}
+\begin{itemize}
+\item Kernel version prior to 3.10. \footnote{Presently when composing this document there is no patch for the depreciation of {\tt create\_proc\_read\_entry()} function. See: \url{https://lkml.org/lkml/2013/4/11/215}}
+\item All packages needed for building a kernel module, names are distribution-dependent
+\item A network interface which supports NAPI polling by its driver.
+\item optional: A network card which supports Direct Network Interface Card (NIC) access (DNA).\footnote{documentation: \url{http://www.ntop.org/products/pf\_ring/DNA/}}
+\end{itemize}
+
+\subsection*{Quick setup}
+Download PF\_RING from a stable tar ball or development source at \url{http://www.ntop.org/get-started/download/}. In order to build the code the following
+commands have to executed in a bash window:
+
+\begin{figure}[ht]
+\centering
+%\begin{tabular}{c}
+\begin{lstlisting}
+cd PF_RING/kernel
+make && sudo make install
+modprobe pf_ring
+\end{lstlisting}
+%\end{tabular}
+\caption{building kernel module}
+\end{figure}
+
+Tranalyzer2 requires at least libpfring and libpcap-ring which can be installed the following way:
+\begin{figure}[ht]
+\centering
+%\begin{tabular}{c}
+\begin{lstlisting}
+cd PF_RING/userland
+cd lib
+make && sudo make install
+cd ..
+cd libpcap
+make && sudo make install
+\end{lstlisting}
+%\end{tabular}
+\caption{basic userland}
+\end{figure}
+
+You may like to install other tools such as tcpdump. Just install it the same way as described above.\\
+NOTE: The {\em pf\_ring.ko} is loaded having the {\tt transparent\_mode=0} by default which enables NAPI polling. If you use a card with special driver support for DNA  you may want to compile the driver and load {\em pf\_ring.ko} in a different mode.\footnote{See: {\tt man modprobe.d}}
+
+\subsection*{Load on boot}
+Since this seems to be difficult for many users the load procedure is described in the following.\\
+Depending on your distribution or to be more specific, the init system your distribution uses at boot time may be somewhere different. In systemd \footnote{More info: \url{http://www.freedesktop.org/wiki/Software/systemd/}} create a file with a `.conf' ending at {\em /etc/modules-load.d/} which contains just the text {\tt pf\_ring}, the module name without the `.ko' ending.\footnote{For more info: {\tt man modules-load.d}}\\
+Ubuntu uses {\em /etc/modules} as a single file where you can add a line with the module name.\footnote{See: {\tt man modules}}
+
+\begin{figure}[ht]
+\centering
+%\begin{tabular}{c}
+\begin{lstlisting}
+systemd
+echo pf_ring > /etc/modules-load.d/pfring.conf
+OR
+ubuntu
+echo pf_ring >> /etc/modules
+\end{lstlisting}
+%\end{tabular}
+\caption{on-boot kernel module load examples}
+\end{figure}
+
+\subsection*{New kernel}
+Once in a while there is indeed a new kernel available. If you want to use pf\_ring afterwards do not forget to recompile the kernel module, or set up {\tt dkms}.
+
+\end{document}

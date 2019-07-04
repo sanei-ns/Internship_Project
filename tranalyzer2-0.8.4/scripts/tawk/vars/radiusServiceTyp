@@ -1,0 +1,21 @@
+#H radiusServiceTyp | Description
+#H =============================================================================
+                  1 | Login
+                  2 | Framed
+                  3 | Callback Login
+                  4 | Callback Framed
+                  5 | Outbound
+                  6 | Administrative
+                  7 | NAS Prompt
+                  8 | Authenticate Only
+                  9 | Callback NAS Prompt
+                 10 | Call Check
+                 11 | Callback Administrative
+                 12 | Voice
+                 13 | Fax
+                 14 | Modem Relay
+                 15 | IAPP-Register
+                 16 | IAPP-AP-Check
+                 17 | Authorize Only
+                 18 | Framed-Management
+                 19 | Additional-Authorization

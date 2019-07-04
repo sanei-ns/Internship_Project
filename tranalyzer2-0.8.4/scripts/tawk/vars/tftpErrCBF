@@ -1,0 +1,10 @@
+#H bit | tftpErrCBF | Description
+#H =============================================================================
+     0 | 0x01       | File not found
+     1 | 0x02       | Access violation
+     2 | 0x04       | Disk full or allocation exceeded
+     3 | 0x08       | Illegal TFTP operation
+     4 | 0x10       | Unknown transfer ID
+     5 | 0x20       | File already exists
+     6 | 0x40       | No such user
+     7 | 0x80       | Terminate transfer due to option negotiation

@@ -1,0 +1,145 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {lldpDecode} % Plugin name
+    {Link Layer Discovery Protocol (LLDP)} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{lldpDecode}\label{s:lldpDecode}
+
+\subsection{Description}
+The lldpDecode plugin analyzes LLDP traffic.
+
+%\subsection{Dependencies}
+
+%\traninput{file} % use this command to input files
+%\traninclude{file} % use this command to include files
+
+%\tranimg{image} % use this command to include an image (must be located in a subfolder ./img/)
+
+%\subsubsection{External Libraries}
+%This plugin depends on the {\bf XXX} library.
+%\paragraph{Ubuntu:} {\tt sudo apt-get install XXX}
+%\paragraph{Arch:} {\tt sudo pacman -S XXX}
+%
+%\subsubsection{Other Plugins}
+%This plugin requires the {\bf XXX} plugin.
+%
+%\subsubsection{Required Files}
+%The file {\tt file.txt} is required.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt LLDP\_TTL\_AGGR} &   1 & Whether (1) or not (0) to aggregate TTL values\\
+    {\tt LLDP\_NUM\_TTL}  &   8 & Number of different TTL values to store\\
+    {\tt LLDP\_OPT\_TLV}  &   1 & Whether or not to output optional TLVs info\\
+    {\tt LLDP\_STRLEN}    & 512 & Maximum length of strings to store\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The lldpDecode plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{lldpStat}} & H16 & Status & \\
+    {\tt lldpChassis} & SC & Chassis ID\\
+    {\tt lldpPort} & S & Port ID\\
+    {\tt lldpTTL} & RU16 & Time To Live (sec)\\
+    {\tt lldpPortDesc} & S & Port description & {\tt LLDP\_OPT\_TLV=1}\\
+    {\tt lldpSysName} & S & System name & {\tt LLDP\_OPT\_TLV=1}\\
+    {\tt lldpSysDesc} & S & System description & {\tt LLDP\_OPT\_TLV=1}\\
+    {\tt \hyperref[lldpCaps]{lldpCaps\_Enabled}} & H16\_H16 & Supported and enabled capabilities & {\tt LLDP\_OPT\_TLV=1}\\
+    {\tt lldpMngmtAddr} & SC & Management address & {\tt LLDP\_OPT\_TLV=1}\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{lldpStat}\label{lldpStat}
+The {\tt lldpStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf lldpStat} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x0001} & Flow is LLDP\\
+    {\tt 0x0002} & Mandatory TLV missing\\
+    {\tt 0x0004} & Optional TLVs present\\
+    {\tt 0x0008} & Reserved TLV type used\\
+    {\tt 0x0010} & Organization specific TLV used\\
+    {\tt 0x0020} & Unhandled TLV used\\
+    {\tt 0x2000} & String truncated\ldots increase {\tt LLDP\_STRLEN}\\
+    {\tt 0x4000} & Too many TTL\ldots increase {\tt LLDP\_NUM\_TTL}\\
+    {\tt 0x8000} & Snapped payload\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{lldpCaps}\label{lldpCaps}
+The {\tt lldpCaps\_Enabled} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf lldpCaps} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x0001}         & Other\\
+    {\tt 0x0002}         & Repeater\\
+    {\tt 0x0004}         & Bridge\\
+    {\tt 0x0008}         & WLAN access point\\
+    {\tt 0x0010}         & Router\\
+    {\tt 0x0020}         & Telephone\\
+    {\tt 0x0040}         & DOCSIS cable device\\
+    {\tt 0x0080}         & Station only\\
+    {\tt 0x0100--0x8000} & Reserved\\
+    \bottomrule
+\end{longtable}
+
+%\subsection{Packet File Output}
+%In packet mode ({\tt --s} option), the lldpDecode plugin outputs the following columns:
+%\begin{longtable}{llll}
+%    \toprule
+%    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+%    \midrule\endhead%
+%    {\tt lldpDecodeCol1} & I8 & describe col1 & \\
+%    \bottomrule
+%\end{longtable}
+
+\subsection{Plugin Report Output}
+The following information is reported:
+\begin{itemize}
+    \item Number of LLDP packets
+    %\item Aggregated status flags ({\tt\nameref{lldpStat}})
+\end{itemize}
+
+%\subsection{Additional Output}
+%Non-standard output:
+%\begin{itemize}
+%    \item {\tt PREFIX\_suffix.txt}: description
+%\end{itemize}
+
+%\subsection{Post-Processing}
+%
+%\subsection{Example Output}
+%
+%\subsection{Known Bugs and Limitations}
+
+%\subsection{TODO}
+%\begin{itemize}
+%    \item TODO1
+%    \item TODO2
+%\end{itemize}
+
+%\subsection{References}
+%\begin{itemize}
+%    \item \href{https://tools.ietf.org/html/rfcXXXX}{RFCXXXX}: Title
+%    \item \url{https://www.iana.org/assignments/}
+%\end{itemize}
+
+\end{document}

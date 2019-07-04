@@ -1,0 +1,18 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/p0f
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+#
+# Flag name         File
+
+# src/p0f.h
+P0F_SSL_VER         src/p0f.h
+P0F_SSL_NCIPHER     src/p0f.h
+P0F_SSL_NUMEXT      src/p0f.h
+P0F_SSL_FLAGS       src/p0f.h
+P0F_SSL_CIPHER      src/p0f.h
+P0F_SSL_EXT         src/p0f.h

@@ -1,0 +1,10 @@
+#H bit | popStat | Description
+#H =============================================================================
+     0 | 0x01    | POP2 port found
+     1 | 0x02    | POP3 port found
+     2 | 0x04    | Response +OK
+     3 | 0x08    | Response -ERR
+     4 | 0x10    | Data storage exists
+     5 | 0x20    | Data storage in progress
+     6 | 0x40    | Response not valid or data
+#W   7 | 0x80    | Array overflow

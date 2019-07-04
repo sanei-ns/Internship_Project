@@ -1,0 +1,34 @@
+#!/usr/bin/env awk
+#
+# Returns true if the source IP is equal to 'ip' or belongs to 'ip', e.g., 1.2.3.4/24
+# If 'ip' is omitted, returns the source IP
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - snet: alias for shost
+#
+# Examples:
+#   - tawk 'shost("1.2.3.4")' file.txt
+#   - tawk 'shost("1.2.3.4/24"' file.txt
+#   - tawk 'shost(0x01020304) { print $dstIP4 }' file.txt
+#   - tawk '{ print shost() }' file.txt
+
+@include "hdr"
+@include "ip2num"
+@include "ipinnet"
+@include "_validate_col"
+
+function shost(ip,        _sip, _i6, _s6) {
+    _sip = _validate_col("srcIP;srcIP4;srcIP6", _my_srcIP)
+    if (!ip || (__PRIHDR__ && hdr())) return $_sip
+    if (index(ip, "/") != 0) {
+        return ipinnet($_sip, ip)
+    } else if (length(ip) > 0) {
+        _i6 = isip6(ip)
+        _s6 = isip6($_sip)
+        if ((_i6 && !_s6) || (!_i6 && _s6)) return 0
+        return ip2num($_sip) == ip2num(ip)
+    }
+}

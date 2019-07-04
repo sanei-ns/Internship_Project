@@ -1,0 +1,51 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {mysqlSink} % Plugin name
+    {MySQL} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{mysqlSink}\label{s:mysqlSink}
+
+\subsection{Description}
+The mysqlSink plugin outputs flow files to MySQL database.
+
+\subsection{Dependencies}
+
+\subsubsection{External Libraries}
+This plugin depends on the {\bf MySQL} library.
+\paragraph{Ubuntu:} {\tt sudo apt-get install libmysqlclient-dev}
+%\paragraph{Arch:} {\tt sudo pacman -S mysql}
+\paragraph{Mac OS X:} {\tt brew install mysql-connector-c}
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt MYSQL\_OVERWRITE\_DB}       & 2                  & 0: abort if DB already exists\\
+                                     &                    & 1: overwrite DB if it already exists\\
+                                     &                    & 2: reuse DB if it already exists\\
+    {\tt MYSQL\_OVERWRITE\_TABLE}    & 2                  & 0: abort if table already exists\\
+                                     &                    & 1: overwrite table if it already exists\\
+                                     &                    & 2: append to table if it already exists\\
+    {\tt MYSQL\_TRANSACTION\_NFLOWS} & 40000              & 0: one transaction\\
+                                     &                    & > 0: one transaction every $n$ flows\\
+    {\tt MYSQL\_QRY\_LEN}            & 32768              & Max length for query\\
+    {\tt MYSQL\_HOST}                & {\tt "127.0.0.1"}  & Address of the database\\
+    {\tt MYSQL\_DBPORT}              & 3306               & Port the DB is listening to\\
+    {\tt MYSQL\_USER}                & {\tt "mysql"}      & Username to connect to DB\\
+    {\tt MYSQL\_PASS}                & {\tt "mysql"}      & Password to connect to DB\\
+    {\tt MYSQL\_DBNAME}              & {\tt "tranalyzer"} & Name of the database\\
+    {\tt MYSQL\_TABLE\_NAME}         & {\tt "flow"}       & Name of the table\\
+    \bottomrule
+\end{longtable}
+
+\end{document}

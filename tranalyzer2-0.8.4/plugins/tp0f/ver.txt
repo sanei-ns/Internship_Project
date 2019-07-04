@@ -1,0 +1,48 @@
+unknown
+NT
+XP
+7
+8
+10
+10.9 or newer (sometimes iPhone or iPad)
+10.x
+11.x
+2.0
+2.2.x
+2.2.x-3.x
+2.2.x-3.x (barebone)
+2.2.x-3.x (no timestamps)
+2.2.x (loopback)
+2.4-2.6
+2.4.x
+2.4.x-2.6.x
+2.4.x (loopback)
+2.6.x
+2.6.x (Google crawler)
+2.6.x (loopback)
+3.11 and newer
+3.1-3.10
+3DS
+3.x
+3.x (loopback)
+4.x
+4.x-5.x
+5.x
+6
+7 or 8
+7 (Websense crawler)
+7.x
+8
+8.x
+8.x-9.x
+9.x
+9.x or newer
+(Android)
+iPhone or iPad
+NT kernel
+NT kernel 5.x
+NT kernel 6.x
+OS detection
+sendsyn utility
+SYN scan
+Wii

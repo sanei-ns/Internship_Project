@@ -1,0 +1,12 @@
+#H bit | arpOpcode | Description
+#H =============================================================================
+     1 | 0x0002    | ARP Request
+     2 | 0x0004    | ARP Reply
+     3 | 0x0008    | Reverse ARP (RARP) Request
+     4 | 0x0010    | Reverse ARP (RARP) Reply
+     5 | 0x0020    | Dynamic RARP (DRARP) Request
+     6 | 0x0040    | Dynamic RARP (DRARP) Reply
+     7 | 0x0080    | Dynamic RARP (DRARP) Error
+     8 | 0x0100    | Inverse ARP (InARP) Request
+     9 | 0x0200    | Inverse ARP (InARP) Reply
+    10 | 0x0400    | ARP NAK

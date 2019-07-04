@@ -1,0 +1,19 @@
+#!/usr/bin/env awk
+#
+# Converts an array to string, separating each value with 'sep'
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{ split($srcManuf_dstManuf, a, "_"); print join(a, ",") }' file.txt
+#   - tawk '{ split($srcManuf_dstManuf, a, "_"); b = join(a, ","); print b }' file.txt
+
+function join(array, sep,        _i, _n, _str) {
+    _n = length(array)
+    _str = array[1]
+    for (_i = 2; _i <= _n; _i++) {
+        _str = _str sep array[_i]
+    }
+    return _str
+}

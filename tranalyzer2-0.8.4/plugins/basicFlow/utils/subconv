@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+
+source "$(dirname "$0")/../../../scripts/t2utils.sh"
+
+usage() {
+    echo "Usage:"
+    echo "    $SNAME [OPTION...] <subnets.txt>"
+    echo
+    echo "Optional arguments:"
+    echo "    -4                Generate subnet file for IPv4"
+    echo "    -6                Generate subnet file for IPv6"
+    echo
+    echo "    -t                Add tor info to subnet file (IPv4 only)"
+    echo
+    echo "    -h, --help        Show this help, then exit"
+}
+
+while [ $# -ne 0 ]; do
+    case "$1" in
+        -h|-\?|--help) usage; exit 0;;
+        -t) TOR=1;;
+        -4) IPVER=4;;
+        -6) IPVER=6;;
+        *)
+            if [ ! -f "$1" ]; then
+                abort_option_unknown "$1"
+            fi
+            FILE="$1"
+            ;;
+    esac
+    shift
+done
+
+if [ ! -f "$FILE" ]; then
+    abort_required_file
+fi
+
+if [ -z "$IPVER" ]; then
+    # TODO try to automatically detect the version, e.g., $1 ~ /:/?
+    printerr "One of '-4' or '-6' option is required"
+    abort_with_help
+fi
+
+if [ $TOR ] && [ "$IPVER" = "6" ]; then
+    printwrn "No Tor information available for IPv6"
+    unset TOR
+fi
+
+make -C utils distclean_v$IPVER utils_v$IPVER || exit 1
+
+V="$($AWK -F'\t' 'NR == 1 { print $2, $3; exit }' "$FILE")"
+VER="$($AWK '{ print $1 }' <<< "$V")"
+REV="$($AWK '{ print $2 }' <<< "$V")"
+printinf "IPv$IPVER subnet file version $VER revision $REV"
+
+# check subnet version supported by T2
+T2V=$(get_define SUBVER src/utils.h)
+if [ "$VER" != "$T2V" ]; then
+    printerr "Subnet file '$FILE' version $VER not supported by Tranalyzer"
+    printinf "Please update and ./autogen.sh -f"
+    exit 1
+fi
+
+PREFIX="$($AWK -F'.' -v OFS='.' 'NF > 1 { NF-- } { print }' <<< "$FILE")"
+HLFILE="${PREFIX}_HL.txt"
+
+convert() {
+    local HLFILE="$1"
+    local HLPFILE="${PREFIX}_HLP.txt"
+    local BINFILE="${PREFIX}_HLP.bin"
+    LC_ALL=C sort -t$'\t' -k1,1 -k2n,2 "$HLFILE" | uniq | ./utils/nett$IPVER | ./utils/vect$IPVER > "$HLPFILE"
+    ./utils/sbm$IPVER "$HLPFILE" "$BINFILE" "$VER" "$REV"
+}
+
+printinf "Converting IPv$IPVER subnet file and generating binary"
+./utils/ext$IPVER "$FILE" > "$HLFILE"
+convert "$HLFILE"
+
+if [ $TOR ]; then
+    make -C tor distclean all || exit 1
+    printinf "Downloading only a new Tor address file, don't be alarmed"
+    ./tor/torldld
+    printinf "Adding IPv$IPVER Tor info"
+    ./tor/bsHL4 ./tor/tor4.txt >> "$HLFILE"
+    printinf "Interlacing Tor info into IPv$IPVER subnet file and generating binary"
+    convert "$HLFILE"
+fi
+

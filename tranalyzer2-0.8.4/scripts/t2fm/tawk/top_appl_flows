@@ -1,0 +1,10 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+{
+    ndpiclass = gensub(/\..*/, "", 1, unquote($nDPIclass)) # master protocol only
+    aggr(ndpiclass, "flows", n)
+}

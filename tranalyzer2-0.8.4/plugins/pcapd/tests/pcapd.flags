@@ -1,0 +1,15 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/pcapd
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/pcapd.h
+PD_SPLIT    src/pcapd.h
+PD_FORMAT   src/pcapd.h
+PD_MODE_IN  src/pcapd.h
+PD_MODE_OUT src/pcapd.h
+PD_EQ       src/pcapd.h

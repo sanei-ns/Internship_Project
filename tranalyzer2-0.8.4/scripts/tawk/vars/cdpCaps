@@ -1,0 +1,9 @@
+#H bit | cdpCaps     | Description
+#H =============================================================================
+     0 | 0x0000 0001 | Router
+     1 | 0x0000 0002 | Transparent Bridge
+     2 | 0x0000 0004 | Source Route Bridge
+     3 | 0x0000 0008 | Switch
+     4 | 0x0000 0010 | Host
+     5 | 0x0000 0020 | IGMP capable
+     6 | 0x0000 0040 | Repeater

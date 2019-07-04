@@ -1,0 +1,16 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/ospfDecode
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+IPV6_ACTIVATE       ../../tranalyzer2/src/networkHeaders.h
+
+# src/ospfDecode.h
+OSPF_OUTPUT_DBD     src/ospfDecode.h
+OSPF_OUTPUT_MSG     src/ospfDecode.h
+OSPF_MASK_AS_IP     src/ospfDecode.h
+OSPF_AREA_AS_IP     src/ospfDecode.h

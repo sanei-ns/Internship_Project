@@ -1,0 +1,38 @@
+#
+# Template Makefile for building plugin documentation
+#
+# To benefit from the template, just create a Makefile in your
+# plugin doc/ folder:
+#
+# plugins/yourPlugin/doc/Makefile:
+#    INFILE = yourPlugin.tex
+#    include ../../../doc/Makefile.plugin
+#
+
+PDFLATEX := $(shell which pdflatex)
+RM        = /bin/rm -f
+
+ifeq ($(PDFLATEX),)
+	$(error "No pdflatex in $(PATH)")
+endif
+
+INPUT  = $(INFILE).tex
+OUTPUT = $(INFILE).pdf
+TEMP   = $(wildcard *.aux *.log *.out *.svn *.toc *~)
+
+# required for latex to find t2doc.cls
+export TEXINPUTS=$(shell echo $$TEXINPUTS):../../doc:../../../doc
+
+all:
+ifeq ($(wildcard *.toc),)
+	$(PDFLATEX) $(INPUT)
+endif
+	$(PDFLATEX) $(INPUT)
+
+clean:
+ifneq ($(TEMP),)
+	$(RM) $(TEMP)
+endif
+
+clean_all: clean
+	$(RM) $(OUTPUT)

@@ -1,0 +1,27 @@
+#!/usr/bin/env awk
+#
+# Returns true if the protocol number is equal to 46 (RSVP)
+#
+# Parameters:
+#   - [p] : the protocol to test [default: $l4Proto]
+#
+# Dependencies:
+#   - basicFlow
+#
+# See Also:
+#   - proto
+#
+# Examples:
+#   - tawk 'rsvp()' file.txt
+#   - tawk 'rsvp() { print $srcIP4 }' file.txt
+#   - tawk 'rsvp($l4Proto)' file.txt
+#   - tawk 'rsvp($l4Proto) { print $srcIP4 }' file.txt
+
+@include "hdr"
+@include "proto"
+
+function rsvp(p) {
+    if (hdr()) return __PRIHDR__
+    if (p) return p == 46
+    else return proto(46)
+}

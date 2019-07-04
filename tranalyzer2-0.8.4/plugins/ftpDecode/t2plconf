@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#
+# Configuration file for ftpDecode
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    FTP_SAVE check "" "Extract transferred content"
+    BITFIELD check "" "Bitfield coding of FTP commands"
+
+    FTP_UXNMLN   range "" "Maximal USER length: 0 255"
+    FTP_PXNMLN   range "" "Maximal PW length: 0 255"
+    FTP_MXNMLN   range "" "Maximal name length: 0 255"
+    FTP_MAXCPFI  range "" "Maximal number of linked flow indices: 0 255"
+    MAXUNM       range "" "Maximal number of users: 0 255"
+    MAXPNM       range "" "Maximal number of passwords: 0 255"
+    MAXCNM       range "" "Maximal number of parameters: 0 255"
+
+    FTP_F_PATH text "FTP_SAVE == 1" "Folder where to save extracted content"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

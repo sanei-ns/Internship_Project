@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#
+# Configuration file for dnsDecode
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    NF_SERVADD text "" "Destination address"
+    NF_DPORT range "" "Destination port:0 65535"
+
+    NF_SOCKTYPE radio ""
+        "Information to output; \
+            0: UDP; \
+            1: +TCP"
+
+    NF_VER radio ""
+        "Information to output; \
+            9: Netflow 9; \
+            10: +Netflow 10"
+
+    NF_NUM4FLWS text "" "Max # of IPv4 flows in one netflow message"
+    NF_NUM6FLWS text "" "Max # of IPv6 flows in one netflow message"
+
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

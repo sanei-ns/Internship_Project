@@ -1,0 +1,18 @@
+#!/usr/bin/env awk
+#
+# bps - bits per second
+#
+# Dependencies:
+#   - basicStats
+#
+# Example:
+#   - tawk '{ print bps() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function bps(        _c) {
+    _c = _validate_col("bytps", _my_bytps)
+    if (hdr()) return "bps"
+    return 8 * $_c
+}

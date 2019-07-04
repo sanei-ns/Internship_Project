@@ -1,0 +1,18 @@
+#	4	01062019
+# IP CIDR	IP range	CtryWhoCode	ASN	Uncert	Latitude	Longitude	WhoCntry	WhoRgn	Org
+# Begin IPv6 private address space
+::/0	::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff	0x01000000	0	-1.0	666.000000	666.000000	00	-	Default route     
+::/128	::-::	0x01000000	0	-1.0	666.000000	666.000000	01	-	Unspecified
+::1/128	::1-::1	0x01000000	0	-1.0	666.000000	666.000000	02	-	Loopback
+::ffff:0:0/96	::ffff:0:0-::ffff:ffff:ffff	0x01000000	0	-1.0	666.000000	666.000000	03	-	IPv4 mapped
+::ffff:0:0:0/96	::ffff:0:0:0-::ffff:0:ffff:ffff	0x01000000	0	-1.0	666.000000	666.000000	04	-	IPv4 translated
+64:ff9b::/96	64:ff9b::-64:ff9b::ffff:ffff	0x01000000	0	-1.0	666.000000	666.000000	05	-	IPv4/IPv6 translation
+100::/64	100::-100::ffff:ffff:ffff:ffff	0x01000000	0	-1.0	666.000000	666.000000	06	-	Discard prefix
+2001::/32	2001::-2001::ffff:ffff:ffff:ffff:ffff:ffff	0x01000000	0	-1.0	666.000000	666.000000	07	-	Teredo
+2001:20::/28	2001:20::-2001:2f:ffff:ffff:ffff:ffff:ffff:ffff	0x01000000	0	-1.0	666.000000	666.000000	08	-	ORCHIDv2
+2001:db8::/32	2001:db8::-2001:db8:ffff:ffff:ffff:ffff:ffff:ffff	0x01000000	0	-1.0	666.000000	666.000000	09	-	doc and example source
+2002::/16	2002::-2002:ffff:ffff:ffff:ffff:ffff:ffff:ffff	0x01000000	0	-1.0	666.000000	666.00000	10	-	6to4 addressing scheme (deprecated) 
+fc00::/7	fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff	0x01000000	0	-1.0	666.000000	666.000000	11	-	Unique local
+fe80::/10	fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff	0x01000000	0	-1.0	666.000000	666.000000	12	-	Link-local
+ff00::/8	ff00::-ffff:ffff:ffff:ffff:fff:ffff:ffff:ffff	0x01000000	0	-1.0	666.000000	666.000000	13	-	Multicast
+# End IPv6 private address space

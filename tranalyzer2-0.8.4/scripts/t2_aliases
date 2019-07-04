@@ -1,0 +1,221 @@
+#!/usr/bin/env bash
+#
+# Aliases for Tranalyzer (tested with Bash and ZSH)
+#
+# Known issues:
+#   [ZSH]
+#       - alias lsx is already defined
+#         fix: type 'unalias lsx' before sourcing this file
+#
+# To activate these aliases, append the following lines to ~/.bashrc or
+# ~/.bash_aliases (make sure to replace $T2HOME with the actual path, e.g.,
+# $HOME/tranalyzer2-0.8.3):
+#
+#      if [ -f "$T2HOME/scripts/t2_aliases" ]; then
+#          . "$T2HOME/scripts/t2_aliases"             # Note the leading '.'
+#      fi
+#
+# TODO
+#   - Improve ZSH/Bash completion
+#       - tawk: ignore '$' when completing variable names
+#       - describe options
+
+# To force deactivation of the completion, set HAS_COMPLETION to 0
+HAS_COMPLETION=1
+
+# Private functions
+_printerr() {
+    printf "\e[0;31m$1\e[0m\n" >&2  # Red
+}
+
+_printok() {
+    printf "\e[0;32m$1\e[0m\n"      # Green
+}
+
+_printwrn() {
+    printf "\e[0;33m$1\e[0m\n" >&2  # Orange
+}
+
+_printinf() {
+    printf "\e[0;34m$1\e[0m\n"      # Blue
+}
+
+if  [ $HAS_COMPLETION -eq 1 ]; then
+    if hash complete 2> /dev/null || type compdef &> /dev/null; then
+        HAS_COMPLETION=1
+    else
+        _printwrn "No valid completion program found."
+        _printinf "Try installing 'bash-completion' with your package utility"
+        HAS_COMPLETION=0
+    fi
+fi
+
+# Required programs
+if [ "$(uname)" = "Darwin" ]; then
+    for i in gawk greadlink gsed pidof watch; do
+        if ! type $i &> /dev/null; then
+            deps="bash-completion coreutils gawk gnu-sed pidof watch"
+            _printerr "t2_aliases: missing dependencies: $deps"
+            _printinf "You may use homebrew to install them: brew install $deps"
+            return 1
+        fi
+    done
+    if [ $HAS_COMPLETION -eq 1 ]; then
+        if [ -n "$ZSH_VERSION" ] && [[ $(zsh --version | awk '{print $2}') < 5.2 ]]; then
+            _printwrn "Your zsh version does not support tab completion"
+            HAS_COMPLETION=0
+        fi
+    fi
+    AWK="$(which gawk)"
+    READLINK="$(which greadlink)"
+    SED="$(which gsed)"
+    OPEN="open"
+else
+    for i in gawk readlink sed; do
+        deps="coreutils gawk sed"
+        if ! type $i &> /dev/null; then
+            if hash apt-get 2> /dev/null; then
+                pgrmname="apt-get"
+                pgrmcmd="apt-get install"
+            elif hash pacman 2> /dev/null; then
+                pgrmname="pacman"
+                pgrmcmd="pacman -S"
+            elif hash yum 2> /dev/null; then
+                pgrmname="yum"
+                pgrmcmd="yum install"
+            else
+                pgrmname="your package utility"
+            fi
+            [ -n "$pgrmcmd" ] && pgrmcmd=": $pgrmcmd $deps"
+            _printerr "t2_aliases: missing dependencies: $deps"
+            _printinf "You may use $pgrmname to install them$pgrmcmd"
+            return 1
+        fi
+    done
+    AWK="$(which gawk)"
+    READLINK="$(which readlink)"
+    SED="$(which sed)"
+    OPEN="$(which xdg-open)"
+fi
+
+# Check for completion
+if [ -z "$ZSH_VERSION" ] && [ $HAS_COMPLETION -eq 1 ]; then
+    if [ ! -f "/usr/share/bash-completion/bash_completion" ] ||
+       [ -z "$(grep "^_init_completion()" /usr/share/bash-completion/bash_completion 2> /dev/null)" ]
+    then
+        if hash _get_comp_words_by_ref 2> /dev/null; then
+            #_printwrn "Providing a simplistic implementation of _init_completion"
+            _init_completion() {
+                COMPREPLY=()
+                _get_comp_words_by_ref cur prev words cword
+            }
+        else
+            _printwrn "Deactivating completion as your bash-completion version does not provide the '_init_completion()' function."
+            HAS_COMPLETION=0
+        fi
+    fi
+fi
+
+# Set T2HOME
+if [ -n "$ZSH_VERSION" ]; then
+    T2HOME="$(dirname "$($READLINK -f "${(%):-%x}")")/.."
+else
+    T2HOME="$(dirname "$($READLINK -f "$BASH_SOURCE")")/.."
+fi
+export T2HOME="$($READLINK -f "$T2HOME")"
+export T2PLHOME="$T2HOME/plugins"
+
+# Tranalyzer
+alias t2="$T2HOME/tranalyzer2/src/tranalyzer"
+alias gt2="gdb --args $T2HOME/tranalyzer2/src/tranalyzer"
+alias st2="sudo $T2HOME/tranalyzer2/src/tranalyzer -p \"$HOME\"/.tranalyzer/plugins/"
+alias tranalyzer="$T2HOME/tranalyzer2/src/tranalyzer"
+
+alias tran="cd $T2HOME"
+alias tranpl="cd $T2PLHOME"
+alias .tran="cd $HOME/.tranalyzer/plugins/"
+
+# Access every plugin folder by its name,
+# e.g., tcpFlags instead of cd $T2PLHOME/tcpFlags
+for i in "$T2HOME/tranalyzer2" "$T2PLHOME/"*; do
+    b=$(basename "$i")
+    if [ -f "$i/autogen.sh" ]; then
+        alias $b="cd $i"
+    fi
+done
+
+alias awkf="$AWK -F'\t' -v OFS='\t'"
+alias sortu="sort | uniq -c | sort -rn"
+
+# Make some scripts globally accessible
+alias fpsEst="$T2HOME/scripts/fpsEst"
+alias fpsGplt="$T2HOME/scripts/fpsGplt"
+alias protStat="$T2HOME/scripts/protStat"
+alias rrdmonitor="$T2HOME/scripts/rrdmonitor"
+alias rrdplot="$T2HOME/scripts/rrdplot"
+alias statGplt="$T2HOME/scripts/statGplt"
+alias t2build="$T2HOME/autogen.sh"
+alias t2caplist="$T2HOME/scripts/t2caplist"
+alias t2conf="$T2HOME/scripts/t2conf/t2conf"
+alias t2doc="$T2HOME/scripts/t2doc"
+alias t2dmon="$T2HOME/scripts/t2dmon"
+alias t2fm="$T2HOME/scripts/t2fm/t2fm"
+alias t2plot="$T2HOME/scripts/t2plot"
+alias t2stat="$T2HOME/scripts/t2stat"
+alias t2timeline="$T2HOME/scripts/t2timeline"
+alias t2viz="$T2HOME/scripts/t2viz"
+alias t2wizard="$T2HOME/scripts/t2wizard"
+alias tawk="$T2HOME/scripts/tawk/tawk"
+
+tcol() {
+    local ubuntu
+    if hash apt-get 2> /dev/null; then
+        ubuntu="-n -e"
+    fi
+
+    if [ $# -eq 0 ]; then
+        eval "column -t -s $'\t' $ubuntu | less -S"
+    else
+        eval "column -t -s $'\t' $ubuntu \"$@\" | less -S"
+    fi
+}
+
+# ZSH already defines an lsx alias
+if ! type lsx &> /dev/null; then
+    lsx() {
+        local WIDTH=40
+        if [ $# -gt 0 ] && [ -z "$(echo "$1" | $SED 's/^[0-9]\+$//')" ]; then
+            WIDTH=$1
+            shift
+        fi
+        less -RSx${WIDTH} "$@"
+    }
+fi
+
+# fextractor
+if [ -d "$T2PLHOME/findexer/fextractor" ]; then
+    alias fextractor="$T2PLHOME/findexer/fextractor/fextractor"
+fi
+
+# Bash/ZSH completion
+if [ $HAS_COMPLETION -eq 1 ]; then
+    source "$T2HOME/scripts/tawk/completions/_tawk"
+    for i in "$T2HOME/scripts/completions/"*; do
+        source "$i"
+    done
+fi
+
+# Cleanup
+unset ans
+unset b
+unset deps
+unset i
+unset pgrmcmd
+unset pgrmname
+unset HAS_COMPLETION
+unset READLINK
+
+# Do not unset those variables: used in functions or completions
+#unset AWK
+#unset OPEN
+#unset SED

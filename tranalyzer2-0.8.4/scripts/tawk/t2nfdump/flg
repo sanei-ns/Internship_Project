@@ -1,0 +1,35 @@
+#!/usr/bin/env awk
+#
+# TCP Flags
+#
+# Dependencies:
+#   - tcpFlags
+#
+# Example:
+#   - tawk '{ print flg() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function flg(        _c, _f, _s) {
+    _c = _validate_col("tcpFlags")
+    if (hdr()) return "Flags"
+    _f = strtonum($_c)
+    if (and(_f, 0x01)) _s = "F" _s # FIN
+    else _s = "." _s
+    if (and(_f, 0x02)) _s = "S" _s # SYN
+    else _s = "." _s
+    if (and(_f, 0x04)) _s = "R" _s # RST
+    else _s = "." _s
+    if (and(_f, 0x08)) _s = "P" _s # PSH
+    else _s = "." _s
+    if (and(_f, 0x10)) _s = "A" _s # ACK
+    else _s = "." _s
+    if (and(_f, 0x20)) _s = "U" _s # URG
+    else _s = "." _s
+    #if (and(_f, 0x40)) _s = "E" _s # ECE
+    #else _s = "." _s
+    #if (and(_f, 0x80)) _s = "W" _s # CWR
+    #else _s = "." _s
+    return _s
+}

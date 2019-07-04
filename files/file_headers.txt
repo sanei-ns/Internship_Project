@@ -1,0 +1,119 @@
+# Date: 1561721757.928335 sec (Fri 28 Jun 2019 12:35:57 CET)
+# Tranalyzer 0.8.4 (Anteater), Tarantula.
+# sensorID: 666
+# PID: 15624
+# Command line: tranalyzer -r /root/Documents/NetwareDetection/NetwareDetection/snif3.pcap -w /root/Documents/files/file
+# HW Info: may;Linux;4.19.0-kali5-amd64;#1 SMP Debian 4.19.37-5kali1 (2019-06-20);x86_64
+#
+# Plugins loaded:
+#   01: protoStats, version 0.8.4
+#   02: basicFlow, version 0.8.4
+#   03: macRecorder, version 0.8.4
+#   04: portClassifier, version 0.8.4
+#   05: basicStats, version 0.8.4
+#   06: tcpFlags, version 0.8.4
+#   07: tcpStates, version 0.8.4
+#   08: icmpDecode, version 0.8.4
+#   09: connStat, version 0.8.4
+#   10: txtSink, version 0.8.4
+#
+# Col No.	Type	Name	Description
+1	C	dir	Flow direction
+2	U64	flowInd	Flow index
+3	H64	flowStat	Flow status and warnings
+4	U64.U32	timeFirst	Date time of first packet
+5	U64.U32	timeLast	Date time of last packet
+6	U64.U32	duration	Flow duration
+7	U8	numHdrDesc	Number of different headers descriptions
+8	U16:R	numHdrs	Number of headers (depth) in hdrDesc
+9	SC:R	hdrDesc	Headers description
+10	MAC:R	srcMac	Mac source
+11	MAC:R	dstMac	Mac destination
+12	H16	ethType	Ethernet type
+13	U16:R	ethVlanID	VLAN IDs
+14	IPX	srcIP	Source IP address
+15	SC	srcIPCC	Source IP country code
+16	S	srcIPWho	Source IP who
+17	U16	srcPort	Source port
+18	IPX	dstIP	Destination IP address
+19	SC	dstIPCC	Destination IP country code
+20	S	dstIPWho	Destination IP who
+21	U16	dstPort	Destination port
+22	U8	l4Proto	Layer 4 protocol
+23	U32	macPairs	Number of distinct Source/Destination MAC addresses pairs
+24	MAC_MAC_U64:R	srcMac_dstMac_numP	Source MAC address, destination MAC address, number of packets of MAC address combination
+25	SC_SC:R	srcManuf_dstManuf	Source MAC manufacturer, destination MAC manufacturer
+26	U16	dstPortClassN	Port based classification of the destination port number
+27	SC	dstPortClass	Port based classification of the destination port name
+28	U64	numPktsSnt	Number of transmitted packets
+29	U64	numPktsRcvd	Number of received packets
+30	U64	numBytesSnt	Number of transmitted bytes
+31	U64	numBytesRcvd	Number of received bytes
+32	U16	minPktSz	Minimum layer 3 packet size
+33	U16	maxPktSz	Maximum layer 3 packet size
+34	F	avePktSize	Average layer 3 packet size
+35	F	stdPktSize	Standard deviation layer 3 packet size
+36	F	minIAT	Minimum IAT
+37	F	maxIAT	Maximum IAT
+38	F	aveIAT	Average IAT
+39	F	stdIAT	Standard deviation IAT
+40	F	pktps	Send packets per second
+41	F	bytps	Send bytes per second
+42	F	pktAsm	Packet stream asymmetry
+43	F	bytAsm	Byte stream asymmetry
+44	H16	tcpFStat	tcpFlags status
+45	U16	ipMindIPID	IP minimum delta IP ID
+46	U16	ipMaxdIPID	IP maximum delta IP ID
+47	U8	ipMinTTL	IP minimum TTL
+48	U8	ipMaxTTL	IP maximum TTL
+49	U8	ipTTLChg	IP TTL change count
+50	H8	ipTOS	IP Type of Service
+51	H16	ipFlags	IP aggregated flags
+52	U16	ipOptCnt	IP options count
+53	H8_H32	ipOptCpCl_Num	IP aggregated options, copy-class & number
+54	U16_U16	ip6OptCntHH_D	IPv6 hop by hop destination option counts
+55	H32_H32	ip6OptHH_D	IPv6 aggregated hop by hop destination options
+56	U16	tcpPSeqCnt	TCP packet seq count
+57	U64	tcpSeqSntBytes	TCP sent seq diff bytes
+58	U16	tcpSeqFaultCnt	TCP sequence number fault count
+59	U16	tcpPAckCnt	TCP packet ack count
+60	U64	tcpFlwLssAckRcvdBytes	TCP flawless ack received bytes
+61	U16	tcpAckFaultCnt	TCP ack number fault count
+62	U32	tcpInitWinSz	TCP initial effective window size
+63	F	tcpAveWinSz	TCP average effective window size
+64	U32	tcpMinWinSz	TCP minimum effective window size
+65	U32	tcpMaxWinSz	TCP maximum effective window size
+66	U16	tcpWinSzDwnCnt	TCP effective window size change down count
+67	U16	tcpWinSzUpCnt	TCP effective window size change up count
+68	U16	tcpWinSzChgDirCnt	TCP effective window size direction change count
+69	F	tcpWinSzThRt	TCP packet count ratio below window size WINMIN threshold
+70	H8	tcpFlags	TCP aggregated protocol flags (cwr, ecn, urgent, ack, push, reset, syn, fin)
+71	H16	tcpAnomaly	TCP aggregated header anomaly flags
+72	U16	tcpOptPktCnt	TCP options packet count
+73	U16	tcpOptCnt	TCP options count
+74	H32	tcpOptions	TCP aggregated options
+75	U16	tcpMSS	TCP maximum Segment Length
+76	U8	tcpWS	TCP window scale
+77	U32	tcpTmS	TCP time stamp
+78	U32	tcpTmER	TCP time echo reply
+79	F	tcpEcI	TCP estimated counter increment
+80	U64.U32	tcpBtm	TCP estimated boot time
+81	F	tcpSSASAATrip	TCP trip time SYN, SYN-ACK Destination | SYN-ACK, ACK Source
+82	F	tcpRTTAckTripMin	TCP ACK trip min
+83	F	tcpRTTAckTripMax	TCP ACK trip max
+84	F	tcpRTTAckTripAve	TCP ACK trip average
+85	F	tcpRTTAckTripJitAve	TCP ACK trip jitter average
+86	F	tcpRTTSseqAA	TCP round trip time SYN, SYN-ACK, ACK | TCP ACK-ACK RTT
+87	F	tcpRTTAckJitAve	TCP ACK round trip average jitter
+88	H8	tcpStates	TCP state machine anomalies
+89	H8	icmpStat	ICMP Status
+90	U8	icmpTCcnt	ICMP type code count
+91	H32_H32_H16	icmpBFTypH_TypL_Code	ICMP Aggregated type H (>128), L(<32) & code bit field
+92	H32	icmpTmGtw	ICMP time/gateway
+93	F	icmpEchoSuccRatio	ICMP Echo reply/request success ratio
+94	U64	icmpPFindex	ICMP parent flowIndex
+95	U32	connSip	Number of unique source IPs
+96	U32	connDip	Number of unique destination IPs
+97	U32	connSipDip	Number of connections between source and destination IP
+98	U32	connSipDprt	Number of connections between source IP and destination port
+99	F	connF	the f number, experimental: connSipDprt / connSip

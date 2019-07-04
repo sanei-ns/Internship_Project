@@ -1,0 +1,103 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {popDecode}
+    {Post Office Protocol (POP)}
+    {Tranalyzer Development Team} % author(s)
+
+\section{popDecode}\label{s:popDecode}
+
+\subsection{Description}
+The popDecode plugin processes MAIL header and content information of a flow. The idea is to identify
+certain pop mail features and save content. User defined compiler switches are in {\em popDecode.h}.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt POP\_SAVE} &  0 & save content to POP\_F\_PATH\\
+    {\tt MXNMLN}    & 21 & maximal name length  \\
+    {\tt MXUNM}     &  5 & maximal number of users \\
+    {\tt MXPNM}     &  5 & maximal number of passwords/parameters \\
+    {\tt MXCNM}     &  5 & maximal number of content \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The popDecode plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt \nameref{popStat}} & H8   & Status bit field\\
+    {\tt \nameref{popCBF}}  & H16  & POP command codes bit field \\
+    {\tt popCC}             & RSC  & POP Command Codes \\
+    {\tt popRM}             & RU16 & POP Response Codes \\
+    {\tt popUsrNum}         & U8   & number of POP Users \\
+    {\tt popPwNum}          & U8   & number of POP Passwords \\
+    {\tt popCNum}           & U8   & number of POP parameters \\
+    {\tt popUsr}            & RS   & POP Users \\
+    {\tt popPw}             & RS   & POP Passwords \\
+    {\tt popC}              & RS   & POP Content \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{popStat}\label{popStat}
+The {\tt popStat} column describes the errors encountered during the flow lifetime:
+\begin{longtable}{rll}
+    \toprule
+    {\bf popStat} & {\bf Name} & {\bf Description} \\
+    \midrule\endhead%
+    $2^0$ (={\tt 0x01}) & POP2\_INIT & pop2 port found \\
+    $2^1$ (={\tt 0x02}) & POP3\_INIT & pop3 port found \\
+    $2^2$ (={\tt 0x04}) & POP\_ROK & response +OK \\
+    $2^3$ (={\tt 0x08}) & POP\_RERR & response -ERR \\
+    $2^4$ (={\tt 0x10}) & POP\_DWF & data storage exists, POP\_SAVE == 1\\
+    $2^4$ (={\tt 0x20}) & POP\_DTP & data storage in progress, POP\_SAVE == 1\\
+    $2^6$ (={\tt 0x40}) & POP\_RNVL & response not valid or data \\
+    $2^7$ (={\tt 0x80}) & POP\_OVFL & array overflow \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{popCBF}\label{popCBF}
+The {\tt popCBF} column describes the commands encountered during the flow lifetime:
+\begin{longtable}{rll}
+    \toprule
+    {\bf popCBF} & {\bf Name} & {\bf Description} \\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0001}) & POP\_APOP & Login with MD5 signature \\
+    $2^{1}$  (={\tt 0x0002}) & POP\_AUTH & Authentication request \\
+    $2^{2}$  (={\tt 0x0004}) & POP\_CAPA & Get a list of capabilities supported by the server \\
+    $2^{3}$  (={\tt 0x0008}) & POP\_DELE & Mark the message as deleted \\
+    $2^{4}$  (={\tt 0x0010}) & POP\_LIST & Get a scan listing of one or all messages \\
+    $2^{5}$  (={\tt 0x0020}) & POP\_NOOP & Return a +OK reply \\
+    $2^{6}$  (={\tt 0x0040}) & POP\_PASS & Cleartext password entry \\
+    $2^{7}$  (={\tt 0x0080}) & POP\_QUIT & Exit session. Remove all deleted messages from the server \\
+    $2^{8}$  (={\tt 0x0100}) & POP\_RETR & Retrieve the message \\
+    $2^{9}$  (={\tt 0x0200}) & POP\_RSET & Remove the deletion marking from all messages \\
+    $2^{10}$ (={\tt 0x0400}) & POP\_STAT & Get the drop listing \\
+    $2^{11}$ (={\tt 0x0800}) & POP\_STLS & Begin a TLS negotiation \\
+    $2^{12}$ (={\tt 0x1000}) & POP\_TOP &  Get the top n lines of the message \\
+    $2^{13}$ (={\tt 0x2000}) & POP\_UIDL & Get a unique-id listing for one or all messages \\
+    $2^{14}$ (={\tt 0x4000}) & POP\_USER & Mailbox login \\
+    $2^{15}$ (={\tt 0x8000}) & POP\_XTND &  \\
+    \bottomrule
+\end{longtable}
+
+\subsection{TODO}
+
+\begin{itemize}
+    \item IPv6
+    \item fragmentation
+    \item reply address extraction
+\end{itemize}
+
+\end{document}

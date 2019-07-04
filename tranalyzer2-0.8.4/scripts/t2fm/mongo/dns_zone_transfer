@@ -1,0 +1,54 @@
+cursor = db.flow.aggregate([
+    {
+        $match : {
+            dnsStat : { $bitsAllSet : NumberInt(0x80) },
+            timeFirst : { $gte : time_from },
+            timeLast  : { $lte : time_to },
+        }
+    },
+    {
+        $unwind : "$dnsQname"
+    },
+    {
+        $project : {
+            sip : {
+                $cond : {
+                    if : {
+                        $eq : [
+                            { $mod : [ "$flowStat", 2 ] },
+                            0
+                        ]
+                    },
+                    then : "$srcIP",
+                    else : "$dstIP"
+                }
+            },
+            dip : {
+                $cond : {
+                    if : {
+                        $eq : [
+                            { $mod : [ "$flowStat", 2 ] },
+                            0
+                        ]
+                    },
+                    then : "$dstIP",
+                    else : "$srcIP"
+                }
+            },
+        }
+    },
+    {
+        $limit : n
+    }
+])
+
+cursor.forEach(
+    function(e) {
+        print(
+              e.time  + "\t"
+            + e.sip   + "\t"
+            + e.dip   + "\t"
+            + e.query
+        )
+    }
+)

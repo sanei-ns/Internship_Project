@@ -1,0 +1,10 @@
+#H bit | ospfStat | Description
+#H =============================================================================
+     0 | 0x01    | OSPF message had invalid TTL (!= 0)
+     1 | 0x02    | OSPF message had invalid destination
+     2 | 0x04    | OSPF message had invalid type
+     3 | 0x08    | OSPF message had invalid checksum
+     4 | 0x10    | OSPF message was malformed
+     5 | 0x20    | -
+     6 | 0x40    | -
+     7 | 0x80    | -

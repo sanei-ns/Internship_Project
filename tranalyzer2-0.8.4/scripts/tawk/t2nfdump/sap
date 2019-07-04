@@ -1,0 +1,19 @@
+#!/usr/bin/env awk
+#
+# Source Address:Port
+#
+# Dependencies:
+#   - basicFlow
+#
+# Example:
+#   - tawk '{ print sap() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function sap(        _sip, _sp) {
+    _sip = _validate_col("srcIP4;srcIP6;srcIP", _my_srcIP)
+    _sp  = _validate_col("srcPort", _my_srcPort)
+    if (hdr()) return "Src IP Addr:Port"
+    return $_sip ":" $_sp
+}

@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+#
+# Configuration file for telnetDecode
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    TEL_SAVE     check "" "Save content to TEL_F_PATH/TELFNAME"
+
+    TEL_CMDC     check "" "Output command codes"
+    TEL_CMDS     check "" "Output command human readable"
+    TEL_OPTS     check "" "Output options human readable"
+
+    TEL_CMD_AGGR check "" "Aggregate commands"
+    TEL_OPT_AGGR check "" "Aggregate options"
+
+    TELCMDN range "" "Maximal command / flow: 0 255"
+    TELOPTN range "" "Maximal options / flow: 0 255"
+
+    TEL_F_PATH text "TEL_SAVE == 1" "Path for extracted content"
+    TELFNAME   text "TEL_SAVE == 1" "File name"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

@@ -1,0 +1,24 @@
+#!/usr/bin/env awk
+#
+# Decodes an encoded URL
+#
+# Dependencies:
+#   - None
+#
+# Parameters:
+#   - url
+#
+# Examples:
+#   - tawk '{ print urldecode($httpURL) }' file.txt
+
+function urldecode(url,        _i, _n, _s, _seps, _dec) {
+    _n = split(url, _s, /%[a-fA-F0-9][a-fA-F0-9]/, _seps)
+    for (_i = 1; _i <= _n; _i++) {
+        gsub(/^%/, "0x", _seps[_i])
+        _seps[_i] = sprintf("%c", strtonum(_seps[_i]))
+        _dec = _dec _s[_i]
+        if (_i < _n) _dec = _dec _seps[_i]
+    }
+    gsub(/\+/, " ", _dec)
+    return _dec
+}

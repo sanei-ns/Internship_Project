@@ -1,0 +1,22 @@
+#!/usr/bin/env awk
+#
+# Removes leading spaces from a string
+#
+# Parameters:
+#   - s : the string to strip
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - rstrip
+#   - strip
+#   - chomp
+#
+# Examples:
+#   - tawk '{ print lstrip("  str  ") }' file.txt
+
+function lstrip(s) {
+    gsub(/^\s*/, "", s) # remove leading spaces
+    return s
+}

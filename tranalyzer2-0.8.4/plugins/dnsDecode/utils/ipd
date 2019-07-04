@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+source "$(dirname "$0")/../../../scripts/t2utils.sh"
+
+usage() {
+    printf "Usage:\n"
+    printf "    $SNAME [OPTION...] <malfile.txt>\n"
+    printf "\nOptional arguments:\n"
+    printf "    -d          input file contains domain names instead of IP addresses\n"
+    printf "    -h          display this help, then exit\n"
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -d|--domain) DOMAIN=1;;
+        -h|-\?|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            if [ ! -f "$1" ]; then
+                abort_option_unknown "$1"
+            fi
+            INFILE="$1"
+            ;;
+    esac
+    shift
+done
+
+if [ ! -f "$INFILE" ]; then
+    abort_required_file
+fi
+
+if [ -z "$DOMAIN" ]; then
+    $AWK '{
+	    split($1, A, ".");
+	    I = lshift(lshift(lshift(A[1], 8) + A[2], 8) + A[3], 8) + A[4]
+	    printf "0x%08X\t%s\n", I, $2
+    }' "$INFILE" | sort -n | uniq
+
+else
+
+    $AWK -F'\t' -v OFS='\t' '!/^#/ {
+	    n = split($3, A, ";")
+	    for (i = 1; i <= n; i++) {
+            print A[i], $2
+        }
+    }' "$INFILE" | sort -k1 | uniq | $AWK '
+        BEGIN {
+            a = ""
+            u = 0
+        }
+        {
+	        if (FNR == 1) a = $1
+	        if ($1 == a) {
+                u = or(u, strtonum($2))
+            } else {
+	            printf "%s\t0x%08X\n", a, u
+	            a = $1
+	            u = strtonum($2)
+	        }
+        }
+        END {
+	        printf "%s\t0x%08X\n", a, u
+        }'
+fi

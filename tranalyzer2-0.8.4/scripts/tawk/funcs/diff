@@ -1,0 +1,58 @@
+#!/usr/bin/env awk
+#
+# Compares two files and prints the name of the columns which differ
+#
+# The 'mode' parameter can be used to change the format of the output:
+#   0: only prints the name of the differing columns
+#   1: prints the name and value of each differing column on one line
+#      (tab or OFS separated): row, col, name, val_from_file1, val_from_file2
+#   2: prints the value of each differing column (human readable)
+#   3: prints the entire row when at least one column differs
+#
+# Dependencies:
+#   - None
+#
+# Parameters:
+#   - file
+#   - mode
+#
+# Examples:
+#   - tawk 'diff("file1.txt", 2)' file2.txt
+#   - tawk -v file1="file1.txt" 'diff(file1)' file2.txt
+
+@include "COL"
+@include "printerr"
+
+function diff(file, mode,        _i, _l, _line, _n, _col) {
+    getline _line < file
+    _n = split(_line, _l, FS)
+
+    if (_n != NF) {
+        printerr("Row " NR ": number of columns differs: " _n "/" NF)
+        next
+    }
+
+    for (_i = 1; _i <= NF; _i++) {
+        if ($_i != _l[_i]) {
+            if (mode == 1) {
+                print NR, _i, COL[_i], _l[_i], $_i
+            } else if (mode == 2) {
+                printerr("Row " NR ", column " _i " (" COL[_i] ") differs:")
+                print "    " file ": " _l[_i]
+                print "    " FILENAME ": " $_i
+            } else if (mode == 3) {
+                print file OFS _line
+                print FILENAME OFS $0
+                break
+            } else {
+                __DIFF_COL__[_i] = COL[_i]
+            }
+        }
+    }
+}
+
+END {
+    for (_i in __DIFF_COL__) {
+        printerr("Column " __DIFF_COL__[_i] " differs")
+    }
+}

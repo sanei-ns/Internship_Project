@@ -1,0 +1,74 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {psqlSink} % Plugin name
+    {PostgreSQL} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{psqlSink}\label{s:psqlSink}
+
+\subsection{Description}
+The psqlSink plugin outputs flow files to PostgreSQL database.
+
+\subsection{Dependencies}
+
+\subsubsection{External Libraries}
+This plugin depends on the {\bf libpq} library.
+\paragraph{Ubuntu:} {\tt sudo apt-get install libpq-dev}
+\paragraph{Arch:} {\tt sudo pacman -S postgresql-libs}
+\paragraph{Mac OS X:} {\tt brew install postgresql}
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt PSQL\_OVERWRITE\_DB}       & 2                  & 0: abort if DB already exists\\
+                                    &                    & 1: overwrite DB if it already exists\\
+                                    &                    & 2: reuse DB if it already exists\\
+    {\tt PSQL\_OVERWRITE\_TABLE}    & 2                  & 0: abort if table already exists\\
+                                    &                    & 1: overwrite table if it already exists\\
+                                    &                    & 2: append to table if it already exists\\
+    {\tt PSQL\_TRANSACTION\_NFLOWS} & 40000              & 0: one transaction\\
+                                    &                    & > 0: one transaction every $n$ flows\\
+    {\tt PSQL\_QRY\_LEN}            & 32768              & Max length for query\\
+    {\tt PSQL\_HOST}                & {\tt "127.0.0.1"}  & Address of the database\\
+    {\tt PSQL\_PORT}                & 5432               & Port of the database\\
+    {\tt PSQL\_USER}                & {\tt "postgres"}   & Username to connect to DB\\
+    {\tt PSQL\_PASS}                & {\tt "postgres"}   & Password to connect to DB\\
+    {\tt PSQL\_DBNAME}              & {\tt "tranalyzer"} & Name of the database\\
+    {\tt PSQL\_TABLE\_NAME}         & {\tt "flow"}       & Name of the table\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Post-Processing}
+The following queries can be used to analyze bitfields in PostgreSQL:
+\begin{itemize}
+    \item Select all A flows:\\
+        \begin{ttfamily}
+            \textcolor{darkblue}{\bf SELECT} to\_hex(\textcolor{red}{"flowStat"}::\textcolor{darkblue}{bigint}), *\\
+            \textcolor{darkblue}{\bf FROM} flow\\
+            \textcolor{darkblue}{\bf WHERE} (\textcolor{red}{"flowStat"}::\textcolor{darkblue}{bigint} \& \textcolor{cyan}{1}) = \textcolor{cyan}{0}::\textcolor{darkblue}{bigint}
+        \end{ttfamily}
+    \item Select all IPv4 flows:\\
+        \begin{ttfamily}
+            \textcolor{darkblue}{\bf SELECT} *\\
+            \textcolor{darkblue}{\bf FROM} flow\\
+            \textcolor{darkblue}{\bf WHERE} (\textcolor{red}{"flowStat"}::\textcolor{darkblue}{bigint} \& x`\textcolor{red}{4000}'::\textcolor{darkblue}{bigint}) != \textcolor{cyan}{0}::\textcolor{darkblue}{bigint}
+        \end{ttfamily}
+    \item Select all IPv6 flows:\\
+        \begin{ttfamily}
+            \textcolor{darkblue}{\bf SELECT} to\_hex(\textcolor{red}{"flowStat"}::\textcolor{darkblue}{bigint}), *\\
+            \textcolor{darkblue}{\bf FROM} flow\\
+            \textcolor{darkblue}{\bf WHERE} (\textcolor{red}{"flowStat"}::\textcolor{darkblue}{bigint} \& x`\textcolor{red}{8000}'::\textcolor{darkblue}{bigint}) != \textcolor{cyan}{0}::\textcolor{darkblue}{bigint}
+        \end{ttfamily}
+\end{itemize}
+
+\end{document}

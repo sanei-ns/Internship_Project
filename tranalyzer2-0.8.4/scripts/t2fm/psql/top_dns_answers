@@ -1,0 +1,24 @@
+-- Top DNS answers by number of flows
+
+SELECT
+    dns,
+    COUNT(*) AS cnt
+
+FROM (
+    SELECT
+        UNNEST("dnsAname") AS dns
+    FROM
+        flow
+    WHERE
+        ARRAY_LENGTH("dnsAname", 1) > 0
+        AND ("dnsStat" & x'2'::INT) = 0::INT  -- Ignore NBNS
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+WHERE dns != ''
+
+GROUP BY dns
+ORDER BY cnt DESC
+
+LIMIT :n

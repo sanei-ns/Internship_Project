@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+#
+# Rename and organize the files extracted by the smbDecode plugin.
+# The script must be run from within the SMB_SAVE_DIR folder
+# (where the file smb_filenames.txt is located)
+
+source "$(dirname "$0")/../../scripts/t2utils.sh"
+
+usage() {
+    printf "Usage:\n"
+    printf "    $SNAME [OPTION...]\n"
+    printf "\nOptional arguments:\n"
+    printf "    -f file     file mapping ID to filenames [$MAPFILE]\n"
+    printf "    -r          do not rename the files\n"
+    printf "    -o          do not organise the files\n"
+    printf "    -h          display this help, then exit\n"
+}
+
+RENAME=1
+ORGANISE=1
+MAPFILE="smb_filenames.txt"
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -r) RENAME=0;;
+        -o) ORGANISE=0;;
+        -f)
+            validate_next_file "$1" "$2"
+            MAPFILE="$1"
+            shift
+            ;;
+        -h|-\?|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            abort_option_unknown "$1"
+            ;;
+    esac
+    shift
+done
+
+
+if [ $RENAME -eq 1 ]; then
+    if [ ! -f "$MAPFILE" ]; then
+        printerr "File '$MAPFILE' not found"
+        exit 1
+    fi
+
+    nf=$(wc -l "$MAPFILE" | $AWK '{print $1}')
+
+    while IFS='\n' read i; do
+        c=$((c+1))
+        echo -ne "$c / $nf ($((100*c/nf))%)\r"
+        file="$(echo "$i" | $AWK -F'\t' '{print $1}')"
+        name="$(echo "$i" | $AWK -F'\t' '{print $2}')"
+        ext="$(echo "$i" | $AWK -F'.' 'NF>1{print $NF}')"
+        if [ -n "$ext" ]; then
+            ext="$(echo ".$ext")"
+            name="$(echo "$name" | $SED "s/$ext$//")"
+        fi
+        if [ -f "$file" ] && [ -n "$name" ]; then
+            findex="$(echo "$file" | cut -d_ -f4)"
+            dest="${name}_${findex}${ext}"
+            if [ -f "$dest" ]; then
+                cnt=1
+                while [ -f "$dest" ]; do
+                    dest="${name}_${findex}($cnt)${ext}"
+                    cnt=$((cnt+1))
+                done
+            fi
+            mv "$file" "${dest}"
+        fi
+    done < "$MAPFILE"
+fi
+
+# Organise the files
+
+if [ $ORGANISE -eq 1 ]; then
+    mkdir -p SPEC/ CHM/ DB/ DLL/ DOC/ BIN/ HTM/ IMG/ CONF/ LNK/ LOG/ MAIL/ PDF/ PPT/ TMP/ URL/ XLS/ XML/ ZIP/ ENC/ AUD/ VID/ TXT/ APP/ EMPTY/
+
+    find . -type f -empty -exec mv {} EMPTY/ \;
+
+    for i in lsarpc samr spoolss srvsvc wkssvc winreg; do
+        N=$(ls $i* 2> /dev/null | wc -l)
+        if [ $N -gt 0 ]; then
+            mv $i* SPEC/
+        fi
+    done
+
+    test -n "$(ls | egrep -i .avi$)"   && mv *.[aA][vV][iI]  VID/
+    test -n "$(ls | egrep -i .chm$)"   && mv *.[cC][hH][mM]  CHM/
+    test -n "$(ls | egrep -i .db$)"    && mv *.[dD][bB]      DB/
+    test -n "$(ls | egrep -i .dll$)"   && mv *.[dD][lL][lL]  DLL/
+    test -n "$(ls | egrep -i .docx?$)" && mv *.[dD][oO][cC]* DOC/
+    test -n "$(ls | egrep -i .odt$)"   && mv *.[oO][dD][tT]  DOC/
+    test -n "$(ls | egrep -i .exe$)"   && mv *.[eE][xX][eE]  BIN/
+    test -n "$(ls | egrep -i .html?$)" && mv *.[hH][tT][mM]* HTM/
+    test -n "$(ls | egrep -i .jpe?g$)" && mv *.[jJ][pP]*[gG] IMG/
+    test -n "$(ls | egrep -i .png$)"   && mv *.[pP][nN][gG]  IMG/
+    test -n "$(ls | egrep -i .bmp$)"   && mv *.[bB][mM][pP]  IMG/
+    test -n "$(ls | egrep -i .ini$)"   && mv *.[iI][nN][iI]  CONF/
+    test -n "$(ls | egrep -i .lnk$)"   && mv *.[lL][nN][kK]  LNK/
+    test -n "$(ls | egrep -i .log$)"   && mv *.[lL][oO][gG]  LOG/
+    test -n "$(ls | egrep -i .msg$)"   && mv *.[mM][sS][gG]  MAIL/
+    test -n "$(ls | egrep -i .pst$)"   && mv *.[pP][sS][tT]  MAIL/
+    test -n "$(ls | egrep -i .pdf$)"   && mv *.[pP][dD][fF]  PDF/
+    test -n "$(ls | egrep -i .pptx?$)" && mv *.[pP][pP][tT]* PPT/
+    test -n "$(ls | egrep -i .odp$)"   && mv *.[oO][dD][pP]  PPT/
+    test -n "$(ls | egrep -i .tmp$)"   && mv *.[tT][mM][pP]  TMP/
+    test -n "$(ls | egrep -i .txt$)"   && mv *.[tT][xX][tT]  TXT/
+    test -n "$(ls | egrep -i .url$)"   && mv *.[uU][rR][lL]  URL/
+    test -n "$(ls | egrep -i .xlsx?$)" && mv *.[xX][lL][sS]* XLS/
+    test -n "$(ls | egrep -i .ods$)"   && mv *.[oO][dD][sS]  XLS/
+    test -n "$(ls | egrep -i .xml$)"   && mv *.[xX][mM][lL]  XML/
+    test -n "$(ls | egrep -i .zip$)"   && mv *.[zZ][iI][pP]  ZIP/
+    test -n "$(ls | egrep -i .z$)"     && mv *.[zZ]          ZIP/
+
+    for i in *; do
+        if [ "$i" != "$MAPFILE" ] && [ -f "$i" ]; then
+            res="$(file -b -i "$i" | cut -d\; -f1)"
+            case "$res" in
+                "application/pdf") mv "$i" PDF/;;
+                "application/zip") mv "$i" ZIP/;;
+                "application/vnd.ms-excel") mv "$i" XLS/;;
+                "application/vnd.oasis.opendocument.spreadsheet") mv "$i" XLS/;;
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") mv "$i" XLS/;;
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document") mv "$i" DOC/;;
+                "application/msword") mv "$i" DOC/;;
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation") mv "$i" PPT/;;
+                "application/x-wine-extension-ini") mv "$i" CONF/;;
+                "application/CDFV2-corrupt") mv "$i" ENC/;;
+                "application/CDFV2-encrypted") mv "$i" ENC/;;
+                "application/octet-stream") mv "$i" BIN/;;
+                "application/xml") mv "$i" XML/;;
+                text/htm*)     mv "$i" HTM/;;
+                audio/*)       mv "$i" AUD/;;
+                application/*) mv "$i" APP/;;
+                image/*)       mv "$i" IMG/;;
+                text/*)        mv "$i" TXT/;;
+                video/*)       mv "$i" VID/;;
+                *) ;;
+            esac
+        fi
+    done
+fi
+
+# *.msg can be converted to eml with msgconvert FILE

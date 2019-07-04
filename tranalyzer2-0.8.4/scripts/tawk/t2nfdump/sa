@@ -1,0 +1,18 @@
+#!/usr/bin/env awk
+#
+# Source Address
+#
+# Dependencies:
+#   - basicFlow
+#
+# Example:
+#   - tawk '{ print sa() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function sa(        _sip) {
+    _sip = _validate_col("srcIP4;srcIP6;srcIP", _my_srcIP)
+    if (hdr()) return "Src IP Addr"
+    return $_sip
+}

@@ -1,0 +1,9 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+!strisempty($sslServerName) {
+    aggrrep($sslServerName, "flows", n, 1)
+}

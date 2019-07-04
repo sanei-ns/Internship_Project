@@ -1,0 +1,12 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/binSink
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/binSink.h
+GZ_COMPRESS  src/binSink.h
+SFS_SPLIT    src/binSink.h

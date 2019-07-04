@@ -1,0 +1,16 @@
+#!/usr/bin/env awk
+#
+# Converts a network mask (int) to an IPv6 address (int)
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{ print mask2ip6(64) }' file.txt
+
+@include "isnum"
+
+function mask2ip6(m) {
+    if (!isnum(m) || m > 128 || m < 0) return m
+    return xor(lshift(1, 128) - 1, lshift(1, 128 - m) - 1)
+}

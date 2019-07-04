@@ -1,0 +1,42 @@
+# Bash/ZSH completion for fextractor
+
+_fextractor() {
+    #compdef fextractor
+    local cur prev
+    if type compdef &> /dev/null; then
+        local opts=(
+            '(-R)'{-r,-r}'[Read offsets from XER file]:file:_files'
+            '(-r)'{-R,-R}'[Read offsets from multiple XER files]:file:_files'
+            '(-j)'{-i,-i}'[Read flow indexes from FILE]:file:_files'
+            '-w[Write packets to PCAP FILE]:file:_files'
+            '-s[Skip the first N PCAPs]:number of PCAP to skip (int):'
+            '-f[Overwrite OUTPUTFILE if it already exists]'
+            '-n[Print oldest PCAP still available, its first packet timestamp and exit]'
+            '-p[Search PCAPs in DIR]:directory:_files -/'
+            '(- 1 *)'{-h,-h}'[Show help options and exit]'
+        )
+        _arguments -s -S "${opts[@]}"
+    else
+        local cur prev words cword
+        _init_completion || return
+        case $prev in
+            -r|-R|-i|-j|-w)
+                _filedir
+                return
+                ;;
+            -p)
+                _filedir -d
+                return
+                ;;
+        esac
+        if [[ "$cur" == -* ]]; then
+            COMPREPLY=($(compgen -W "$(_parse_help "$T2HOME/findexer/fextractor/fextractor" -h)" -- "$cur"))
+        fi
+    fi
+}
+
+if type compdef &> /dev/null; then
+    compdef _fextractor fextractor
+else
+    complete -F _fextractor fextractor
+fi

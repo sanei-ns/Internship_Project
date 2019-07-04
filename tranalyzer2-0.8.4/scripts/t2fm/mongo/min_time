@@ -1,0 +1,7 @@
+cursor = db.flow.find().sort({timeFirst : 1}).limit(1)
+
+cursor.forEach(
+    function(e) {
+        print(e.timeFirst / 1000)
+    }
+)

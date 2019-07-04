@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+#
+# Launch several instances of Tranalyzer in the background, each with its own
+# list of plugins (Tranalyzer must be configured to use a plugin loading list
+# (tranalyzer2/src/loadPlugins.h:24: USE_PLLIST > 0)
+#
+# If a list of loading files is provided, then the script uses them to derive
+# the output prefix and the script launches as many Tranalyzer as the number
+# of files provided.
+#
+# TODO
+#   - reuse previously generated loading list
+#   - path to tranalyzer (IPv6/IPv4)
+
+source "$(dirname "$0")/t2utils.sh"
+
+usage() {
+    printf "Usage:\n"
+    printf "    $SNAME [OPTION...] <INPUT> [file(s).load]\n\n"
+    printf "Input.\n"
+    printf "    -i iface            Interface to capture traffic from\n"
+    printf "    -r pcap             PCAP file to analyse\n"
+    printf "    -R list             List of PCAP files to analyse\n"
+    printf "\n"
+    printf "Optional arguments:\n"
+    printf "    -0                  deactivates all plugins\n"
+    printf "    -f factor           Hash table multiplication factor\n"
+    printf "    -p path             Load plugins from path instead of ~/.tranalyzer/plugins\n\n"
+    printf "    -?, -h, --help      Show help otions and exit\n"
+}
+
+# Command line options
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -i)
+            validate_next_arg "$1" "$2"
+            IFACE="$2"
+            shift
+            ;;
+        -r)
+            validate_next_file "$1" "$2"
+            PCAP="$2"
+            shift
+            ;;
+        -R)
+            validate_next_file "$1" "$2"
+            PCAPLIST="$2"
+            shift
+            ;;
+        -p)
+            validate_next_arg "$1" "$2"
+            PLFOLDER="$2"
+            shift
+            ;;
+        -f)
+            validate_next_num "$1" "$2"
+            HASHFACTOR="-f $2"
+            shift
+            ;;
+        -0)
+            T2CONFOPTS="-0"
+            ;;
+        -\?|-h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            if [ ! -f "$1" ]; then
+                abort_option_unknown "$1"
+            fi
+            LOADFILES+=("$1")
+            ;;
+    esac
+    shift
+done
+
+if [ -z "$("$T2" -h | grep -- "^\s\+-b\s\+")" ]; then
+    printerr "Tranalyzer not configured to use plugin loading list"
+    printinf "Set USE_PLLIST to 1 in tranalyzer2/src/loadPlugins.h"
+    exit 1
+fi
+
+if [ -z "$IFACE$PCAP$PCAPLIST" ]; then
+    printerr "One of -i, -r or -R option is required"
+    abort_with_help
+fi
+
+INPUT="$IFACE$PCAP$PCAPLIST"
+if [ "$INPUT" != "$IFACE" ] &&
+   [ "$INPUT" != "$PCAP" ] &&
+   [ "$INPUT" != "$PCAPLIST" ]
+then
+    printerr "Cannot use -i, -r and -R options at the same time"
+    abort_with_help
+fi
+
+if [ -n "$PCAP$PCAPLIST" ] && [ ! -f "$PCAP$PCAPLIST" ]; then
+    printerr "File '$PCAP$PCAPLIST' does not exist"
+    exit 1
+fi
+
+if [ -n "$PCAPLIST" ]; then
+    T2OPTS="-R"
+elif [ -n "$IFACE" ]; then
+    T2OPTS="-i"
+else
+    T2OPTS="-r"
+fi
+T2OPTS="-l -c0 $T2OPTS"
+
+if [ -n "$PLFOLDER" ]; then
+    if [ ! -d "$PLFOLDER" ]; then
+        printerr "Plugin folder '$PLFOLDER' does not exist"
+        exit 1
+    fi
+    PLFOLDER="-p '$PLFOLDER'"
+fi
+
+printf "Welcome to T2 Wizard\n\n"
+printf "(press q at any time to abort)\n\n"
+
+while [ "$ANS" != "q" ]; do
+    if [ -n "$LOADFILES" ]; then
+        OUTPREF="$($AWK -F. -v OFS=. '{ NF--; print }' <<< "${LOADFILES[i]}")"
+        PLUGINLIST="${LOADFILES[i]}"
+        i=$((i+1))
+        if [ $i -eq ${#LOADFILES[*]} ]; then
+            unset LOADFILES
+            #ANS="q"
+        fi
+    else
+        read -p "Choose the output prefix: " OUTPREF
+        case "$OUTPREF" in
+            q|Q) ANS="q"; continue;;
+            # Expand ~ and $HOME
+            ~*) OUTPREF="$(perl -lpe "s!~!$HOME!" <<< "$OUTPREF")";;
+            '$HOME'*) OUTPREF="$(perl -lpe "s!\\\$HOME!$HOME!" <<< "$OUTPREF")";;
+        esac
+
+        # Plugin loading list
+        PLUGINLIST="${OUTPREF}.load"
+
+        # Select and configure the plugins
+        "$T2CONF" -L "$PLUGINLIST" $T2CONFOPTS $PLFOLDER
+    fi
+
+    # Launch Tranalyzer in the background
+    "$T2" $T2OPTS "$INPUT" $HASHFACTOR -w "$OUTPREF" -b "$PLUGINLIST" $PLFOLDER &
+
+    # Make sure it has started and report the PID
+    unset PID
+    LOGFILE="${OUTPREF}_log.txt"
+    while [ ! -f "$LOGFILE" ] || [ -z "$PID" ]; do
+        sleep 1
+        PID="$(grep "^Tranalyzer\s.*PID: " "$LOGFILE" | perl -lpe 's/^Tranalyzer\s+.*\.\s+PID:\s+(\d+)\s*$/\1/')"
+    done
+    printf "Tranalyzer run in the background... PID $PID\n\n"
+
+    if [ -z "$LOADFILES" ]; then
+        read -p "Do you want to configure another Tranalyzer (Y/n)? " ANS
+        case "$ANS" in
+            n|N|q|Q) ANS="q";;
+        esac
+        printf "\n"
+    fi
+done
+
+printf "Waiting for all Tranalyzer to finish... "
+wait < <(jobs -p)
+printf "done!\n"

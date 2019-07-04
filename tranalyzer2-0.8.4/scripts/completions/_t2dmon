@@ -1,0 +1,26 @@
+# Bash/ZSH completion for t2dmon
+
+_t2dmon() {
+    #compdef t2dmon
+    if type compdef &> /dev/null; then
+        if [[ "${words[CURRENT]}" == -* ]]; then
+            _arguments --
+        else
+            _files -/
+        fi
+    else
+        local cur prev words cword
+        _init_completion || return
+        if [[ "$cur" == -* ]]; then
+            COMPREPLY=($(compgen -W "$(_parse_help "$T2HOME/scripts/t2dmon")" -- "$cur"))
+        else
+            _filedir -d
+        fi
+    fi
+}
+
+if type compdef &> /dev/null; then
+    compdef _t2dmon t2dmon
+else
+    complete -F _t2dmon t2dmon
+fi

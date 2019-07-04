@@ -1,0 +1,34 @@
+#!/usr/bin/env awk
+#
+# Returns true if one item of 'val' split by 'sep' is 'item'.
+# If ign is 1, performs a case insensitive comparison
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - contains
+#   - containsi
+#   - cvalcontains
+#   - cvalcontainsi
+#   - rvalcontains
+#   - rvalcontainsi
+#   - valcontainsi
+#
+# Examples:
+#   - tawk 'valcontains($srcMac_dstMac_numP, "_", "00:11:22:33:44:55")' file.txt
+#   - tawk 'valcontains("str1;str2;str3", ";", "str2") { print }' file.txt
+
+@include "hdr"
+@include "unquote"
+
+function valcontains(val, sep, item, ign,        _i, _l, _tmp) {
+    if (hdr()) return __PRIHDR__
+    _l = split(val, _tmp, sep)
+    for (_i = 1; _i <= _l; _i++) {
+        _tmp[_i] = unquote(_tmp[_i])
+        if (ign) _tmp[_i] = tolower(_tmp[_i])
+        if (_tmp[_i] == item) return 1
+    }
+    return 0
+}

@@ -1,0 +1,27 @@
+#!/usr/bin/env awk
+#
+# Returns true if the protocol number is equal to 17 (UDP)
+#
+# Parameters:
+#   - [p] : the protocol to test [default: $l4Proto]
+#
+# Dependencies:
+#   - basicFlow
+#
+# See Also:
+#   - proto
+#
+# Examples:
+#   - tawk 'udp()' file.txt
+#   - tawk 'udp() { print $srcIP4 }' file.txt
+#   - tawk 'udp($l4Proto)' file.txt
+#   - tawk 'udp($l4Proto) { print $srcIP4 }' file.txt
+
+@include "hdr"
+@include "proto"
+
+function udp(p) {
+    if (hdr()) return __PRIHDR__
+    if (p) return p == 17
+    else return proto(17)
+}

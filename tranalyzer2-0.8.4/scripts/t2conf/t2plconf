@@ -1,0 +1,301 @@
+#!/usr/bin/env bash
+#
+# Master plugin configuration file
+#
+# Every plugin can list its configuration options in a file named 't2plconf':
+#   - options must be described in an array named ITEMS
+#   - this file must then be sourced
+#
+# For a concrete example, keep reading or refer to plugins/t2PSkel/t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+#
+#ITEMS=(
+#    # An item can be specified in one line...
+#    T2PSKEL_VAR1 check "" "Description of option" # No dependencies
+#
+#    # Or span multiple lines
+#    T2PSKEL_VAR1 radio "T2PSKEL_VAR1 == 1"
+#           "Description of option; \
+#                   0: description of val 0; \
+#                   1: description of val 1; \
+#                   2: description of val 2"
+#
+#    T2PSKEL_SIZE range "T2PSKEL_VAR1 == 1 || T2PSKEL_VAR2 > 0"
+#           "Description: 0 255" # min=0, max=255
+#
+#    T2PSKEL_STR text
+#           "T2PSKEL_SIZE <= 5 && (T2PSKEL_VAR1 != 0 || T2PSKEL_VAR2 <= 1)"
+#           "Description"
+#)
+#
+# Source the main config file
+# source ../../scripts/t2conf/t2plconf
+
+# TODO
+#   - type char
+#   - move cursor to end of match
+#   - dependencies for string, e.g., LANG == "en"
+
+DIRNAME0="$(dirname "$0")"
+
+source "$DIRNAME0/../../scripts/t2utils.sh"
+
+# Default values
+EDITOR="${EDITOR:-$(which vim)}"
+SRCDIR="src"
+SRCPATH="$DIRNAME0/$SRCDIR"
+
+if [ "$DIRNAME0" != "." ]; then
+    PNAME="$($AWK -F'/' '{ print $NF }' <<< "$DIRNAME0")"
+else
+    PNAME="$(basename "$PWD")"
+fi
+
+# Dependencies
+check_dependency dialog
+
+# associative arrays were introduced in bash 4
+if [[ ${BASH_VERSINFO[0]} < 4 ]]; then
+    printerr "minimum bash version required is '4', found '$(cut -d- -f1 <<< "$BASH_VERSION")'"
+    exit 1
+fi
+
+DVER="$(dialog --version | $AWK '{print $2}')"
+if [[ $(cut -d- -f1 <<< "$DVER") < 1.1 ]] ||
+   [[ $(cut -d- -f2 <<< "$DVER") < 20120703 ]]; then
+    printerr "minimum dialog version required is '1.1-20120703', found '$DVER'"
+    exit 1
+fi
+
+if [ -z "$ITEMS" ]; then
+    printerr "Error: variable 'ITEMS' not defined in $PNAME/t2plconf"
+    exit 1
+elif [ "$ITEMS" = "none" ]; then
+    unset ITEMS
+fi
+
+TITLE="Tranalyzer2"
+
+# setup_tempfile
+tempfile=`(tempfile) 2> /dev/null` || tempfile=/tmp/test$$
+trap "{ rm -f $tempfile ; exit 255; }" EXIT SIGINT SIGTERM
+
+declare -A INDEX
+
+for ((i=0; i < ${#ITEMS[*]}; i+=4)); do
+    TAG="${ITEMS[$i]}"
+    case "$(grep "^#define\s\+$TAG\s\+" "$SRCPATH/"*.h | wc -l | tr -d ' ')" in
+        1) FILE="$(grep -l "^#define\s\+$TAG\s\+" "$SRCPATH/"*.h)";;
+        0) printerr "Variable '$TAG' not found in '$SRCPATH'"; exit 1;;
+        *) printerr "Variable '$TAG' defined more than once in '$SRCPATH'"; exit 1;;
+    esac
+    INDEX[$TAG]=$((i/4))
+    VAL="$(grep "^#define\s\+$TAG\s\+" "$FILE" | perl -pe "s/(^#define\s+$TAG\s+)([^\s]((?!\s*\/[\/\*]|\s*$).)*)(.*$)/\${2}/p")"
+    IFILE+=("$FILE")
+    ITAGS+=("$TAG")
+    IVALS+=("$VAL")
+    ITYPE+=("${ITEMS[$((i+1))]}")
+    IDEPS+=("${ITEMS[$((i+2))]}")
+    IDESC+=("${ITEMS[$((i+3))]}")
+done
+
+# Dialog return value
+OK=0
+CANCEL=1
+HELP=2
+EXTRA=3
+ITEM_HELP=4
+ESC=255
+
+retval=1
+SELECTED=0
+NF=${#ITYPE[*]}
+while [ $retval -ne 0 ]; do
+    unset IELEM
+    for ((i=0; i < $NF; i++)); do
+        if [ -z "${IDEPS[$i]}" ]; then
+            IELEM+=("${ITAGS[$i]}" "${IVALS[$i]}")
+        else
+            # Test whether deps are statisfied
+            D="${IDEPS[$i]}"
+            for ((j=0; j < $NF; j++)); do
+                if [ -z "$(tr -d '[0-9][:space:]' <<< "${IVALS[$j]}")" ]; then
+                    D="$(perl -pe "s/\b${ITAGS[$j]}\b/${IVALS[$j]}/g" <<< "$D")";
+                fi
+            done
+            if [ "$(bc <<< "$D")" -eq 1 ]; then
+                IELEM+=("${ITAGS[$i]}" "${IVALS[$i]}")
+            fi
+        fi
+    done
+
+    if [ -z "$ITEMS" ]; then
+        if [ -f "$SRCPATH/$PNAME.h" ]; then
+            IFILE=("$SRCPATH/$PNAME.h")
+            EDIT="--help-button --help-label Edit --help-status"
+        fi
+        dialog --no-lines --no-shadow --title "$TITLE" \
+            $EDIT --default-button "ok" \
+            --msgbox "\nNo configuration options available for $PNAME plugin" 20 70 2> $tempfile
+    else
+        dialog --no-lines --no-shadow --title "$TITLE" \
+            --extra-button --extra-label "Configure" \
+            --help-button --help-label "Edit" --help-status \
+            --default-item "${ITAGS[$SELECTED]}" \
+            --default-button "ok" \
+            --menu "\n$PNAME plugin configuration:" 20 70 20 -- "${IELEM[@]}" 2> $tempfile
+    fi
+    retval=$?
+    [ -s $tempfile ] && SELECTED=$(cat $tempfile) # Selected contains the TAG of the element
+    case $retval in
+        $OK)
+            for ((i=0; i < $NF; i++)); do
+                FILE="${IFILE[$i]}"
+                TAG="${ITAGS[$i]}"
+                VAL="${IVALS[$i]}"
+                VAL="$($AWK -v t="$VAL" 'BEGIN { if (t ~ /\//) { gsub(/\//, "\\/", t) } print t }')"
+                perl -i -pe "s/(^#define\s+$TAG\s+)([^\s]((?!\s*\/[\/\*]|\s*$).)*)(.*$)/\${1}$VAL\${4}/p" "$FILE"
+            done
+            ;;
+        # Edit
+        $HELP)
+            SELECTED=${INDEX[$($AWK '{print $2}' <<< "$SELECTED")]}
+            FILE="${IFILE[$SELECTED]}"
+            TAG="${ITAGS[$SELECTED]}"
+            if [ "$EDITOR" = "$(which vim)" ] && [ -n "$TAG" ]; then
+                "$EDITOR" -c "/^#define\\s\\+$TAG\\s\\+[^\\s]" -c noh "$FILE"
+            else
+                "$EDITOR" "$FILE"
+            fi
+            for ((i=0; i < $NF; i++)); do
+                FILE="${IFILE[$i]}"
+                TAG="${ITAGS[$i]}"
+                VAL="$(grep "^#define\s\+$TAG\s\+" "$FILE" | perl -pe "s/^#define\s+$TAG\s+(.*)/\1/" | perl -pe 's/\s*\/[\/\*].*//')"
+                IVALS[$i]="$VAL"
+            done
+            ;;
+        # Configure
+        $EXTRA)
+            rm -f $tempfile
+            SELECTED=${INDEX[$SELECTED]}
+            case ${ITYPE[$SELECTED]} in
+                radio)
+                    IFS=$'\t\n'
+                    DESC="$($AWK '{
+                        split($0, e, ";")
+                        print e[1]
+                    }' <<< "${IDESC[$SELECTED]}")"
+                    SVAL="$(perl -pe 's/^"//' <<< "${IVALS[$SELECTED]}" | perl -pe 's/"$//')"
+                    RITEMS=($($AWK -v selected="$SVAL" '{
+                        split($0, e, ";")
+                        descr = e[1]
+                        for (i = 2; i <= length(e); i++) {
+                            if (length(e[i]) == 0) continue
+                            split(e[i], f, ":")
+                            gsub(/^[[:space:]]*/, "", f[1])
+                            gsub(/^[[:space:]]*/, "", f[2])
+                            s = (f[1] == selected) ? "on" : "off"
+                            printf("%s\t%s\t%s\n", f[1], f[2], s)
+                        }
+                    }' <<< "${IDESC[$SELECTED]}"))
+                    dialog --no-lines --no-shadow --title "$TITLE" --no-tags \
+                           --radiolist "\n$DESC\n\nUse the space bar to select a value" \
+                           20 70 20 "${RITEMS[@]}" 2> $tempfile
+                    if [ -s $tempfile ]; then
+                        VAL="$(cat $tempfile)"
+                        if [ -n "$VAL" ]; then
+                            if [ -z "$(tr -d '[0-9][:space:]' <<< "$VAL")" ]; then
+                                VAL="$(tr -d '[:space:]' <<< "$VAL")"
+                            else
+                                VAL="\"$(perl -pe 's/^\s+//' <<< "$VAL" | perl -pe 's/\s+$//')\""
+                            fi
+                            IVALS[$SELECTED]="$VAL"
+                        fi
+                    fi
+                    unset $IFS
+                    ;;
+                check)
+                    if [ "${IVALS[$SELECTED]}" -eq 1 ]; then
+                        VAL="on"
+                    else
+                        VAL="off"
+                    fi
+                    dialog --no-lines --no-shadow --title "$TITLE" --no-tags \
+                        --checklist "\nUse the space bar to (de)activate the value" \
+                        20 70 20 "${ITAGS[$SELECTED]}" \
+                        "${IDESC[$SELECTED]}" "$VAL" 2> $tempfile
+                    if [ $? -eq $OK ]; then
+                        if [ -s $tempfile ]; then
+                            IVALS[$SELECTED]=1
+                        else
+                            IVALS[$SELECTED]=0
+                        fi
+                    fi
+                    ;;
+                range)
+                    IFS=$'\t\n'
+                    RITEMS=($($AWK '{
+                        split($0, e, ":")
+                        split(e[2], f, " ")
+                        printf("%s\t%s\t%s\n", e[1], f[1], f[2])
+                    }' <<< "${IDESC[$SELECTED]}"))
+                    DESC="${RITEMS[0]}"
+                    MIN="${RITEMS[1]}"
+                    MAX="${RITEMS[2]}"
+                    VAL="${IVALS[$SELECTED]}"
+                    dialog --no-lines --no-shadow --title "$TITLE" --no-tags \
+                           --rangebox "\n$DESC\n\nUse +/-, up/down, Home/End and 0-9 to change the value" \
+                           5 70 $MIN $MAX $VAL 2> $tempfile
+                    VAL="$(cat $tempfile | tr -d '[:space:]')"
+                    if [ -n "$VAL" ]; then
+                        IVALS[$SELECTED]=$VAL
+                    fi
+                    unset $IFS
+                    ;;
+                text)
+                    dialog --no-shadow --title "$TITLE" --no-tags \
+                        --inputbox "${IDESC[$SELECTED]}" 20 70 -- \
+                        "$(perl -pe 's/^"//' <<< "${IVALS[$SELECTED]}" | perl -pe 's/"$//')" 2> $tempfile
+                    if [ $? -eq $OK ]; then
+                        IVALS[$SELECTED]="\"$(cat $tempfile)\""
+                    fi
+                    ;;
+            esac
+            ;;
+        #$ITEM_HELP)
+        #    echo "ITEM_HELP"
+        #    ;;
+        $CANCEL|$ESC)
+            dialog --no-lines --no-shadow --title "$TITLE" --yesno "\nYour changes have not been saved and will be discarded.\n\nAre you sure you want to quit?" 10 40
+            if [ $? -ne $CANCEL ]; then
+                retval=0
+            fi
+            ;;
+    esac
+done

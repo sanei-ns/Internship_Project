@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+#
+# Configuration file for httpSniffer
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    HTTP_MIME radio ""
+        "MIME type information; \
+            0: Print # of mime types only; \
+            1: Print mime type in flow file"
+
+    HTTP_STAT radio ""
+        "Status code information; \
+            0: Print # of status codes only; \
+            1: Print status code in flow file"
+
+    HTTP_STATAGA check "HTTP_STAT == 1" "Aggregate status responses"
+
+    HTTP_MCNT check "" "Output the number of GET and POST requests"
+
+    HTTP_HOST radio ""
+        "Hosts information; \
+            0: Print # of hosts only; \
+            1: Print hosts in flow file"
+
+    HTTP_HOSTAGA check "HTTP_HOST == 1" "Aggregate hosts"
+
+    HTTP_URL radio ""
+        "URL information; \
+            0: Print # of hosts only; \
+            1: Print URL in flow file"
+
+    HTTP_URLAGA check "HTTP_URL == 1" "Aggregate URLs"
+
+    HTTP_COOKIE radio ""
+        "Cookies information; \
+            0: print # of cookies only; \
+            1: print cookies in flow file"
+
+    HTTP_IMAGE radio ""
+        "Images information; \
+            0: Print # of images only; \
+            1: Print image name in flow file"
+
+    HTTP_VIDEO radio ""
+        "Videos information; \
+            0: Print # of videos only; \
+            1: Print video name in flow file"
+
+    HTTP_AUDIO radio ""
+        "Audio information; \
+            0: Print # of audios only; \
+            1: Print audio name in flow file"
+
+    HTTP_MSG radio ""
+        "Message information; \
+            0: Print # of pdf only; \
+            1: Print pdf name in flow file"
+
+    HTTP_APPL radio ""
+        "Applications information; \
+            0: Print # of applications only; \
+            1: Print application name in flow file"
+
+    HTTP_TEXT radio ""
+        "Text information; \
+            0: Print # of texts only; \
+            1: Print text name in flow file"
+
+    HTTP_BODY check "" "Print anomaly bits in flow file (body exam)"
+    HTTP_BDURL check "" "Print body url name in flow file"
+
+    HTTP_USRAG check "" "Print user agents in flow file"
+    HTTP_USRAGA check "HTTP_USRAG == 1" "Aggregate user agents"
+
+    HTTP_XFRWD check "" "Print X-Forwarded-For in flow file"
+    HTTP_XFRWDA check "HTTP_XFRWD == 1" "Aggregate X-Forwarded-For"
+
+    HTTP_REFRR check "" "Print Referer in flow file"
+    HTTP_REFRRA check "HTTP_REFRR == 1" "Aggregate Referer"
+
+    HTTP_VIA check "" "Print Via info in flow file"
+    HTTP_VIAA check "HTTP_VIA == 1" "Aggregate Via"
+
+    HTTP_LOC check "" "Print Location info in flow file"
+    HTTP_LOCA check "HTTP_LOC == 1" "Aggregate Location"
+
+    HTTP_SERV check "" "Print Server info in flow file"
+    HTTP_SERVA check "HTTP_SERV == 1" "Aggregate Server"
+
+    HTTP_PWR check "" "Print Powered-By info in flow file"
+    HTTP_PWRA check "HTTP_PWR == 1" "Aggregate Powered-By"
+
+    HTTP_SAVE_IMAGE check "" "Save images in HTTP_IMAGE_PATH"
+    HTTP_SAVE_VIDEO check "" "Save videos in HTTP_VIDEO_PATH"
+    HTTP_SAVE_AUDIO check "" "Save audios in HTTP_AUDIO_PATH"
+    HTTP_SAVE_MSG   check "" "Save messages in HTTP_MSG_PATH"
+    HTTP_SAVE_TEXT  check "" "Save texts in HTTP_TEXT_PATH"
+    HTTP_SAVE_APPL  check "" "Save applications in HTTP_TEXT_PATH"
+
+    HTTP_RM_PICDIR check
+        "HTTP_SAVE_IMAGE == 1 || HTTP_SAVE_VIDEO == 1 || HTTP_SAVE_AUDIO == 1 || HTTP_SAVE_MSG == 1 || HTTP_SAVE_TEXT == 1 || HTTP_SAVE_APPL == 1"
+        "Remove pic dir in order to prevent appending to existing files"
+
+    HTTP_PATH text
+        "HTTP_SAVE_IMAGE == 1 || HTTP_SAVE_VIDEO == 1 || HTTP_SAVE_AUDIO == 1 || HTTP_SAVE_MSG == 1 || HTTP_SAVE_TEXT == 1 || HTTP_SAVE_APPL == 1"
+        "Root folder for extracted files"
+
+    HTTP_IMAGE_PATH text "HTTP_SAVE_IMAGE == 1" "Path for extracted pictures"
+    HTTP_VIDEO_PATH text "HTTP_SAVE_VIDEO == 1" "Path for extracted videos"
+    HTTP_AUDIO_PATH text "HTTP_SAVE_AUDIO == 1" "Path for extracted audios"
+    HTTP_MSG_PATH   text "HTTP_SAVE_MSG   == 1" "Path for extracted messages"
+    HTTP_TEXT_PATH  text "HTTP_SAVE_TEXT  == 1" "Path for extracted texts"
+    HTTP_APPL_PATH  text "HTTP_SAVE_APPL  == 1" "Path for extracted applications"
+
+    HTTP_NONAME text
+        "HTTP_SAVE_IMAGE == 1 || HTTP_SAVE_VIDEO == 1 || HTTP_SAVE_AUDIO == 1 || HTTP_SAVE_MSG == 1 || HTTP_SAVE_TEXT == 1 || HTTP_SAVE_APPL == 1"
+        "Name of files without name"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

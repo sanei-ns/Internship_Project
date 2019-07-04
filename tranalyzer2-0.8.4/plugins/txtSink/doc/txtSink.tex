@@ -1,0 +1,181 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {txtSink}
+    {Text Output}
+    {Tranalyzer Development Team} % author(s)
+
+\section{txtSink}\label{s:txtSink}
+
+\subsection{Description}
+The txtSink plugin provides human readable text output which can be saved in a file {\tt PREFIX\_flows.txt}, where {\tt PREFIX} is provided via the {\tt --w} option. The generated output contains a textual representation of all plugins results. Each line in the file represents one flow. The different output statistics of the plugins are separated by a tab character to provide better post-processing with command line scripts or statistical toolsets.
+
+\subsection{Dependencies}
+
+\subsubsection{External Libraries}
+If gzip compression is activated ({\tt GZ\_COMPRESS=1}), then {\bf zlib} must be installed.
+
+\paragraph{Kali/Ubuntu:} {\tt sudo apt-get install zlib1g-dev}
+\paragraph{Arch:} {\tt sudo pacman -S zlib}
+\paragraph{Fedora/Red Hat:} {\tt sudo yum install zlib-devel}
+\paragraph{Gentoo:} {\tt sudo emerge zlib}
+\paragraph{OpenSUSE:} {\tt sudo zypper install zlib-devel}
+\paragraph{Mac OS X:} {\tt brew install zlib}\footnote{Brew is a packet manager for Mac OS X that can be found here: \url{https://brew.sh}}
+
+\subsection{Configuration Flags}
+The configuration flags for the txtSink plugins are separated in two files.
+
+\subsubsection{txtSink.h}
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt TFS\_SPLIT}        & 1 & Split the output file (Tranalyzer {\tt --W} option)\\
+    {\tt TFS\_PRI\_HDR}     & 1 & Print a row with column names at the start of the flow file\\
+    {\tt TFS\_HDR\_FILE}    & 1 & Generate a separate header file (\refs{s:tfsHeader})\\
+    {\tt TFS\_PRI\_HDR\_FW} & 0 & Print header in every output fragment (Tranalyzer {\tt --W} option)\\
+    {\tt GZ\_COMPRESS}      & 0 & Compress the output (gzip)\\
+    \bottomrule
+\end{longtable}
+The default suffix used for the flow file is {\tt \_flows.txt} and {\tt \_headers.txt} for the header file. Both suffix can be configured using {\tt FLOWS\_TXT\_SUFFIX} and {\tt HEADER\_SUFFIX} respectively.
+
+\subsubsection{bin2txt.h}
+{\tt bin2txt.h} controls the conversion from internal binary format to standard text output.
+
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Variable} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt HEX\_CAPITAL}          & 0 & Hex number representation: 0: lower case, 1: upper case\\
+    {\tt IP4\_NORMALIZE}        & 0 & IPv4 addresses representation: 0: normal, 1: normalized (padded with 0)\\
+    {\tt IP6\_COMPRESS}         & 1 & IPv6 addresses representation: 1: compressed, 0: full 128 bit length \\
+    {\tt TFS\_EXTENDED\_HEADER} & 0 & Whether or not to print an extended header in the flow file\\
+                                &   & (number of rows, columns, columns type)\\
+    {\tt B2T\_LOCALTIME}        & 0 & Time representation: 0: UTC, 1: localtime\\
+    {\tt B2T\_TIME\_IN\_MICRO\_SECS} & 1 & Time precision: 0: nanosecs, 1: microsecs\\
+    {\tt HDR\_CHR} & {\tt "\%"} & start character of comments in flow file\\
+    {\tt SEP\_CHR} & {\tt "\textbackslash{}t"} & character to use to separate the columns in the flow file\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Additional Output}
+
+\subsubsection{Header File}\label{s:tfsHeader}
+The header file {\tt PREFIX\_headers.txt} describes the columns of the flow file and provides some additional information, such as plugins loaded and PCAP file or interface used, as depicted below. The default suffix used for the header file is {\tt \_headers.txt}. This suffix can be configured using {\tt HEADER\_SUFFIX}.
+
+% TODO update listing
+\begin{lstlisting}
+    # Header file for flow file: PREFIX_flows.txt
+    # Generated from: /home/test/file.pcap
+    #
+    # 666;03.03.2016_19:04:55;hostname;Linux;4.2.0-30-generic;#36-Ubuntu SMP Fri Feb 26 00:58:07 UTC 2016;x86_64
+    #
+    # Plugins loaded:
+    # 00: protoStats, version 0.6.0
+    # 01: basicFlow, version 0.6.0
+    # 02: macRecorder, version 0.6.0
+    # 03: portClassifier, version 0.5.8
+    # 04: basicStats, version 0.6.1
+    # 05: tcpFlags, version 0.6.0
+    # 06: tcpStates, version 0.5.8
+    # 07: icmpDecode, version 0.6.0
+    # 08: connectionCounter, version 0.6.0
+    # 09: txtSink, version 0.5.8
+    #
+    # Col No.   Type        Name
+    1           24:N        Flow direction
+    2           10:N        Flow Index
+    3           15:N        Flow Status
+    4           25:N        System time of first packet
+    5           25:N        System time of last packet
+    6           25:N        Flow duration
+    7           8:R         Ether VlanID
+    8           28:N        Source IPv4 address
+    9           15:N        Subnet number of source IPv4
+    10          8:N         Source port
+    11          28:N        Destination IP4 address
+    12          15:N        Subnet number of destination IP
+    13          8:N         Destination port
+    14          7:N         Layer 4 protocol
+    15          9:N         Number of distinct Source/Destination MAC addresses pairs
+    16          27_27_10:R  Source MAC address, destination MAC address, number of packets of MAC address combination
+    17          30_30:R Source MAC manufacturer, destination MAC manufacturer
+    ...
+\end{lstlisting}
+
+The column number can be used, e.g., with {\tt awk} to query a given column.
+For example, to extract all ICMP flows (layer 4 protocol equals 1) from a flow file:
+\begin{center}
+{\tt awk -F'\textbackslash{}t' '\$14 == 1' PREFIX\_flows.txt}
+\end{center}
+The second column indicates the type of the column (see table below).
+If the value is repetitive, the type is postfixed with {\tt :R}.
+Repetitive values can occur any number of times (from 0 to $N$).
+Each repetition is separated by a semicolon.
+The {\tt `\_'} indicates a compound, i.e., a value containing 2 or more subvalues.
+
+\begin{savenotes}
+\begin{minipage}{0.28\textwidth}
+    \begin{longtable}{rll}
+        \toprule
+        {\bf \#} & {\bf Name} & {\bf Description}\\
+        \midrule\endhead%
+         1 & I8   & int8\\
+         2 & I16  & int16\\
+         3 & I32  & int32\\
+         4 & I64  & int64\\
+         5 & I128 & int128\\
+         6 & I256 & int256\\
+         7 & U8   & uint8\\
+         8 & U16  & uint16\\
+         9 & U32  & uint32\\
+        10 & U64  & uint64\\\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+\begin{minipage}{0.28\textwidth}
+    \begin{longtable}{rll}
+        \toprule
+        {\bf \#} & {\bf Name} & {\bf Description}\\
+        \midrule\endhead%
+        11 & U128 & uint128\\
+        12 & U256 & uint256\\
+        13 & H8   & hex8\\
+        14 & H16  & hex16\\
+        15 & H32  & hex32\\
+        16 & H64  & hex64\\
+        17 & H128 & hex128\\
+        18 & H256 & hex256\\
+        19 & F    & float\\
+        20 & D    & double\\\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+    \begin{longtable}{rll}
+        \toprule
+        {\bf \#} & {\bf Name} & {\bf Description}\\
+        \midrule\endhead%
+        21 & LD      & long double\\
+        22 & C       & char\\
+        23 & S       & string\\
+        24 & C       & flow direction\footnote{{\tt A}: client$\rightarrow$server, {\tt B}: server$\rightarrow$client}\\
+        25 & TS      & timestamp\footnote{U64.U32/S (See {\tt B2T\_TIMESTR} in \tranref{bin2txt.h})}\\
+        26 & U64.U32 & duration\\
+        27 & MAC     & mac address\\
+        29 & IP4     & IPv4 address\\
+        29 & IP6     & IPv6 address\\
+        30 & IPX     & IPv4 or 6 address\\
+        31 & SC      & string class\footnote{string without quotes}\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+\end{savenotes}
+
+\end{document}

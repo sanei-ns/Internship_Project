@@ -1,0 +1,46 @@
+#H radiusNasPortTyp | Description
+#H =============================================================================
+                  0 | Async
+                  1 | Sync
+                  2 | ISDN Sync
+                  3 | ISDN Async V.120
+                  4 | ISDN Async V.110
+                  5 | Virtual
+                  6 | PIAFS
+                  7 | HDLC Clear Channel
+                  8 | X.25
+                  9 | X.75
+                 10 | G.3 Fax
+                 11 | SDSL - Symmetric DSL
+                 12 | ADSL-CAP - Asymmetric DSL, Carrierless Amplitude Phase Modulation
+                 13 | ADSL-DMT - Asymmetric DSL, Discrete Multi-Tone
+                 14 | IDSL - ISDN Digital Subscriber Line
+                 15 | Ethernet
+                 16 | xDSL - Digital Subscriber Line of unknown type
+                 17 | Cable
+                 18 | Wireless - Other
+                 19 | Wireless - IEEE 802.11
+                 20 | Token-Ring
+                 21 | FDDI
+                 22 | Wireless - CDMA2000
+                 23 | Wireless - UMTS
+                 24 | Wireless - IX-EV
+                 25 | IAPP
+                 26 | FTTP - Fiber to the Premises
+                 27 | Wireless - IEEE 802.16
+                 28 | Wireless - IEEE 802.20
+                 29 | Wireless - IEEE 802.22
+                 30 | PPPoA - PPP over ATM
+                 31 | PPPoEoA - PPP over Ethernet over ATM
+                 32 | PPPoEoE - PPP over Ethernet over Ethernet
+                 33 | PPPoEoVLAN - PPP over Ethernet over VLAN
+                 34 | PPPoEoQinQ - PPP over Ethernet over IEEE 802.1QinQ
+                 35 | xPON - Passive Optical Network
+                 36 | Wireless - XGP
+                 37 | WiMAX Pre-Release 8 IWK Function
+                 38 | WiMAX-WIFI-IWK: WiMAX WIFI Interworking
+                 39 | WiMAX-SFF: Signaling Forwarding Function for LTE/3GPP2
+                 40 | WiMAX-HA-LMA: WiMAX HA and or LMA function
+                 41 | WiMAX-DHCP: WiMAX DHCP service
+                 42 | WiMAX-LBS: WiMAX location based service
+                 43 | WiMAX-WVS: WiMAX voice service

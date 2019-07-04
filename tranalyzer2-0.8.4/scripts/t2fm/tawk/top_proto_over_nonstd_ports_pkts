@@ -1,0 +1,58 @@
+#!/usr/bin/env awk
+
+BEGIN {
+    # Index is the nDPIclass (master protocol)
+    # Values are comma separated dstPortClass
+    _ndpimap["apple"] = "http"
+    _ndpimap["bjnp"] = "canon-bjnp2,canon-mfnp"
+    _ndpimap["ciscoskinny"] = "cisco-sccp"
+    _ndpimap["citrix"] = "citriximaclient,ica"
+    _ndpimap["dce_rpc"] = "epmap"
+    _ndpimap["dhcp"] = "bootps"
+    _ndpimap["dhcpv6"] = "dhcpv6-client"
+    _ndpimap["direct_download_link"] = "http"
+    _ndpimap["dns"] = "domain"
+    _ndpimap["dropbox"] = "db-lsp-disc"
+    _ndpimap["ftp_control"] = "ftp"
+    _ndpimap["ftp_data"] = "ftp-data"
+    _ndpimap["gnutella"] = "gnutella-svc"
+    _ndpimap["google"] = "http"
+    _ndpimap["http"] = "http-alt"
+    _ndpimap["http_connect"] = "http"
+    _ndpimap["http_proxy"] = "http,http-alt"
+    _ndpimap["ipsec"] = "ipsec-nat-t,isakmp"
+    _ndpimap["irc"] = "ircu"
+    _ndpimap["msn"] = "http,msnp"
+    _ndpimap["mssql-tds"] = "ms-wbt-server"
+    _ndpimap["netbios"] = "netbios-ssn,netbios-ns,netbios-dgm"
+    _ndpimap["ookla"] = "http-alt"
+    _ndpimap["pops"] = "pop3s"
+    _ndpimap["quic"] = "https"
+    _ndpimap["rdp"] = "ms-wbt-server"
+    _ndpimap["radius"] = "radius-acct"
+    _ndpimap["rtmp"] = "https"
+    _ndpimap["skype"] = "https"
+    _ndpimap["smbv23"] = "microsoft-ds"
+    _ndpimap["smbv1"] = "microsoft-ds"
+    _ndpimap["ssl"] = "https,imaps,pop3s,pcsync-https"
+    _ndpimap["ssl_no_cert"] = "https"
+    _ndpimap["tor"] = "https"
+    _ndpimap["unencrypted_jabber"] = "xmpp-client"
+    _ndpimap["upnp"] = "ssdp"
+    _ndpimap["vnc"] = "vnc-server"
+    _ndpimap["yahoo"] = "http"
+}
+
+hdr() {
+    next
+}
+
+$dir == "A" {
+    _ndpiClass = unquote(tolower($nDPIclass))
+    _ndpiClass = gensub(/\..*/, "", 1, _ndpiClass) # master protocol only
+    _portClass = tolower($dstPortClass)
+    if (streq(_ndpiClass, "unknown") || streq(_portClass, "unknown")) next
+    if (streq(_ndpiClass, _portClass)) next
+    if (_ndpiClass in _ndpimap && _ndpimap[_ndpiClass] ~ "\\y" _portClass "\\y") next
+    aggr(_ndpiClass OFS $dstPortClassN OFS $dstPortClass, $numPktsSnt + $numPktsRcvd, n)
+}

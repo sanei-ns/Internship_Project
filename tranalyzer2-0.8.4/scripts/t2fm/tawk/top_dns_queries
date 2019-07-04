@@ -1,0 +1,9 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+!strisempty($dnsQname) && !bitsallset($dnsStat, 0x2) {  # ignore NBNS
+    aggrrep($dnsQname, "flows", n, 1)
+}

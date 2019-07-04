@@ -1,0 +1,18 @@
+#!/usr/bin/env awk
+#
+# bpp - Bytes per packet
+#
+# Dependencies:
+#   - basicStats
+#
+# Example:
+#   - tawk '{ print bpp() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function bpp(        _c) {
+    _c = _validate_col("avePktSize", _my_avePktSize)
+    if (hdr()) return "Bpp"
+    return $_c
+}

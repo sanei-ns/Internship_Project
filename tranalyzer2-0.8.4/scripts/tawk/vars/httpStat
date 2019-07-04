@@ -1,0 +1,18 @@
+#H bit | httpStat | Description
+#H =============================================================================
+     0 | 0x0001   | More Data in Flow than HTTP_DATA_C_MAX can save
+     1 | 0x0002   | Filename larger than HTTP_MXIMNM_LEN or Linux def
+     2 | 0x0004   | Internal State: pending url name
+     3 | 0x0008   | HTTP Flow
+     4 | 0x0010   | Internal State: Chunked transfer
+     5 | 0x0020   | Internal State: HTTP Flow detected
+     6 | 0x0040   | Internal State: http hdr in process
+     7 | 0x0080   | Internal State: sequence number init
+     8 | 0x0100   | Internal State: header shift
+     9 | 0x0200   | Internal State: PUT payload sniffing
+    10 | 0x0400   | Internal State: Image payload sniffing
+    11 | 0x0800   | Internal State: video payload sniffing
+    12 | 0x1000   | Internal State: audio payload sniffing
+    13 | 0x2000   | Internal State: message payload sniffing
+    14 | 0x4000   | Internal State: text payload sniffing
+    15 | 0x8000   | Internal State: application payload sniffing

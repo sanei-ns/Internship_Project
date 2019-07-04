@@ -1,0 +1,132 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+% from https://tex.stackexchange.com/a/50263
+\lstdefinelanguage{diff}{
+    morecomment=[f][\color{blue}]{@@},     % group identifier
+    morecomment=[f][\color{red}]-,         % deleted lines
+    morecomment=[f][\color{green}]+,       % added lines
+    morecomment=[f][\color{red}]{---}, % Diff header lines (must appear after +,-)
+    morecomment=[f][\color{green}]{+++},
+}
+
+\begin{document}
+
+\trantitle
+    {nDPI}
+    {Classification Based on Content Analysis}
+    {Tranalyzer Development Team}
+
+\section{nDPI}\label{s:nDPI}
+
+\subsection{Description}
+This plugin is a simple wrapper around the nDPI library: \url{https://github.com/ntop/nDPI}.
+It classifies flows according to their protocol/application by analyzing the payload content
+instead of using the destination port. This plugin produces output to the flow file and to
+a protocol statistics file. Configuration is achieved by user defined compiler switches in
+{\tt src/nDPI.h}.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Variable} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt NDPI\_OUTPUT\_NUM}   & 0 & Whether (1) or not (0) to output a numerical classification.\\
+    {\tt NDPI\_OUTPUT\_STR}   & 1 & Whether (1) or not (0) to output a textual classification.\\
+    {\tt NDPI\_OUTPUT\_STATS} & 1 & Whether (1) or not (0) to output nDPI protocol distribution in a separate file.\\
+    {\tt NDPI\_GUESS\_UNKNOWN} & 1 & Whether (1) or not (0) to try guessing unknown protocols.\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The nDPI plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt nDPIMasterProto} & U16 & numerical nDPI master protocol     & {\tt NDPI\_OUTPUT\_NUM=1}\\
+    {\tt nDPISubProto}    & U16 & numerical nDPI sub protocol        & {\tt NDPI\_OUTPUT\_NUM=1}\\
+    {\tt nDPIclass}       & S   & nDPI based protocol classification & {\tt NDPI\_OUTPUT\_STR=1}\\
+    \bottomrule
+\end{longtable}
+
+\subsection{nDPI Numerical Protocol Classification}
+
+\traninput{proto}
+
+\subsection{Plugin Report Output}
+The following information is reported:
+\begin{itemize}
+    \item Number of flows classified
+\end{itemize}
+
+\subsection{Additional Output}
+If {\tt NDPI\_OUTPUT\_STATS=1} then nDPI protocol distribution statistics are output in {\tt PREFIX\_nDPI.txt}.\\
+
+\subsection{Post-Processing}
+The {\tt\tranref{protStat}} script can be used to sort the {\tt PREFIX\_nDPI.txt} file for the most or least occurring protocols (in terms of number of packets or bytes).
+It can output the top or bottom $N$ protocols or only those with at least a given percentage:
+\begin{itemize}
+    \item list all the options: {\tt protStat --{}--help}
+    \item sorted list of protocols (by packets): {\tt protStat PREFIX\_nDPI.txt}
+    \item sorted list of protocols (by bytes): {\tt protStat PREFIX\_nDPI.txt --b}
+    \item top 10 protocols (by packets): {\tt protStat PREFIX\_nDPI.txt --n 10}
+    \item bottom 5 protocols (by bytes): {\tt protStat PREFIX\_nDPI.txt --n --5 --b}
+    \item protocols with packets percentage greater than 20\%: {\tt protStat PREFIX\_nDPI.txt --p 20}
+    \item protocols with bytes percentage smaller than 5\%: {\tt protStat PREFIX\_nDPI.txt --b --p --5}
+\end{itemize}
+
+\subsection{How to Update nDPI to New Version}
+
+\begin{itemize}
+    \item download latest stable version (or git clone and checkout stable branch)
+    \item delete {\tt src/nDPI} and replace it with this new version
+    \item run the {\tt ./new\_ndpi\_prepatch.sh} script
+    \item {\tt cd src/nDPI/}
+    \item edit {\tt configure.ac}
+    \begin{lstlisting}[language=diff]
+--- configure.ac.origin
++++ configure.ac
+@@ -119,9 +119,9 @@
+
+ dnl> https://github.com/json-c/json-c
+ AC_ARG_ENABLE([json-c],
+-    AS_HELP_STRING([--disable-json-c], [Disable json-c support]))
++    AS_HELP_STRING([--enable-json-c], [Enable json-c support]))
+
+-AS_IF([test "x$enable_json_c" != "xno"], [
++AS_IF([test "x$enable_json_c" = "xyes"], [
+        PKG_CONFIG_PATH=/usr/local/share/pkgconfig:$PKG_CONFIG_PATH
+        pkg-config --exists json-c
+        AS_IF([test "$?" == "0"],
+@@ -147,7 +147,7 @@
+
+ AC_CHECK_LIB(pthread, pthread_setaffinity_np, AC_DEFINE_UNQUOTED(HAVE_PTHREAD_SETAFFINITY_NP, 1, [libc has pthread_setaffinity_np]))
+
+-AC_CONFIG_FILES([Makefile example/Makefile example/Makefile.dpdk tests/Makefile libndpi.pc src/include/ndpi_define.h src/lib/Makefile])
++AC_CONFIG_FILES([Makefile libndpi.pc src/include/ndpi_define.h src/lib/Makefile])
+ AC_CONFIG_HEADERS(src/include/ndpi_config.h)
+ AC_SUBST(GIT_RELEASE)
+ AC_SUBST(NDPI_MAJOR)
+    \end{lstlisting}
+    \item edit {\tt Makefile.am}
+    \begin{lstlisting}[language=diff]
+--- Makefile.am.origin
++++ Makefile.am
+@@ -1,5 +1,5 @@
+ ACLOCAL_AMFLAGS = -I m4
+-SUBDIRS = src/lib example tests
++SUBDIRS = src/lib
+
+ pkgconfigdir = $(prefix)/libdata/pkgconfig
+ pkgconfig_DATA = libndpi.pc
+    \end{lstlisting}
+    \item Replace the {\tt proto.tex} file using the {\tt prototex} utiliy and regenerate doc.
+    \item Add the new files to SVN and delete removed files before commit.
+\end{itemize}
+
+\end{document}

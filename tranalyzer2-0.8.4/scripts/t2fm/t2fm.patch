@@ -1,0 +1,29 @@
+# Patch Tranalyzer and the plugins for t2fm.
+#
+# Apply the patch as follows: t2conf -x --patch t2fm.patch
+# Revert the patch as follows: t2conf -x --rpatch t2fm.patch
+#
+# Format of the patch:
+#     - Empty lines and lines starting with '%' or '#'’ are ignored
+#     - Filenames are relative to $T2HOME (where the setup.sh script is located)
+#     - A line is composed of four tabs (not spaces) separated columns:
+#         NAME <tab> newvalue <tab> oldvalue <tab> file
+
+# tranalyzer2
+USE_PLLIST	1	0	tranalyzer2/src/loadPlugins.h
+
+# httpSniffer
+HTTP_SAVE_IMAGE	1	0	plugins/httpSniffer/src/httpSniffer.h
+HTTP_SAVE_VIDEO	1	0	plugins/httpSniffer/src/httpSniffer.h
+HTTP_SAVE_AUDIO	1	0	plugins/httpSniffer/src/httpSniffer.h
+HTTP_SAVE_MSG	1	0	plugins/httpSniffer/src/httpSniffer.h
+HTTP_SAVE_TEXT	1	0	plugins/httpSniffer/src/httpSniffer.h
+HTTP_SAVE_APPL	1	0	plugins/httpSniffer/src/httpSniffer.h
+HTTP_SAVE_PUNK	1	0	plugins/httpSniffer/src/httpSniffer.h
+
+# nDPI
+NDPI_OUTPUT_STR	1	0	plugins/nDPI/src/nDPI.h
+
+# portClassifier
+PBC_NUM	1	0	plugins/portClassifier/src/portClassifier.h
+PBC_STR	1	0	plugins/portClassifier/src/portClassifier.h

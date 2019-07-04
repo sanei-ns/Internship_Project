@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+
+source "$(dirname "$0")/t2utils.sh"
+
+check_dependency gnuplot
+
+$AWK '
+BEGIN {
+    FUNC = 2; # 0: Simple filter, 1: Holt, 2: Holt-Winters
+    func_str[0] = "Simple";
+    func_str[1] = "Holt";
+    func_str[2] = "Holt-Winters";
+
+    n_plot = 1; # number of lines plotted in func (-> d + n_plot lines)
+
+    d = 1;
+    m = 800;
+    m = 48;
+    ww = 24;
+    a[d,m] = 0.0;
+    i = 0;
+    k = 0;
+    u = l = 0;
+
+    # Simple filter
+    e_alpha = 0.3;
+
+    # Holt (trend, no seasons)
+    h_alpha = 0.3;
+    h_beta  = 0.3;  # for the slope
+
+    # Holt-Winters (trend, seasons)
+    hw_alpha  = 0.9;  # overall smoothing
+    hw_beta   = 0.5;  # trend smoothing
+    hw_gamma  = 0.3;  # season smoothing
+    hw_delta1 = 2.5;  # lower bound
+    hw_delta2 = 2.5;  # higher bound
+    hw_aaa    = 1.0;  # weight for overall smoothing
+    hw_bbb    = 1.0;  # weight for trend smoothing
+    hw_ccc    = 1.0;  # weight for seasonal smoothing
+}
+{
+    val = $1;
+
+    if (NR == 1) {
+        a[d,0] = val;
+
+        # Inital estimates
+        # Holt (trend, no seasons)
+        h_a[0] = val;
+        h_b[0] = 0;    # initial slope
+
+        # Holt-Winters (trend, seasons)
+        hw_a[0] = val;
+        hw_b[0] = 0;
+        hw_c[0] = 0;
+        hw_d[0] = 0;
+
+        # Gnuplot configuration
+        #print "set term x11 dashed";
+        print "set style data linespoints";
+        print "set title \"" func_str[FUNC] "\" offset 0, 0";
+    } else {
+        if (u) t=u-1; else t=m-1;
+
+        switch (FUNC) {
+            case 0: # Simple filter
+                a[d,u] = e_alpha * val + (1 - e_alpha) * a[d,t];
+                print "plot \"-\" ls 1 title \"data\",\
+                            \"-\" ls 2 title \"filter\"";
+                break;
+
+            case 1: # Holt (trend, no seasons)
+                h_a[u] = h_alpha * val + (1 - h_alpha) * (h_a[t] + h_b[t]);
+                h_b[u] = h_beta * (h_a[u] - h_a[t]) + (1 - h_beta ) * h_b[t]; # slope
+                a[d,u] = h_a[u] + h_b[u]; # forecast
+                print "plot \"-\" ls 1 title \"data\",\
+                            \"-\" ls 2 title \"holt\"";
+                break;
+
+            case 2: # Holt-Winters (trend, seasons)
+                w = (u + 1) % ww;
+                hw_a[u] = hw_alpha * (val - hw_c[w]) + (1 - hw_alpha) * (hw_a[t] + hw_b[t]); # Overall smoothing
+                hw_b[u] = hw_beta * (hw_a[u] - hw_a[t]) + (1 - hw_beta) * hw_b[t];           # Trend smoothing
+                hw_c[u] = hw_gamma * (val - hw_a[u]) + (1 - hw_gamma) * hw_c[w];             # Seasonal smoothing
+
+                a[d,u] = hw_aaa * hw_a[u] + hw_bbb * hw_b[u] + hw_ccc * hw_c[w];  # Forecast
+
+                # Holt-Winters Confidence band
+                hw_d[u] = hw_gamma * abs(val - a[d,u]) + (1 - hw_gamma) * hw_d[w];
+
+                a[d+1,u] = a[d,u] - hw_delta1 * hw_d[w]; # Lower bound
+                a[d+2,u] = a[d,u] + hw_delta2 * hw_d[w]; # Upper bound
+
+                n_plot = 3;
+                print "plot \"-\" u 1:2 ls 3 title \"data\",\
+                            \"-\" u 1:2 ls 9 title \"smooth\",\
+                            \"-\" u 1:2 ls 7 title \"lower bound\",\
+                            \"-\" u 1:2 ls 5 title \"upper bound\"";
+                break;
+            default:
+                print "Unknown function " FUNC;
+                exit;
+        }
+    }
+
+    for (b = 0; b < d; b++) a[b,u] = $(b+1);
+    u = ++i % m;
+
+    if (k == u) {
+        k++;
+        l -= m - 2
+    } else l = 0;
+
+    k %= m;
+    l1 = l;
+
+    for (b = 0; b < d+n_plot; b++) {
+        j = k;
+        l = l1;
+
+        while (j%m != u) {
+            if (NR>1) printf "%d %f\n",l++,a[b,j%m];
+            j++;
+        }
+
+        if (NR>1) print "e";
+        fflush();
+    }
+}
+
+function abs(x) { return (x >= 0) ? x : -x }
+' | gnuplot -p

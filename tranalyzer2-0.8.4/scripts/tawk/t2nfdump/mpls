@@ -1,0 +1,21 @@
+#!/usr/bin/env awk
+#
+# MPLS labels 1-10
+#
+# Dependencies:
+#   - basicStats
+#
+# Example:
+#   - tawk '{ print mpls() }' file
+
+@include "hdr"
+@include "_mplsi"
+
+function mpls(        _s) {
+    if (hdr()) return "MPLS labels 1-10"
+    _s = _mplsi(1)
+    for (i = 2; i <= 10; i++) {
+        _s = _s OFS _mplsi(i)
+    }
+    return _s
+}

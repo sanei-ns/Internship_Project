@@ -1,0 +1,61 @@
+# Bash/ZSH completion for t2, gt2 and tranalyzer
+
+_t2() {
+    #compdef t2 gt2 tranalyzer
+    if type compdef &> /dev/null; then
+        local opts=(
+            '(-r -R -D)'{-i,-i}'[Listen on interface]:interface:_net_interfaces'
+            '(-i -R -D)'{-r,-r}'[Read packets from PCAP file]:file:_files'
+            '(-i -r -D)'{-R,-R}'[Process every PCAP file listed in FILE]:file:_files'
+            '(-i -r -R)'{-D,-D}'[Process every PCAP whose name matches EXPR]:_files'
+            '(-w -W)'{-w,-w}'[Apprend PREFIX to any output file produced]:output prefix:_files'
+            '(-w -W)'{-W,-W}'[Like -w, but fragment flow files according to SIZE]:output prefix:_files'
+            '-l[Print end report in PREFIX_log.txt instead of stdout]'
+            '-b[Use plugin loading list FILE]:file:_files'
+            '-s[Packet forensics mode]'
+            '-F[Read BPF filter from file]:file:_files'
+            '-p[Load plugins from path PATH instead of ~/.tranalyzer/plugins]:plugin folder:_files -/'
+            '-f[hashfactor]:Multiplication factor for hash table (int):'
+            '-x[Sensor ID]:sensor ID (int):'
+            '(- 1 *)'{-v,-v}'[Show the version of the program and exit]'
+            '(- 1 *)'{-h,--help}'[Show help options and exit]'
+        )
+        if [[ "$OSTYPE" != darwin* ]]; then
+            opts+=('-c[Bind tranalyzer to one core]:CPU core number (int):')
+        fi
+        _arguments -s -S "${opts[@]}"
+    else # BASH
+        local cur prev words cword
+        _init_completion || return
+        case $prev in
+            -i)
+                # active interfaces only
+                _available_interfaces -a
+                return
+                ;;
+            -b|-e|-r|-R|-D|-F|-w|-W)
+                _filedir
+                return
+                ;;
+            -p)
+                _filedir -d
+                return
+                ;;
+            -c)
+                COMPREPLY=($(compgen -W "$(seq 0 $(_ncpus))" -- "$cur"))
+                return
+                ;;
+        esac
+        local args=(-i -r -R -D -e -w -W -l -b -s -f -F -p -x -v -h --help)
+        if [[ "$OSTYPE" != darwin* ]]; then
+            args+=(-c)
+        fi
+        COMPREPLY=($(compgen -W "${args[*]}" -- "$cur"))
+    fi
+}
+
+if type compdef &> /dev/null; then
+    compdef _t2 t2 gt2 st2 tranalyzer
+else
+    complete -F _t2 t2 gt2 st2 tranalyzer
+fi

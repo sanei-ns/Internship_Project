@@ -1,0 +1,18 @@
+#H bit | popCBF | Description
+#H =============================================================================
+     0 | 0x0001 | Login with MD5 signature
+     1 | 0x0002 | Authentication request
+     2 | 0x0004 | Get a list of capabilities supported by the server
+     3 | 0x0008 | Mark the message as deleted
+     4 | 0x0010 | Get a scan listing of one or all messages
+     5 | 0x0020 | Return a +OK reply
+     6 | 0x0040 | Cleartext password entry
+     7 | 0x0080 | Exit session. Remove all deleted messages from the server
+     8 | 0x0100 | Retrieve the message
+     9 | 0x0200 | Remove the deletion marking from all messages
+    10 | 0x0400 | Get the drop listing
+    11 | 0x0800 | Begin a TLS negotiation
+    12 | 0x1000 | Get the top N lines of the message
+    13 | 0x2000 | Get a unique-id listing for one or all messages
+    14 | 0x4000 | Mailbox login
+    15 | 0x8000 | XTND

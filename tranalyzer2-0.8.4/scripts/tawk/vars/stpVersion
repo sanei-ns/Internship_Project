@@ -1,0 +1,6 @@
+#H stpVersion | Description
+#H =============================================================================
+            0 | Spanning Tree
+            2 | Rapid Spanning Tree
+            3 | Multiple Spanning Tree
+            4 | Shortest Path Tree

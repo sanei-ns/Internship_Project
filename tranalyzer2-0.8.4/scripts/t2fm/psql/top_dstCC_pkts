@@ -1,0 +1,42 @@
+-- Top destination countries by number of packets
+
+SELECT
+    CASE WHEN cc ~ '^\d+'      THEN '--'
+         WHEN cc = '--'        THEN 'N/A'
+         WHEN LOWER(cc) = 'ff' THEN 'N/A'
+         ELSE UPPER(cc)
+    END AS cn,
+    SUM(pkts) AS cnt
+
+FROM (
+    -- A flows
+    SELECT
+        "dstIPCC" AS cc,
+        "numPktsRcvd" AS pkts
+    FROM
+        flow
+    WHERE
+        ("flowStat"::BIGINT & 1) = 0::BIGINT
+        AND ("flowStat"::BIGINT & x'c000'::BIGINT) > 0::BIGINT  -- IPv4/6 only
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+
+    UNION ALL
+
+    -- B flows
+    SELECT
+        "srcIPCC" AS cc,
+        "numPktsSnt" AS pkts
+    FROM
+        flow
+    WHERE
+        ("flowStat"::BIGINT & 1) = 1::BIGINT
+        AND ("flowStat"::BIGINT & x'c000'::BIGINT) > 0::BIGINT  -- IPv4/6 only
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+GROUP BY cn
+ORDER BY cnt DESC
+
+LIMIT :n

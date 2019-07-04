@@ -1,0 +1,6 @@
+#!/usr/bin/env awk
+#
+# Include all the functions
+
+#@include "myfunction1"
+#@include "myfunction2"

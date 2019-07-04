@@ -1,0 +1,15 @@
+-- Top applications by number of flows
+
+SELECT
+    SPLIT_PART("nDPIclass", '.', 1) AS appl,
+    COUNT(*) AS cnt
+FROM
+    flow
+WHERE
+    "timeFirst" >= to_timestamp(:time_from)
+    AND "timeLast" <= to_timestamp(:time_to)
+
+GROUP BY appl
+ORDER BY cnt DESC
+
+LIMIT :n

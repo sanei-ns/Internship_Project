@@ -1,0 +1,38 @@
+#!/usr/bin/env awk
+#
+# Converts an IP address to a number
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - ip2hex: converts an IP address to hex
+#   - ip2str: converts an IP address to string
+#
+# Examples:
+#   - tawk '{ print ip2num($srcIP4) }' file.txt
+#   - tawk '{ print ip2num($dstIP6) }' file.txt
+
+@include "ip6expand"
+@include "isip6"
+@include "isiphex"
+@include "isipstr"
+
+function ip2num(ip,        _i, _n, _tmp, _val) {
+    if (__PRIHDR__ && hdr()) return ip
+    if (isiphex(ip)) {
+        return strtonum(ip)
+    } else if (isipstr(ip)) {
+        split(ip, _tmp, /\./)
+        return lshift(_tmp[1], 24) + lshift(_tmp[2], 16) + lshift(_tmp[3], 8) + _tmp[4]
+    } else if (isip6(ip)) {
+        ip = ip6expand(ip)
+        _n = split(ip, _tmp, /:/)
+        for (_i = 1; _i <= _n; _i++) {
+            _val = lshift(_val, 16) + strtonum("0x"_tmp[_i])
+        }
+        return _val
+    } else {
+        return ip
+    }
+}

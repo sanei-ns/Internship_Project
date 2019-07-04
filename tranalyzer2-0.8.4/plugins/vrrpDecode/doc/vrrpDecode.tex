@@ -1,0 +1,146 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {vrrpDecode} % Plugin name
+    {Virtual Router Redundancy Protocol (VRRP)} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{vrrpDecode}\label{s:vrrpDecode}
+
+\subsection{Description}
+The vrrpDecode plugin analyzes Virtual Router Redundancy Protocol (VRRP) traffic.
+
+%\subsection{Dependencies}
+%None.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt VRRP\_NUM\_VRID} &  5 & number of unique virtual router ID to store\\
+    {\tt VRRP\_NUM\_IP}   & 25 & number of unique IPs to store\\
+    {\tt VRRP\_RT}        &  0 & Whether (1) or not (0) to output routing tables\\
+    {\tt VRRP\_SUFFIX} & {\tt "\_vrrp.txt"} & Suffix for routing tables file & {\tt VRRP\_RT=1}\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The vrrpDecode plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description}\\% & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{vrrpStat}}     & H16   & Status\\
+    {\tt \nameref{vrrpVer}}      & H8    & Version\\
+    {\tt \nameref{vrrpType}}     & H8    & Type\\
+    {\tt vrrpVRIDCnt}            & U32   & Virtual router ID count\\
+    {\tt vrrpVRID}               & RU8   & Virtual router ID\\
+    {\tt vrrpMinPri}             & U8    & Minimum priority\\
+    {\tt vrrpMaxPri}             & U8    & Maximum priority\\
+    {\tt vrrpMinAdvInt}          & U8    & Minimum advertisement interval [s]\\
+    {\tt vrrpMaxAdvInt}          & U8    & Maximum advertisement interval [s]\\
+    {\tt \nameref{vrrpAuthType}} & H8    & Autentication type\\
+    {\tt vrrpAuth}               & SC    & Authentication string\\
+    {\tt vrrpIPCnt}              & U32   & IP address count\\
+    {\tt vrrpIP}                 & R(IP) & IP addresses\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{vrrpStat}\label{vrrpStat}
+The {\tt vrrpStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf vrrpStat} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x0001} & flow is VRRP\\
+    {\tt 0x0002} & invalid version\\
+    {\tt 0x0004} & invalid type\\
+    {\tt 0x0008} & invalid checksum\\
+    {\tt 0x0010} & invalid TTL (should be 255)\\
+    {\tt 0x0020} & invalid destination IP (should be 224.0.0.18)\\
+    {\tt 0x0040} & invalid destination MAC (should be 00:00:5e:00:01:routerID)\\
+    {\tt 0x0100} & Virtual Router ID list truncated\ldots increase {\tt VRRP\_NUM\_VRID}\\
+    {\tt 0x0200} & IP list truncated\ldots increase {\tt VRRP\_NUM\_IP}\\
+    {\tt 0x4000} & Packet snapped\\
+    {\tt 0x8000} & Malformed packet\ldots covert channel?\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{vrrpVer}\label{vrrpVer}
+The {\tt vrrpVer} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf vrrpVer} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x04} & VRRP v2\\
+    {\tt 0x08} & VRRP v3\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{vrrpType}\label{vrrpType}
+The {\tt vrrpType} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf vrrpType} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x01} & Advertisement\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{vrrpAuthType}\label{vrrpAuthType}
+The {\tt vrrpAuthType} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf vrrpAuthType} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x01} & No authentication\\
+    {\tt 0x02} & Simple text password\\
+    {\tt 0x04} & IP Authentication Header\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Additional Output}
+Non-standard output:
+\begin{itemize}
+    \item {\tt PREFIX\_vrrp.txt}: VRRP routing tables
+\end{itemize}
+The routing tables contain the following columns:
+\begin{longtable}{rl}
+    \toprule
+    {\bf Name} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt VirtualRtrID}          & Virtual router ID\\
+    {\tt Priority}              & Priority\\
+    {\tt SkewTime[s]}           & Skew time (seconds)\\
+    {\tt MasterDownInterval[s]} & Master down interval (seconds)\\
+    {\tt AddrCount}             & Number of addresses\\
+    {\tt Addresses}             & List of addresses\\
+    {\tt Version}               & VRRP version\\
+    {\tt Type}                  & \hyperref[vrrpType]{Message type}\\
+    {\tt AdverInt[s]}           & Advertisement interval\\
+    {\tt AuthType}              & \hyperref[vrrpAuthType]{Authentication type}\\
+    {\tt AuthString}            & Authentication string\\
+    {\tt Checksum}              & Stored checksum\\
+    {\tt CalcChecksum}          & Calculated checksum\\
+    {\tt flowIndex}             & Flow index\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Plugin Report Output}
+The number of VRRP v2 and v3 packets is reported.
+
+\subsection{Post-Processing}
+The routing tables can be pruned by using the following command:
+\begin{verbatim}
+sort -u PREFIX_vrrp.txt > PREFIX_vrrp_pruned.txt
+\end{verbatim}
+
+\end{document}

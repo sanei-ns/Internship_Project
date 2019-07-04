@@ -1,0 +1,10 @@
+#H bit | tp0fStat | Description
+#H =============================================================================
+     0 | 0x01     | SYN tp0f rule fired
+     1 | 0x02     | SYN-ACK tp0f rule fired
+     2 | 0x04     | -
+     3 | 0x08     | -
+     4 | 0x10     | -
+     5 | 0x20     | -
+     6 | 0x40     | IP already seen by tp0f
+#W   7 | 0x80     | TCP option length or content corrupt

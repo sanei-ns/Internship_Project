@@ -1,0 +1,18 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/smbDecode
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/smbDecode.h
+SMB_RM_DATADIR      src/smbDecode.h
+SMB_SECBLOB         src/smbDecode.h
+SMB1_DECODE         src/smbDecode.h
+SMB_SAVE_AUTH       src/smbDecode.h
+#SMB_SAVE_DATA      src/smbDecode.h
+SMB1_SAVE_DATA      src/smbDecode.h
+SMB2_SAVE_DATA      src/smbDecode.h
+#SMB_USE_FILTER     src/smbDecode.h

@@ -1,0 +1,16 @@
+#!/usr/bin/env awk
+#
+# Prints the string 's' in red with an added newline
+#
+# Parameters:
+#   - s: the string to print
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '$dir ~ /[AB]/ { printerr "Invalid direction" }' file.txt
+
+function printerr(s) {
+    printf "\033[0;31m%s\033[0m\n", s > "/dev/stderr"
+}

@@ -1,0 +1,13 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+tLast < $timeLast {
+    tLast = $timeLast
+}
+
+END {
+    print timestamp(tLast)
+}

@@ -1,0 +1,10 @@
+#H bit | vrrpAuthT | Description
+#H =============================================================================
+     0 | 0x01      | No authentication
+     1 | 0x02      | Simple text password
+     2 | 0x04      | IP Authentication Header
+     3 | 0x08      | -
+     4 | 0x10      | -
+     5 | 0x20      | -
+     6 | 0x40      | -
+     7 | 0x80      | -

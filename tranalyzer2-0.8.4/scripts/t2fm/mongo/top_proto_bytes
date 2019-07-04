@@ -1,0 +1,37 @@
+cursor = db.flow.aggregate([
+    {
+        $match : {
+            dir : "A",
+            flowStat : { $bitsAnySet : NumberInt(0xc000) },  // IPv4/6
+            timeFirst : { $gte : time_from },
+            timeLast  : { $lte : time_to },
+        }
+    },
+    {
+        $project : {
+            proto : "$l4Proto",
+            bytes : { $add : [ "$numBytesSnt", "$numBytesRcvd" ] },
+        }
+    },
+    {
+        $group : {
+            _id : "$proto",
+            count : { $sum : "$bytes" }
+        }
+    },
+    {
+        $sort : { count : -1 }
+    },
+    {
+        $limit : n
+    }
+])
+
+cursor.forEach(
+    function(e) {
+        print(
+              e._id + "\t"
+            + e.count
+        )
+    }
+)

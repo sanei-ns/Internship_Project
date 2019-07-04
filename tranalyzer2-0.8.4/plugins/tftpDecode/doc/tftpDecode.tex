@@ -1,0 +1,116 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {tftpDecode}
+    {Trivial File Transfer Protocol (TFTP)}
+    {Tranalyzer Development Team} % author(s)
+
+\section{tftpDecode}\label{s:tftpDecode}
+
+\subsection{Description}
+The {\tt tftpDecode} plugin analyses TFTP traffic. User defined compiler switches are in {\em tftpDecode.h}.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt TFTP\_SAVE}   &  0 & save content to FTP\_F\_PATH \\
+    {\tt TFTP\_MXNMLN} & 15 & maximal name length  \\
+    {\tt MAXCNM}       &  2 & maximal length of command field \\
+    {\tt FTP\_F\_PATH} & {\tt\small "/tmp/TFTPFILES/"} & path for {\tt TFTP\_SAVE} \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The tftpDecode plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt \nameref{tftpStat}} & H16 & TFTP status bitfield \\
+    {\tt tftPFlw} & U64 & TFTP Parent Flow \\
+    {\tt \nameref{tftpOpCBF}} & H8 & TFTP OP Code Bit Field \\
+    {\tt \nameref{tftpErrCBF}} & H8 & TFTP Error Code Bit Field \\
+    {\tt tftOpCNum} & U8 & TFTP Number of OP Code \\
+    {\tt tftpPNum} & U8 & TFTP Number of parameters \\
+    {\tt tftpOpC} & RSC & TFTP OP Codes \\
+    {\tt tftpC} & RS & TFTP Parameters \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{tftpStat}\label{tftpStat}
+The {\tt tftpStat} column describes the errors encountered during the flow lifetime:
+\begin{longtable}{rll}
+    \toprule
+    {\bf tftpStat} & {\bf Name} & {\bf Description} \\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0001}) & TFTPS\_INIT & TFTP flow found \\
+    $2^{1}$  (={\tt 0x0002}) & TFTPS\_DRD & TFTP data read \\
+    $2^{2}$  (={\tt 0x0004}) & TFTPS\_DWD & TFTP data write \\
+    $2^{3}$  (={\tt 0x0008}) & TFTP\_FERR & file open error for TFTP\_SAVE\\
+    $2^{4}$  (={\tt 0x0010}) & TFTPS\_BSERR & Error in block send sequence \\
+    $2^{5}$  (={\tt 0x0020}) & TFTPS\_BSAERR & Error in block ack sequence \\
+    $2^{6}$  (={\tt 0x0040}) & TFTPS\_PERR & Error or TFTP protocol error or not TFTP \\
+    $2^{7}$  (={\tt 0x0080}) & TFTPS\_OVFL & array overflow \\
+    $2^{8}$  (={\tt 0x0100}) & --- & --- \\
+    $2^{9}$  (={\tt 0x0200}) & --- & --- \\
+    $2^{10}$ (={\tt 0x0400}) & --- & --- \\
+    $2^{11}$ (={\tt 0x0800}) & TFTP\_RW\_PLNERR &  Crafted packet or TFTP read/write parameter length error \\
+    $2^{12}$ (={\tt 0x1000}) & TFTPS\_ACT & TFTP active \\
+    $2^{13}$ (={\tt 0x2000}) & TFTPS\_PSV & TFTP passive \\
+    $2^{14}$ (={\tt 0x4000}) & --- & --- \\
+    $2^{15}$ (={\tt 0x8000}) & --- & --- \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{tftpOpCBF}\label{tftpOpCBF}
+The {\tt tftpOpCBF} column describes the op code encountered during the flow lifetime:
+\begin{longtable}{rll}
+    \toprule
+    {\bf tftpOpCBF} & {\bf Name} & {\bf Description} \\
+    \midrule\endhead%
+    $2^0$ (={\tt 0x01}) & TFTP\_RRQ & 1: Read request \\
+    $2^1$ (={\tt 0x02}) & TFTP\_WRQ & 2: Write request \\
+    $2^2$ (={\tt 0x04}) & TFTP\_DATA & 3: Read or write the next block of data \\
+    $2^3$ (={\tt 0x08}) & TFTP\_ACK & 4: Acknowledgment \\
+    $2^4$ (={\tt 0x10}) & TFTP\_ERR & 5: Error message \\
+    $2^5$ (={\tt 0x20}) & TFTP\_OACK & 6: Option acknowledgment \\
+    $2^6$ (={\tt 0x40}) & --- & --- \\
+    $2^7$ (={\tt 0x80}) & --- & --- \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{tftpErrCBF}\label{tftpErrCBF}
+The {\tt tftpErrCBF} column describes the error code (if op code TFTP\_ERR encountered during the flow lifetime):
+\begin{longtable}{rll}
+    \toprule
+    {\bf tftpErrCBF} & {\bf Name} & {\bf Description} \\
+    \midrule\endhead%
+          (={\tt 0x00}) & TFTP\_NOERR  & 0: No Error  \\
+    $2^0$ (={\tt 0x01}) & TFTP\_FLNFND & 1: File not found \\
+    $2^1$ (={\tt 0x02}) & TFTP\_ACCVLT & 2: Access violation \\
+    $2^2$ (={\tt 0x04}) & TFTP\_DSKFLL & 3: Disk full or allocation exceeded \\
+    $2^3$ (={\tt 0x08}) & TFTP\_ILGLOP & 4: Illegal TFTP operation \\
+    $2^4$ (={\tt 0x10}) & TFTP\_UKWNID & 5: Unknown transfer ID \\
+    $2^5$ (={\tt 0x20}) & TFTP\_FLEXST & 6: File already exists \\
+    $2^6$ (={\tt 0x40}) & TFTP\_NOSUSR & 7: No such user \\
+    $2^7$ (={\tt 0x80}) & TFTP\_TRMOPN & 8: Terminate transfer due to option negotiation \\
+    \bottomrule
+\end{longtable}
+
+\subsection{TODO}
+
+\begin{itemize}
+    \item fragmentation
+    \item reply address extraction
+\end{itemize}
+
+\end{document}

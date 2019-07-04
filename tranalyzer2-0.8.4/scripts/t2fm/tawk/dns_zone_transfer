@@ -1,0 +1,20 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+# TODO which query is the DNS zone transfer?
+
+bitsallset($dnsStat, 0x80) {
+    _sip = _validate_col("srcIP;srcIP4;srcIP6", _my_srcIP)
+    _dip = _validate_col("dstIP;dstIP4;dstIP6", _my_dstIP)
+    if (bitsallset($flowStat, 1)) {
+        _sa = $_dip
+        _da = $_sip
+    } else {
+        _sa = $_sip
+        _da = $_dip
+    }
+    print utc($timeFirst), _sa, _da, unquote($dnsQname)
+}

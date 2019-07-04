@@ -1,0 +1,101 @@
+\IfFileExists{t2doc.cls}{%
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {voipDetector}
+    {VoIP}
+    {Tranalyzer Development Team}
+
+\section{voipDetector}\label{s:voipDetector}
+
+\subsection{Description}
+The idea of this plugin is to identify SIP, RTP and RTCP flows independently of each other, so
+that also non standard traffic can be detected. Moreover certain QoS values are extracted.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Variable} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt VOIP\_ANALEN}  &  1 & 1: additional check report len against payload length\\
+                        &    & 0: only ssrc check\\
+    {\tt VOIP\_V\_SAVE} &  0 & save rtp content to VOIP\_RM\_DIR \\
+    {\tt VOIP\_RM\_DIR} &  0 & rm RTP content directory & {\tt\small VOIP\_V\_SAVE=1}\\
+    {\tt VOIP\_PLDOFF}  &  0 & offset to payload pointer to save content & {\tt\small VOIP\_V\_SAVE=1}\\
+    {\tt SIPNMMAX}      & 40 & maximal sip caller name length in flow file \\
+    {\tt VOIP\_PATH}  & {\tt\small ``/tmp/''} & default path of content directory \\
+    {\tt VOIP\_FNAME} & {\tt\small ``eier''} & default content file name prefix \\
+    \bottomrule
+\end{longtable}
+
+%\subsection{Required Files}
+%none
+
+\subsection{Flow File Output}
+The voipDetector plugin outputs the following columns:
+
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt \nameref{voipStat}} & H16    & Status \\
+    {\tt voipID}             & H32    & RTP/RTCP ID \\
+    {\tt voipSRCnt}          & U8     & RTP SID/RTCP record count \\
+    {\tt voipTyp}            & U8     & RTP/RTCP type \\
+    {\tt voipPMCnt}          & U32    & RTP packet miss count \\
+    {\tt voipPMr}            & F      & RTP packet miss ratio \\
+    \\
+    {\tt voipSIPStatCnt}     & U8     & SIP stat count \\
+    {\tt voipSIPReqCnt}      & U8     & SIP request count \\
+    {\tt voipSIPCID}         & S      & SIP Call ID \\
+    {\tt voipSIPStat}        & R(U16) & SIP stat \\
+    {\tt voipSIPReq}         & R(S)   & SIP request \\
+    \\
+    {\tt voipTPCnt}          & U32    & RTCP cumulated transmitter packet count \\
+    {\tt voipTBCnt}          & U32    & RTCP cumulated transmitter byte count \\
+    {\tt voipCPMCnt}         & U32    & RTCP cumulated packet miss count\\
+    {\tt voipMaxIAT}         & U32    & RTCP maximal Inter Arrival Time \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{voipStat}\label{voipStat}
+The {\tt voipStat} column is to be interpreted as follows:
+
+\begin{longtable}{rll}
+    \toprule
+    {\bf voipStat} & {\bf Name} & {\bf Description}\\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0001}) & RTP     & RTP detected \\
+    $2^{1}$  (={\tt 0x0002}) & RTCP    & RTCP detected \\
+    $2^{2}$  (={\tt 0x0004}) & SIP     & SIP detected \\
+    $2^{3}$  (={\tt 0x0008}) & STUN    & STUN present \\
+    $2^{4}$  (={\tt 0x0010}) & X       & RTP: extension header  \\
+    $2^{5}$  (={\tt 0x0020}) & P       & RTP: padding present \\
+    $2^{6}$  (={\tt 0x0040}) & -       & -\\
+    $2^{7}$  (={\tt 0x0080}) & M       & RTP: data marker set\\
+    $2^{8}$  (={\tt 0x0100}) & WROP    & RTP: content write operation \\
+    $2^{9}$  (={\tt 0x0200}) & -       & -\\
+    $2^{10}$ (={\tt 0x0400}) & -       & -\\
+    $2^{11}$ (={\tt 0x0800}) & -       & -\\
+    $2^{12}$ (={\tt 0x1000}) & PKTLSS  & RTP: packet loss detected \\
+    $2^{13}$ (={\tt 0x2000}) & RTPNFRM & RTP: new frame header flag \\
+    $2^{14}$ (={\tt 0x4000}) & -       & -\\
+    $2^{15}$ (={\tt 0x8000}) & -       & -\\
+    \bottomrule
+\end{longtable}
+
+\subsection{TODO}
+
+\begin{itemize}
+    \item Skype
+    \item Google Talk
+\end{itemize}
+
+\end{document}

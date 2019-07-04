@@ -1,0 +1,13 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/socketSink
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/netflowSink.h
+NF_SOCKTYPE	src/netflowSink.h
+NF_NUM4FLWS	src/netflowSink.h
+NF_NUM6FLWS	src/netflowSink.h

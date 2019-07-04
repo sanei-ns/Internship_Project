@@ -1,0 +1,9 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+$httpRSCode {
+    aggrrep($httpRSCode, "flows", n)
+}

@@ -1,0 +1,13 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/sshDecode
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/sshDecode.h
+SSH_DEBUG             src/sshDecode.h
+SSH_DECODE            src/sshDecode.h
+SSH_USE_PORT          src/sshDecode.h

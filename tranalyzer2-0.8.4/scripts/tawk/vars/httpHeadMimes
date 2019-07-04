@@ -1,0 +1,18 @@
+#H bit | httpHeadMimes | Description
+#H =============================================================================
+     0 | 0x0001        | Application
+     1 | 0x0002        | Audio
+     2 | 0x0004        | Image
+     3 | 0x0008        | Message
+     4 | 0x0010        | Model
+     5 | 0x0020        | Multipart
+     6 | 0x0040        | Text
+     7 | 0x0080        | Video
+     8 | 0x0100        | VND
+     9 | 0x0200        | X
+    10 | 0x0400        | XPKCS
+    11 | 0x0800        | -
+    12 | 0x1000        | PDF
+    13 | 0x2000        | JAVA
+    14 | 0x4000        | -
+    15 | 0x8000        | All else

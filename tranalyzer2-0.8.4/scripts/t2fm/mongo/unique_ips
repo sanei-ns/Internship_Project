@@ -1,0 +1,32 @@
+cursor = db.flow.aggregate([
+    {
+        $match : {
+            flowStat : { $bitsAnySet : NumberInt(0xc000) },  // IPv4/6 only
+            timeFirst : { $gte : time_from },
+            timeLast  : { $lte : time_to },
+        }
+    },
+    {
+        $project : {
+            ip : [ "$srcIP", "$dstIP" ]
+        }
+    },
+    {
+        $unwind : "$ip"
+    },
+    {
+        $group : {
+            _id : null,
+            distinct_ip : { $addToSet : "$ip" },
+        }
+    },
+    {
+        $unwind : "$distinct_ip"
+    }
+])
+
+cursor.forEach(
+    function(e) {
+        print(e.distinct_ip)
+    }
+)

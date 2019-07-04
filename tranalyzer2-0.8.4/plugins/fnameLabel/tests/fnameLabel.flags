@@ -1,0 +1,14 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/fnameLabel
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+#
+# Flag name     File
+
+# src/fnameLabel.h
+#FNAMELABEL_IP      src/fnameLabel.h # Optional comment
+#FNAMELABEL_VAR1    src/fnameLabel.h

@@ -1,0 +1,68 @@
+#H bit | flowStat              | Description
+#H =============================================================================
+     0 | 0x0000 0000 0000 0001 | Inverted flow, did not initiate connection
+#I   1 | 0x0000 0000 0000 0002 | No Ethernet header
+     2 | 0x0000 0000 0000 0004 | Pure L2 Flow
+     3 | 0x0000 0000 0000 0008 | Point to Point Protocol over Ethernet Discovery (PPPoED)
+
+     4 | 0x0000 0000 0000 0010 | Point to Point Protocol over Ethernet Service (PPPoES)
+     5 | 0x0000 0000 0000 0020 | Link Layer Discovery Protocol (LLDP)
+     6 | 0x0000 0000 0000 0040 | ARP
+     7 | 0x0000 0000 0000 0080 | Reverse ARP
+
+     8 | 0x0000 0000 0000 0100 | VLANs
+     9 | 0x0000 0000 0000 0200 | MPLS unicast
+    10 | 0x0000 0000 0000 0400 | MPLS multicast
+    11 | 0x0000 0000 0000 0800 | L2TP v2/3
+
+    12 | 0x0000 0000 0000 1000 | GRE v1/2
+    13 | 0x0000 0000 0000 2000 | PPP header after L2TP or GRE
+    14 | 0x0000 0000 0000 4000 | IPv4
+    15 | 0x0000 0000 0000 8000 | IPv6
+
+#W  16 | 0x0000 0000 0001 0000 | IPvX bogus packets
+    17 | 0x0000 0000 0002 0000 | IPv4/6 in IPv4/6
+    18 | 0x0000 0000 0004 0000 | Ethernet over IP
+    19 | 0x0000 0000 0008 0000 | Teredo tunnel
+
+    20 | 0x0000 0000 0010 0000 | Anything in Anything (AYIYA) Tunnel
+    21 | 0x0000 0000 0020 0000 | GPRS Tunneling Protocol (GTP)
+    22 | 0x0000 0000 0040 0000 | Virtual eXtensible Local Area Network (VXLAN)
+    23 | 0x0000 0000 0080 0000 | Control and Provisioning of Wireless Access Points (CAPWAP), Lightweight Access Point Protocol (LWAPP)
+
+    24 | 0x0000 0000 0100 0000 | Stream Control Transmission Protocol (SCTP)
+    25 | 0x0000 0000 0200 0000 | SSDP/UPnP
+    26 | 0x0000 0000 0400 0000 | Encapsulated Remote Switch Packet ANalysis (ERSPAN)
+    27 | 0x0000 0000 0800 0000 | Cisco Web Cache Communication Protocol (WCCP)
+
+    28 | 0x0000 0000 1000 0000 | SIP/RTP
+    29 | 0x0000 0000 2000 0000 | Generic Network Virtualization Encapsulation (GENEVE)
+    30 | 0x0000 0000 4000 0000 | Authentication Header (AH)
+
+#W  32 | 0x0000 0001 0000 0000 | Acquired packet length < minimal L2 datagram
+#W  33 | 0x0000 0002 0000 0000 | Acquired packet length < packet length in L3 header
+#W  34 | 0x0000 0004 0000 0000 | Acquired packet length < minimal L3 Header
+#W  35 | 0x0000 0008 0000 0000 | Acquired packet length < minimal L4 Header
+
+    36 | 0x0000 0010 0000 0000 | IPv4 fragmentation present
+#E  37 | 0x0000 0020 0000 0000 | IPv4 fragmentation error (refer to the tcpFlags plugin for more details)
+#W  38 | 0x0000 0040 0000 0000 | IPv4 1. fragment out of sequence or missing
+#W  39 | 0x0000 0080 0000 0000 | Packet fragmentation pending / fragmentation sequence not completed when flow timeouts
+
+#I  40 | 0x0000 0100 0000 0000 | Flow timeout instead of protocol termination
+    41 | 0x0000 0200 0000 0000 | Alarm mode: remove this flow instantly
+    42 | 0x0000 0400 0000 0000 | Autopilot: Flow removed to free space in main hash map
+    43 | 0x0000 0800 0000 0000 | Stop dissecting
+
+#W  44 | 0x0000 1000 0000 0000 | Duplicate IP ID
+    45 | 0x0000 2000 0000 0000 | PPPL3 header not readable, compressed
+
+#W  48 | 0x0001 0000 0000 0000 | Header description overrun
+    49 | 0x0002 0000 0000 0000 | pcapd and PD_ALARM=1: if set dumps the packets from this flow to a new pcap
+#W  50 | 0x0004 0000 0000 0000 | Land attack: same srcIP && dstIP && srcPort && dstPort
+#W  51 | 0x0008 0000 0000 0000 | Timestamp jump, probably due to multi path packet delay or NTP operation
+
+    56 | 0x0100 0000 0000 0000 | Tor address detected
+#I  57 | 0x0200 0000 0000 0000 | A packet had a priority tag (VLAN tag with ID 0)
+
+#W  63 | 0x8000 0000 0000 0000 | PCAP packet length > MAX_MTU in ioBuffer.h, caplen reduced

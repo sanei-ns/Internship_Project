@@ -1,0 +1,307 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {httpSniffer}
+    {Hypertext Transfer Protocol (HTTP)}
+    {Tranalyzer Development Team}
+
+\section{httpSniffer}\label{s:httpSniffer}
+The httpSniffer plugin processes HTTP header and content information of a flow. The idea is to identify
+certain HTTP features using flow parameters and to extract certain content such as text or
+images for further investigation. The httpSniffer plugin requires no dependencies and produces
+only output to the flow file. User defined compiler switches in {\em httpSniffer.h} produce
+optimized code for the specific application.
+
+\subsection{Configuration Flags}
+The flow based output and the extracted information can be controlled by switches and constants listed in the table below.
+They control the output of host, URL and method counts, names and cookies and the function of content storage.
+{\bf WARNING:} The amount of being stored on disk can be substantial, make sure that the number of concurrent file handles
+is large enough, use {\tt ulimit -n}.
+
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt HTTP\_MIME}   & 1 & mime types\\
+    {\tt HTTP\_STAT}   & 1 & status codes\\
+    {\tt HTTP\_MCNT}   & 1 & mime count: get, post \\
+    {\tt HTTP\_HOST}   & 1 & hosts\\
+    {\tt HTTP\_URL}    & 1 & URLs\\
+    {\tt HTTP\_COOKIE} & 1 & cookies\\
+    {\tt HTTP\_IMAGE}  & 1 & image names\\
+    {\tt HTTP\_VIDEO}  & 1 & video names\\
+    {\tt HTTP\_AUDIO}  & 1 & audio names\\
+    {\tt HTTP\_MSG}    & 1 & message names\\
+    {\tt HTTP\_APPL}   & 1 & application names\\
+    {\tt HTTP\_TEXT}   & 1 & text names\\
+    {\tt HTTP\_PUNK}   & 1 & post/else/unknown names\\
+    {\tt HTTP\_BODY}   & 1 & analyse body and print anomalies\\
+    {\tt HTTP\_BDURL}  & 1 & refresh and set-cookie URLs & {\tt HTTP\_BODY=1}\\
+    {\tt HTTP\_USRAG}  & 1 & user agents \\
+    {\tt HTTP\_XFRWD}  & 1 & X-Forward \\
+    {\tt HTTP\_REFRR}  & 1 & Referer \\
+    {\tt HTTP\_VIA}    & 1 & Via \\
+    {\tt HTTP\_LOC}    & 0 & Location \\
+    {\tt HTTP\_SERV}   & 1 & Server \\
+    {\tt HTTP\_PWR}    & 1 & Powered by \\\\
+
+    {\tt HTTP\_STATA}   & 1 & aggregate status response codes\\
+    {\tt HTTP\_HOSTAGA} & 1 & aggregate hosts\\
+    {\tt HTTP\_URLAGA}  & 1 & aggregate URLs\\
+    {\tt HTTP\_USRAGA}  & 1 & aggregate user agents\\
+    {\tt HTTP\_XFRWDA}  & 1 & aggregate X-Forward-For \\
+    {\tt HTTP\_REFRRA}  & 1 & aggregate Referer \\
+    {\tt HTTP\_VIAA}    & 1 & aggregate Via \\
+    {\tt HTTP\_LOCA}    & 1 & aggregate Location \\
+    {\tt HTTP\_SERVA}   & 1 & aggregate Server \\
+    {\tt HTTP\_PWRA}    & 1 & aggregate Powered by \\\\
+
+    {\tt HTTP\_SAVE\_IMAGE} & 0 & save all images\\
+    {\tt HTTP\_SAVE\_VIDEO} & 0 & save all videos\\
+    {\tt HTTP\_SAVE\_AUDIO} & 0 & save all audios\\
+    {\tt HTTP\_SAVE\_MSG}   & 0 & save all messages\\
+    {\tt HTTP\_SAVE\_TEXT}  & 0 & save all texts\\
+    {\tt HTTP\_SAVE\_APPL}  & 0 & save all applications\\
+    {\tt HTTP\_SAVE\_PUNK}  & 0 & save all else\\\\
+
+    {\tt HTTP\_RM\_PICDIR}  & 0 & delete directories at T2 start\\
+    \bottomrule
+\end{longtable}
+Aggregate mode is on by default to save memory space.
+Note that {\tt HTTP\_SAVE\_*} refers to the {\em Content-Type}, e.g., {\tt HTTP\_SAVE\_APPL}, will save all payload whose Content-Type starts with {\tt application/} (including forms, such as \\ {\tt application/x-www-form-urlencoded}).
+The maximum memory allocation per item is defined by {\tt HTTP\_DATA\_C\_MAX} listed below.
+The path of each extracted http content can be set by the {\tt HTTP\_XXXX\_PATH} constant.
+HTTP content having no name is assigned a default name defined by {\tt HTTP\_NONAME\_IMAGE}. Each name is
+appended by the findex, packet number and an index to facilitate the mapping between flows and its content.
+The latter constant has to be chosen carefully because for each item: mime, cookie, image, etc,
+{\tt HTTP\_MXFILE\_LEN * HTTP\_DATA\_C\_MAX * HASHCHAINTABLE\_SIZE * HASHFACTOR} bytes are allocated.
+The filenames are defined as follows:\\
+Filename\_Flow-Dir(0/1)\_findex\_\#Packet-in-Flow\_\#Mimetype-in-Flow\\
+So they can easily being matched with the flow or packet file. If the flow containing the filename is not present Filename = HTTP\_NONAME, defined in httpSniffer.h.
+
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt HTTP\_PATH} & {\tt "/tmp/"} & Root path \\
+    {\tt HTTP\_IMAGE\_PATH}   & {\tt\small HTTP\_PATH"httpPicture/"} & Path for pictures \\
+    {\tt HTTP\_VIDEO\_PATH}   & {\tt\small HTTP\_PATH"httpVideo/"}   & Path for videos \\
+    {\tt HTTP\_AUDIO\_PATH}   & {\tt\small HTTP\_PATH"httpAudio/"}   & Path for audios \\
+    {\tt HTTP\_MSG\_PATH}     & {\tt\small HTTP\_PATH"httpMSG/"}     & Path for messages \\
+    {\tt HTTP\_TEXT\_PATH}    & {\tt\small HTTP\_PATH"httpText/"}    & Path for texts \\
+    {\tt HTTP\_APPL\_PATH}    & {\tt\small HTTP\_PATH"httpAppl/"}    & Path for applications \\
+    {\tt HTTP\_PUNK\_PATH}    & {\tt\small HTTP\_PATH"httpPunk/"}    & Path for put/else \\
+    {\tt HTTP\_NONAME\_IMAGE} & {\tt\small "nudel"} & File name for unnamed content \\
+    {\tt HTTP\_DATA\_C\_MAX}  &  20 & Maximum dim of all storage array: \# / flow \\
+    {\tt HTTP\_CNT\_LEN}      &  13 & max \# of cnt digits attached to file name \\
+    {\tt HTTP\_FINDEX\_LEN}   &  20 & string length of findex in decimal format. \\
+    {\tt HTTP\_MXFILE\_LEN}   &  80 & Maximum image name length in bytes \\
+    {\tt HTTP\_MXUA\_LEN}     & 400 & Maximum user agent name length in bytes \\
+    {\tt HTTP\_MXXF\_LEN}     &  80 & Maximum x-forward-for name length in bytes \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The default settings will result in six tab separated columns in the flow file where the items
+in column 4-6 are sequences of strings separated by ';'. Whereas an item switch is set to '0' only
+the occurrence of this item during the flow is supplied. It is a high speed mode
+for large datasets or real-time operation in order to produce an initial idea of
+interesting flows maybe by script based post processing selecting also by the
+information supplied by first three columns.
+
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{httpStat}} & H16 & Status & \\
+    {\tt \nameref{httpAFlags}} & H16 & Anomaly flags  & \\
+    {\tt \nameref{httpMethods}} & H8 & HTTP methods & \\
+    {\tt \nameref{httpHeadMimes}} & H16 & HEADMIME-TYPES & \\
+    {\tt \nameref{httpCFlags}} & H8 & HTTP content body info & {\tt HTTP\_BODY=1}\\
+    {\tt httpGet\_Post} & 2U16 & Number of GET and POST requests & {\tt HTTP\_MCNT=1}\\
+    {\tt httpRSCnt}  & U16 & Response status count & {\tt HTTP\_STAT=1}\\
+    {\tt httpRSCode} & RU16 & Response status code  & {\tt HTTP\_STAT=1}\\
+    {\tt httpURL\_Via\_Loc\_Srv\_} & 10U16 & Number of URL, Via, Location, Server,\\
+    {\tt \qquad Pwr\_UAg\_XFr\_} && \qquad Powered-By, User-Agent, X-Forwarded-For,\\
+    {\tt \qquad Ref\_Cky\_Mim}   && \qquad Referer, Cookie and Mime-Type\\
+    {\tt httpImg\_Vid\_Aud\_Msg\_} & 7U16 & Number of images, videos, audios, messages,\\
+    {\tt \qquad Txt\_App\_Unk}           && \qquad texts, applications and unknown\\
+    {\tt httpHosts}   & RS & Host names   & {\tt HTTP\_HOST=1}\\
+    {\tt httpURL}     & RS & URLs (including parameters) & {\tt HTTP\_URL=1}\\
+    {\tt httpMimes}   & RS & MIME-types   & {\tt HTTP\_MIME=1}\\
+    {\tt httpCookies} & RS & Cookies      & {\tt HTTP\_COOKIE=1}\\
+    {\tt httpImages}  & RS & Images       & {\tt HTTP\_IMAGE=1}\\
+    {\tt httpVideos}  & RS & Videos       & {\tt HTTP\_VIDEO=1}\\
+    {\tt httpAudios}  & RS & Audios       & {\tt HTTP\_AUDIO=1}\\
+    {\tt httpMsgs}    & RS & Messages     & {\tt HTTP\_MSG=1}\\
+    {\tt httpAppl}    & RS & Applications & {\tt HTTP\_APPL=1}\\
+    {\tt httpText}    & RS & Texts        & {\tt HTTP\_TEXT=1}\\
+    {\tt httpPunk}    & RS & Punk        & {\tt HTTP\_PUNK=1}\\
+    {\tt httpBdyURL}  & RS & Body: Refresh, set\_cookie URL & {\tt HTTP\_BODY=1\&\&}\\
+                                                          &&& {\tt HTTP\_BDURL=1}\\
+    {\tt httpUsrAg} & RS & User-Agent               & {\tt HTTP\_USRAG=1}\\
+    {\tt httpXFor}  & RS & X-Forwarded-For          & {\tt HTTP\_XFRWD=1}\\
+    {\tt httpRefrr} & RS & Referer                  & {\tt HTTP\_REFRR=1}\\
+    {\tt httpVia}   & RS & Via (Proxy)              & {\tt HTTP\_VIA=1}\\
+    {\tt httpLoc}   & RS & Location (Redirection)   & {\tt HTTP\_LOC=1}\\
+    {\tt httpServ}  & RS & Server                   & {\tt HTTP\_SERV=1}\\
+    {\tt httpPwr}   & RS & Powered-By / Application & {\tt HTTP\_PWR=1}\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{httpStat}\label{httpStat}
+The {\tt httpStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf httpStat} & {\bf Description}\\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0001}) & Warning: {\tt HTTP\_DATA\_C\_MAX} entries in flow name array reached\\
+    $2^{1}$  (={\tt 0x0002}) & Warning: Filename longer than {\tt HTTP\_MXFILE\_LEN} \\
+    $2^{2}$  (={\tt 0x0004}) & Internal State: pending url name\\
+    $2^{3}$  (={\tt 0x0008}) & HTTP Flow\\
+    $2^{4}$  (={\tt 0x0010}) & Internal State: Chunked transfer \\
+    $2^{5}$  (={\tt 0x0020}) & Internal State: HTTP Flow detected \\
+    $2^{6}$  (={\tt 0x0040}) & Internal State: http header parsing in process \\
+    $2^{7}$  (={\tt 0x0080}) & Internal State: sequence number init \\
+    $2^{8}$  (={\tt 0x0100}) & Internal State: header shift \\
+    $2^{9}$  (={\tt 0x0200}) & Internal State: PUT payload sniffing \\
+    $2^{10}$ (={\tt 0x0400}) & Internal State: Image payload sniffing \\
+    $2^{11}$ (={\tt 0x0800}) & Internal State: video payload sniffing \\
+    $2^{12}$ (={\tt 0x1000}) & Internal State: audio payload sniffing \\
+    $2^{13}$ (={\tt 0x2000}) & Internal State: message payload sniffing \\
+    $2^{14}$ (={\tt 0x4000}) & Internal State: text payload sniffing \\
+    $2^{15}$ (={\tt 0x8000}) & Internal State: application payload sniffing \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{httpAFlags}\label{httpAFlags}
+The {\tt httpAFlags} column denotes HTTP anomalies regarding the
+protocol and the security. It is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf httpAFlags} & {\bf Description}\\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0001}) & Warning: POST query with parameters, possible malware \\
+    $2^{1}$  (={\tt 0x0002}) & Warning: Host is IPv4\\
+    $2^{2}$  (={\tt 0x0004}) & Warning: Possible DGA\\
+    $2^{3}$  (={\tt 0x0008}) & Warning: Mismatched content-type\\
+    $2^{4}$  (={\tt 0x0010}) & Warning: Sequence number mangled or error retry detected\\
+    $2^{5}$  (={\tt 0x0020}) & Warning: Parse Error\\
+    $2^{6}$  (={\tt 0x0040}) & Warning: header without value, e.g., {\tt Content-Type:\ [missing]}\\
+    $2^{7}$  (={\tt 0x0080}) & \\
+    $2^{8}$  (={\tt 0x0100}) & Info: X-Site Scripting protection\\
+    $2^{9}$  (={\tt 0x0200}) & Info: Content Security Policy\\
+    $2^{10}$ (={\tt 0x0400}) & \\
+    $2^{11}$ (={\tt 0x0800}) & \\
+    $2^{12}$ (={\tt 0x1000}) & Warning: possible exe download, check also mime type for conflict\\
+    $2^{13}$ (={\tt 0x2000}) & Warning: possible ELF download, check also mime type for conflict\\
+    $2^{14}$ (={\tt 0x4000}) & Warning: HTTP 1.0 legacy protocol, often used by malware\\
+    $2^{15}$ (={\tt 0x8000}) & \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{httpMethods}\label{httpMethods}
+The aggregated {\tt httpMethods} bit field provides an instant overview
+about the protocol state and communication during a flow. It can also be used
+during post processing in order to select only flows containing e.g. responses
+or delete operations.
+
+\begin{longtable}{rll}
+    \toprule
+    {\bf httpMethods} & {\bf Type} & {\bf Description}\\
+    \midrule\endhead%
+          (={\tt 0x00}) & RESPONSE & Response of server identified by URL\\
+    $2^0$ (={\tt 0x01}) & OPTIONS & Return HTTP methods that server supports for specified URL\\
+    $2^1$ (={\tt 0x02}) & GET & Request of representation of specified resource \\
+    $2^2$ (={\tt 0x04}) & HEAD & Request of representation of specified resource without BODY \\
+    $2^3$ (={\tt 0x08}) & POST & Request to accept enclosed entity as new subordinate of resource identified by URI \\
+    $2^4$ (={\tt 0x10}) & PUT & Request to store enclosed entity under supplied URI \\
+    $2^5$ (={\tt 0x20}) & DELETE & Delete specified resource \\
+    $2^6$ (={\tt 0x40}) & TRACE & Echo back received request \\
+    $2^7$ (={\tt 0x80}) & CONNECT & Convert request connection to transparent TCP/IP tunnel \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{httpHeadMimes}\label{httpHeadMimes}
+The aggregated {\tt httpHeadMimes} bit field provides an instant overview
+about the content of the HTTP payload being transferred during a flow. Thus, the
+selection of flows with certain content during post processing is possible even when
+the plugin is set to count mode for all items in order to conserve memory and processing
+capabilities. The 16 Bit information is separated into Mime Type (MT) and Common Subtype Prefixes (CSP) /
+ special Flags each comprising of 8 Bit. This is experimental and is subject to change if a better arrangement is found.
+
+\begin{longtable}{rll}
+    \toprule
+    {\bf httpHeadMimes} & {\bf MT / CSP} & {\bf Description} \\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0001}) & application & Multi-purpose files: java or post script, etc \\
+    $2^{1}$  (={\tt 0x0002}) & audio & Audio file \\
+    $2^{2}$  (={\tt 0x0004}) & image & Image file \\
+    $2^{3}$  (={\tt 0x0008}) & message & Instant or email message type \\
+    $2^{4}$  (={\tt 0x0010}) & model &  3D computer graphics \\
+    $2^{4}$  (={\tt 0x0020}) & multipart & Archives and other objects made of more than one part \\
+    $2^{5}$  (={\tt 0x0040}) & text & Human-readable text and source code\\
+    $2^{6}$  (={\tt 0x0080}) & video & Video stream: Mpeg, Flash, Quicktime, etc \\
+    $2^{8}$  (={\tt 0x0100}) & vnd &  vendor-specific files: Word, OpenOffice, etc \\
+    $2^{9}$  (={\tt 0x0200}) & x & Non-standard files: tar, SW packages, LaTex, Shockwave Flash, etc \\
+    $2^{10}$ (={\tt 0x0400}) & x-pkcs & public-key cryptography standard files\\
+    $2^{11}$ (={\tt 0x0800}) & --- & ---\\
+    $2^{12}$ (={\tt 0x1000}) & pdf & ---\\
+    $2^{13}$ (={\tt 0x2000}) & java & ---\\
+    $2^{14}$ (={\tt 0x4000}) & --- & ---\\
+    $2^{15}$ (={\tt 0x8000}) & allelse & All else\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{httpCFlags}\label{httpCFlags}
+The {\tt httpCFlags} contain information about the content body, regarding to
+information about rerouting. They have to be interpreted as follows:
+
+\begin{longtable}{rll}
+    \toprule
+    {\bf httpBodyFlags} & {\bf MT / CSP} & {\bf Description}\\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0001}) & STCOOKIE & http set cookie\\
+    $2^{1}$  (={\tt 0x0002}) & REFRESH & http refresh detected\\
+    $2^{2}$  (={\tt 0x0004}) & HOSTNAME & host name detected\\
+    $2^{3}$  (={\tt 0x0008}) & BOUND & Post Boundary marker\\
+    $2^{4}$  (={\tt 0x0010}) & PCNT & Potential HTTP content\\
+    $2^{5}$  (={\tt 0x0020}) & --- &\\
+    $2^{6}$  (={\tt 0x0040}) & QUARA & Quarantine Virus upload\\
+    $2^{15}$ (={\tt 0x8000}) & --- & \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Plugin Report Output}
+The following information is reported:
+\begin{itemize}
+    \item Max number of file handles (only if {\tt HTTP\_SAVE=1})
+    \item Number of HTTP IPv4/6 packets
+    \item Number of HTTP \#GET, \#POST, \#GET/\#POST ratio
+    \item Aggregated status flags ({\tt\nameref{httpStat}})
+    \item Aggregated mimetype flags ({\tt\nameref{httpHeadMimes}})
+    \item Aggregated anomaly flags ({\tt\nameref{httpAFlags}})
+    \item Aggregated content flags ({\tt\nameref{httpCFlags}}, only if {\tt HTTP\_BODY=1})
+\end{itemize}
+
+The GET/POST ratio is very helpful in detecting malware operations, if you know the normal ratio of your
+machines in the network. The file descriptor gives you an indication of the maximum file handles the
+present pcap will produce. You can increase it by invoking {\tt uname -n mylimit}, but it should not
+be necessary as we manage the number of handle being open to be always below the max limit.
+
+
+
+%\subsection{TODO}
+%
+%Content extraction of:
+%\begin{itemize}
+%   \item http 2.0
+%\end{itemize}
+
+\end{document}

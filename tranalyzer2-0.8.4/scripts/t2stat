@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+
+source "$(dirname "$0")/t2utils.sh"
+
+usage() {
+        echo "Usage:"
+        echo "    $SNAME [OPTION...]"
+        echo
+        echo "Optional arguments:"
+        echo "    INTERVAL     Send a signal to Tranalyzer every INTERVAL seconds"
+        echo "    -SIGNAME     Send SIGNAME signal instead of USR1"
+        echo "    -s           Run the command as root (with sudo)"
+        echo "    -p           Print Tranalyzer PID(s) and exit"
+        echo "    -l           List Tranalyzer PID(s), commands, running time and exit"
+        echo "    -i           Interactively cycle through all Tranalyzer processes"
+        echo "    -h           Show help options and exit"
+}
+
+# Default signal to send
+SIG="-USR1"
+
+while [ $# -ne 0 ]; do
+    case "$1" in
+        -s|--sudo) SUDO="sudo";;
+        -p|--print) PRINT_PID=1;;
+        -l|--list) LIST_PID=1;;
+        -i|--interactive) INTERACTIVE=1;;
+        -[A-Z][A-Z0-9]*) SIG="$1";;
+        [0-9]*) CMD="watch -n $1";;
+        -h|-\?|--help) usage; exit 0;;
+        *) abort_option_unknown "$1";;
+    esac
+    shift
+done
+
+if [ "$CMD" ] && [ $INTERACTIVE ]; then
+    printerr "Cannot use INTERVAL and -i/--interactive option simultaneously"
+    exit 1
+fi
+
+T2_PID="$(pidof tranalyzer)"
+if [ -z "$T2_PID" ]; then
+    echo "No running instance of Tranalyzer found"
+    exit 0
+fi
+
+print_cmd() {
+    local pid="$1"
+    # Command MUST be last otherwise it will be truncated...
+    local opt
+    if [ "$(uname)" != "Darwin" ]; then
+        opt="-q"
+    fi
+    ps $opt $i -o "pid=,etime=,command=" | $AWK '{
+        printf "%s\t%s", $1, $3
+        for (i = 4; i <= NF; i++) {
+            printf " %s", $i
+        }
+        printf "\t%s\n", $2
+    }'
+}
+
+send_signal() {
+    local pid="$1"
+    $SUDO $CMD kill $SIG $pid
+}
+
+if [ $PRINT_PID ]; then
+    echo "$T2_PID"
+    exit 0
+elif [ $LIST_PID ]; then
+    for i in $T2_PID; do
+        print_cmd $i
+    done
+    exit 0
+fi
+
+if [ $INTERACTIVE ]; then
+    for i in $T2_PID; do
+        print_cmd $i
+        read -p "Send $SIG signal to $i (y/N)? " ans
+        case "$ans" in
+            [yY]|[yY][eE][sS]) send_signal "$i";;
+            *);;
+        esac
+    done
+else
+    send_signal "$T2_PID"
+fi

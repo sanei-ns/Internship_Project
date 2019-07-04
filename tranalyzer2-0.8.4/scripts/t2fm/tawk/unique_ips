@@ -1,0 +1,16 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+bitsanyset($flowStat, 0xc000) {  # IPv4/6 only
+    __ip[shost()] = 1
+    __ip[dhost()] = 1
+}
+
+END {
+    for (i in __ip) {
+        print i
+    }
+}

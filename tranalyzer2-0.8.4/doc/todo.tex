@@ -1,0 +1,46 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {Missing Features, Capabilities and Plugins}
+    {TODO} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{TODO}
+This section lists some features, capabilities and plugins which Tranalyzer is currently missing. Feel free to pick a task or
+two and contribute code, plugins or ideas.
+
+\subsection{Features}
+    \begin{itemize}
+        \item Anonymisation
+        \item Endianness independence
+        \item Support for NetMon dump files
+        \item Stream reassembly and reordering
+    \end{itemize}
+
+\subsection{Plugins}
+\begin{multicols}{2}
+    \begin{itemize}
+        \item SS7
+        \item IMAP
+        \item NFS, iSCSI
+        \item XMPP
+        \item Routing (EIGRP, RIPv2, HSRP (Cisco), \ldots)
+        \item Chat (MSN, IRC, YMSG, \ldots)
+        \item Torrent, Gnutella
+        \item TDS (Tabular Data Stream, Microsoft)
+        \item DCE/RPC
+        \item LDAP
+        \item X11
+        \item Dropbox
+        \item OCSP, PKIX-CRL (include in \tranrefpl{sslDecode}?)
+        \item BACnet
+    \end{itemize}
+\end{multicols}
+
+\end{document}

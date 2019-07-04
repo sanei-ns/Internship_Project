@@ -1,0 +1,18 @@
+#!/usr/bin/env awk
+#
+# Destination Port
+#
+# Dependencies:
+#   - basicFlow
+#
+# Example:
+#   - tawk '{ print dp() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function dp(        _c) {
+    _c = _validate_col("dstPort", _my_dstPort)
+    if (hdr()) return "Dst Pt"
+    return $_c
+}

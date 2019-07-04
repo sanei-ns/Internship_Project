@@ -1,0 +1,123 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {Frequently Asked Questions}
+    {FAQ} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{FAQ}
+This section answers some frequently asked questions.
+
+\subsection{If the hashtable is full, how much memory do I need to add?}
+When T2 warns you that the hashtable is full, it also tells you how to correct the problem:
+\begin{center}
+    {\tt [INF] Hash Autopilot: main HashMap full: flushing 1 oldest flow(s)! Fix: Invoke T2 with '-f 5' next time.}
+\end{center}
+T2 calculates an estimate of the multiplication factor {\tt HASHFACTOR} which you can set with the {\tt --f} commandline option.
+By default the main hash autopilot is enabled which maintains the sanity of T2 even if it runs out of flow memory.
+Nevertheless, T2 will be faster if you feed him the recommended {\tt --f} factor.
+
+\subsection{Can I change the timeout of a specific flow in my plugin?}
+That is possible because each flow owns a timeout value which can be altered even on packet basis.
+It enables the user to program stateful protocol plugins.
+Check out the \tranrefpl{tcpStates} plugin as an inspiration.
+
+\subsection{Can I reduce the maximal flow length?}
+In {\em tranalyzer2/src/tranalyzer.h} you will find a constant called {\tt FDURLIMIT}.
+Set it to the amount of seconds you like and T2 will terminate every flow with max {\tt FDURLIMIT+1} seconds.
+And create a new flow for the next packet to come.
+
+\subsection{How can I change the separation character in the flow file?}
+The separation character is defined as {\tt SEP\_CHAR} in {\em utils/bin2txt.h}.
+It can be set to any character(s), e.g., {\tt ","} or {\tt "||"}.
+In addition, the character(s) used for comments, e.g., column names, is controlled by {\tt HDR\_CHR} in the same file.
+Note that Tranalyzer default values are {\tt "\textbackslash{}t"} and {\tt "\%"}, respectively.
+Be advised that if you changed either of those values, some scripts may not work as expected.
+
+\subsection{How can I build all the plugins?}
+If you invoked the script setup.sh then you may use\\
+{\tt t2build -a} \\
+otherwise, old school:\\
+
+{\tt cd ~/tranalyzer2-0.8.4\\
+     ./autogen.sh -a}
+
+\subsection{T2 failed to compile: What can I do?}
+If a dependency is missing, you should see an appropriate messsage, e.g., {\em Missing dependency libname}.
+If no such message is displayed, it could be that the Makefiles are outdated.
+Then use {\tt autogen.sh --r} to force the rebuild of the Makefiles.
+A typical error requiring the use of {\tt autogen.sh --r} is:
+\begin{verbatim}
+...
+/bin/bash: line 10: automake-: command not found
+Makefile:333: recipe for target `Makefile.in' failed
+make[1]: *** [Makefile.in] Error 127
+...
+\end{verbatim}
+
+If you see the following message, then the autotools are not installed.
+\begin{verbatim}
+make: Entering directory '/home/user/tranalyzer2-0.8.4/tranalyzer2/doc'
+make: Nothing to be done for 'clean'.
+make: Leaving directory '/home/user/tranalyzer2-0.8.4/tranalyzer2/doc'
+../autogen.sh: line 116: autoreconf: command not found
+../autogen.sh: line 118: ./configure: No such file or directory
+
+Failed to configure tranalyzer2
+\end{verbatim}
+In this case, please refer to the {\em doc/tutorials/install.pdf}.
+
+\subsection{T2 segfaults: What can I do?}
+T2 never segfaults!
+Unless he deviates from his cosmic plan and indeed segfaults.
+The prominent reason are memory inconsistencies with old plugins being resident under {\tt\textasciitilde{}/.tranalyzer/plugins/}.
+\begin{enumerate}
+    \item Remove all the plugins: {\tt rm \textasciitilde{}/.tranalyzer/plugins/*.so}
+    \item Recompile the plugins, e.g., {\tt cd \textasciitilde{}/tranalyzer2-0.8.4/ \&\& ./autogen.sh}
+    \item T2 should behave again.
+\end{enumerate}
+For the developer: \\
+If that does not fix the problem, recompile T2 in debug mode with {\tt ./autogen.sh -d} and try to run tranalyzer in {\em gdb}: {\tt gdb --args ./tranalyzer -r file.pcap -w outpref}.
+If the error happens while writing flows, try to remove plugins until the error disappears.
+Finally, run the {\tt segvtrack} script as follows: {\tt segvtrack yourpcap}.
+This will automatically reduce the PCAP to the smallest set of packets which causes a segfault.
+If this does not help, send us a bug report at \href{mailto:tranalyzer@rdit.ch}{tranalyzer@rdit.ch} with this pcap, T2 configuration (the values that differ from the default) and the plugins you are using.
+Then we will get a fix for you in no time.
+
+\subsection{socketSink plugin aborts with ``could not connect to socket: Connection refused''}
+The \tranrefpl{socketSink} plugins acts as a client in a socket communication.
+Therefore, a server listening to {\tt SERVADD}, {\tt DPORT} and {\tt SOCKTYPE} is required.
+As described in the {\bf Example} Section of the \tranrefpl{socketSink} plugin documentation,
+a simple server can be set up with netcat as follows: {\tt nc -l 127.0.0.1 6666}.
+Make sure the address and port match the values listed in {\em socketSink.h}.
+
+\subsection{T2 stalls after USR1 interrupt: What can I do?}
+It is a bug in the libpcap, which somehow is not thread-safe under certain conditions.
+Check whether T2 is set to default signal threading mode in ({\tt main.h}):
+\begin{itemize}
+    \item Set {\tt MONINTTHRD} to 1
+    \item Set {\tt MONINTPSYNC} to 1
+\end{itemize}
+Do not forget to recompile T2 with {\tt ./autogen.sh} if you had to change the configuration.\\
+
+Now the process of printing is detached from the packet capture and the output is synchronized to the packet processing main loop.
+Thus, pcap is never interrupted.\\
+
+%Another method is to block all interrupts during pcap, so set {\tt MONINTBLK} to 1, which is less performant.
+
+\subsection{Can I reuse my configuration between different machines or Tranalyzer versions?}
+You can write a patch for \tranref{t2conf} and use it as follows: {\tt t2conf --{}--patch file.patch}.
+Revert the patch with the {\tt --{}--rpatch} option.
+The patch is a simple text file listing the defines to change, e.g., {\tt IPV6\_ACTIVATE <tab> 1 <tab> 0 <tab> tranalyzer2/src/networkHeaders.h}.
+For more details, refer to the documentation of \tranref{t2conf}.
+
+\subsection{How to contribute code, submit a bug or request a feature?}
+Contact the Anteater via email at \href{mailto:tranalyzer@rdit.ch}{tranalyzer@rdit.ch}, and he will answer you.
+
+\end{document}

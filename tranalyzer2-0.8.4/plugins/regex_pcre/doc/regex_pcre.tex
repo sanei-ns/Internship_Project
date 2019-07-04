@@ -1,0 +1,158 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {regex\_pcre}
+    {PCRE}
+    {Tranalyzer Development Team}
+
+\section{regex\_pcre}\label{s:regex_pcre}
+
+\subsection{Description}
+The regex\_pcre plugin provides a full PCRE compatible regex engine.
+
+\subsection{Dependencies}
+
+\subsubsection{External Libraries}
+This plugin depends on the {\bf pcre} library.
+\paragraph{Ubuntu:} {\tt sudo apt-get install libpcre3-dev}
+\paragraph{OpenSUSE:} {\tt sudo zypper install pcre-devel}
+%\paragraph{Arch:} {\tt sudo pacman -S XXX}
+\paragraph{Mac OS X:} {\tt brew install pcre}
+
+\subsubsection{Other Plugins}
+If {\tt LABELSCANS=1}, then this plugin requires the \tranrefpl{tcpFlags} plugin.
+
+\subsubsection{Required Files}
+The file {\tt regexfile.txt} is required. See \refs{regexfile.txt} for more details.
+
+\subsection{Configuration Flags}
+
+\subsubsection{regfile\_pcre.h}
+The compiler constants in {\em regfile\_pcre.h} control the pre-processing and
+compilation of the rule sets supplied in the regex file during the initialisation phase of Tranalyzer.
+
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt RULE\_OPTIMIZE} & 0 & 0: No opt rules allocated 1: Allocate opt rule structure \& compile regex \\
+    {\tt REGEX\_MODE} & {\tt PCRE\_DOTALL} & Regex compile time options \\
+    %{\tt HDRSELMX} & 5 & \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{regex\_pcre.h}
+The compiler constants in {\em regex\_pcre.h} control the execution and
+the output the rule matches.
+
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Variable} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt EXPERTMODE} &  0 & 0: Alarm with highest severity: class type \& severity,\\
+                     &    & 1: full info \\
+    {\tt PKTTIME}    &  0 & 0: no time, 1: timestamp when rule matched \\
+    {\tt LABELSCANS} &  0 & 0: No scans, 1: label scans (depends on \tranrefpl{tcpFlags}) \\
+    {\tt MAXREGPOS}  & 30 & Maximal \# of matches stored / flow \\
+    {\tt OVECCOUNT}  &  1 & regex internal: maximal \# of regex output vectors\\
+    {\tt REXPOSIX\_FILE} & {\tt\small "regexfile.txt"} & Name of regex file under {\em ./tranalyzer/plugins} \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{regexfile.txt}\label{regexfile.txt}
+The {\em regexfile.txt} file has the following format:
+\begin{center}
+\begin{lstlisting}
+# ID Predecessor Flags ANDMask	ANDPin ClassID Severity Sel	Dir	Proto srcPort	dstPort	offset	Regex
+# single rule
+1	0	0x80	0x0000	0x0000	15	3	0x8b	0x0001	6	0	80	0	\x6A.{1,}\x6B\x3C\x24\x0B\x60\x6A.*
+# single rule
+3	1	0x80	0x0000	0x0000	15	3	0x82    0x0001	6	0	80	8	\x31\xDB\x8D\x43\x0D\xCD\x80\x66.*\x31
+# root rules to following tree
+202	0	0x11	0x0000	0x0000	20	4	0x41	0x0001	6	0	80	20	^http
+203	0	0x10	0x0000	0x0000	20	4	0x41	0x0001	6	0	80	20	GET
+# sucessors and predesessors
+204	202	0x01	0x0000	0x0001	43	2	0x85	0x0001	6	0	445	0	Volume Serial Number
+204	203	0x40	0x0000	0x0002	40	2	0x8f	0x0001	6	666	666	0	(?i)Command completed(?-i)
+# successors 20t5 & 205 to 204 AND ruleset
+205	204	0x81	0x0003	0x0000	40	3	0x00	0x0001	0	0	20	0	^get .*porno.*
+206	204	0x80	0x0002	0x0000	35	3	0x00	0x0000	0	0	21	0	^FTP
+\end{lstlisting}
+\end{center}
+
+Lines starting with a {\tt '\#'} denote a comment line and will be ignored.
+All kind of rule trees can be formed using rules also acting on multiple packets using different {\tt ID}'s and {\tt Predecessor} as outlined in the example above.
+Regex rules with the same {\tt ID} denote combined predecessors to other rules. Default is an OR operation unless {\tt ANDPin} bits are set. These bits denote the different inputs to a bitwise AND. The output is then provided
+to the successor rule which compares with the {\tt ANDMask} bit field whether all necessary rules are matched.
+Then an evaluation of the successor rule can take place. Thus, arbitrary rule trees can be constructed and results of
+predecessors can be used for multiple successor rules. The variable {\tt Flags} controls the basic PCRE rule interpretation and the flow alarm production (see the table below), e.g. only if bit eight is set and alarm flow output is produced. {\tt ClassID} and {\tt Severity} denote information being printed in the flow file if the rule fires.
+
+\begin{longtable}{rl}
+    \toprule
+    {\bf Flags} & {\bf Description} \\
+    \midrule\endhead%
+    $2^0$ (={\tt 0x01}) & {\tt PCRE\_CASELESS} \\
+    $2^1$ (={\tt 0x02}) & {\tt PCRE\_MULTILINE} \\
+    $2^2$ (={\tt 0x04}) & {\tt PCRE\_DOTALL} \\
+    $2^3$ (={\tt 0x08}) & {\tt PCRE\_EXTENDED} \\
+    $2^4$ (={\tt 0x10}) & Internal state: successor found \\
+    $2^5$ (={\tt 0x20}) & Internal state: predecessor matched \\
+    $2^6$ (={\tt 0x40}) & Preserve alarm in queue for later use \\
+    $2^7$ (={\tt 0x80}) & Print alarm in flow file \\
+    \bottomrule
+\end{longtable}
+
+The {\tt Sel} column controls the header selection of a rule in the lower nibble and the start of regex evaluation
+in the higher nibble. The position of the bits in the control byte are outlined below:
+
+\begin{longtable}{rl}
+    \toprule
+    {\bf Sel} & {\bf Description} \\
+    \midrule\endhead%
+    $2^0$ (={\tt 0x01}) & Activate dir field \\
+    $2^1$ (={\tt 0x02}) & Activate L4Proto field \\
+    $2^2$ (={\tt 0x04}) & Activate srcPort field \\
+    $2^3$ (={\tt 0x08}) & Activate dstPort field \\
+    $2^4$ (={\tt 0x10}) & Header start: Layer 2 \\
+    $2^5$ (={\tt 0x20}) & Header start: Layer 3 \\
+    $2^6$ (={\tt 0x40}) & Header start: Layer 4 \\
+    $2^7$ (={\tt 0x80}) & Header start: Layer 7 \\
+    \bottomrule
+\end{longtable}
+
+The higher nibble selects which flow direction (A={\tt 0} or B={\tt 1}), protocol, source and destination port will be
+evaluated per rule, all others will be ignored. The {\tt dir} field might contain other bits meaning more selection
+options in future.
+The {\tt offset} column depicts the start of the regex evaluation from the selected header start, default value 0.
+The {\tt Regex} column accepts a full PCRE regex term. If the regex is not correct, the rule will be discarded
+displaying an error message in the Tranalyzer report.
+
+\subsection{Flow File Output}
+The {\tt regex\_pcre} plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt RgxCnt} & U16 & Regexp match count \\
+    {\tt RgxClTyp} & U8 & Classtype & {\tt EXPERTMODE=0}\\
+    {\tt RgxSev} & U8 & Severity & {\tt EXPERTMODE=0}\\
+    {\tt RgxN\_B\_RID\_} & R(4xU16\_) & Packet, byte position, regfile ID, & {\tt EXPERTMODE=1\&\&}\\
+    {\tt \quad Amsk\_F\_CT\_Sv} & \quad H8\_2xU8) & \quad AND mask, flags, classtype, severity & {\tt PKTTIME=0}\\
+    {\tt RgxT\_N\_B\_RID\_} & R(TS\_4xU16\_ & Time, packet, byte position, regfile ID, & {\tt EXPERTMODE=1\&\&}\\
+    {\tt \quad Amsk\_F\_CT\_Sv} & \quad H8\_2xU8) & \quad AND mask, flags, classtype, severity & {\tt PKTTIME=1}\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Plugin Report Output}
+The following information is reported:
+\begin{itemize}
+    \item Number of alarms
+\end{itemize}
+
+\end{document}

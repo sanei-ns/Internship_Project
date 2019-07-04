@@ -1,0 +1,64 @@
+\IfFileExists{t2doc.cls}{%
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {wavelet} % plugin name
+    {Wavelet} % short description
+    {Tranalyzer Development Team}
+
+\section{wavelet}\label{s:wavelet}
+
+\subsection{Description}
+This plugin calculates the Daubechies wavelet transformation of the IP packet length variable in the packet structure, or the
+inter arrival distance of packets (IAT).
+The wavelet plugin requires no dependencies and produces only output to the flow file.
+User defined compiler switches in {\em define\_global.h} produce optimized code for the specific application.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Variable} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt WAVELET\_IAT} & 0 & analysis of 0: pktlen, 1:IAT\\
+    {\tt WAVELET\_SIG} & 0 & print signal\\
+    {\tt WAVELET\_PREC} & 0 & precision 0: float, 1: double\\
+    {\tt WAVELET\_THRES} & 8 & Min number of packets for analysis\\
+    {\tt WAVELET\_LEVEL} & 3 & Wavelet decomposition level \\
+    {\tt WAVELET\_EXTMODE} & ZPD & Extension Mode: NON, SYM, ZPD \\
+    {\tt WAVELET\_TYPE} & DB3 & Mother Wavelet: Daubechies DB1 - DB4 \\
+    {\tt WAVELET\_MAX\_PKT} & 40 & Maximal \# of selected pkts\\
+    \bottomrule
+\end{longtable}
+
+%\subsection{Required files}
+%none
+
+\subsection{Flow File Output}
+The wavelet plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Name} & {\bf Type} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt waveNumPnts}    & U16  & Number of points \\
+    {\tt waveSig}        & RF/D & Packet length / IAT signal \\
+    {\tt waveNumLvl}     & U32  & Number of wavelet levels \\
+    {\tt waveCoefDetail} & RF/D & Wavelet detail coefficients \\
+    {\tt waveCoefApprox} & RF/D & Wavelet approximation coefficients \\
+    \bottomrule
+\end{longtable}
+
+%\subsection{flags}
+%none
+
+%\subsection{Interfaces}
+%This section describes the SW interfaces
+
+%\subsection{Planned Extensions}
+
+\end{document}

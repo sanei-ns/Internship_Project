@@ -1,0 +1,29 @@
+#!/usr/bin/env awk
+#
+# Converts an IPv4 address to a string
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - ip2hex: converts an IPv4 address to hex
+#   - ip2num: converts an IPv4 address to a number
+#
+# Examples:
+#   - tawk '{ print ip2str($srcIP4) }' file.txt
+
+@include "isiphex"
+@include "isipnum"
+
+function ip2str(ip) {
+    if (!isiphex(ip) && !isipnum(ip)) {
+        return ip
+    } else {
+        ip = strtonum(ip)
+        return sprintf("%d.%d.%d.%d",
+               rshift(and(ip, 0xff000000), 24),
+               rshift(and(ip, 0x00ff0000), 16),
+               rshift(and(ip, 0x0000ff00),  8),
+                      and(ip, 0x000000ff))
+    }
+}

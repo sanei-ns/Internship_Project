@@ -1,0 +1,141 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {Development Status of the Plugins}
+    {Overview} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{Status}
+This section summarises the available plugins.
+For each plugin, a brief description is provided, along with the development status (pre-alpha, alpha, beta, release-candidate, release or deprecated).
+
+\subsection{Global Plugins}
+\begin{longtable}{*{4}{l}}
+    \toprule
+    {\bf Plugin Name} & {\bf Number} & {\bf Description} & {\bf Status}\\
+    \midrule\endhead%
+    \tranrefpl{protoStats} & 001 & Overall statistics about protocols & release\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Basic Plugins}
+\begin{longtable}{*{4}{l}}
+    \toprule
+    {\bf Plugin Name} & {\bf Number} & {\bf Description} & {\bf Status}\\
+    \midrule\endhead%
+    \tranrefpl{basicFlow}      & 100 & Overall statistics plugin            & release\\
+    \tranrefpl{macRecorder}    & 110 & MAC addresses and manufacturers      & release\\
+    \tranrefpl{portClassifier} & 111 & Classification based on port numbers & release\\
+    \tranrefpl{basicStats}     & 120 & Basic statistics                     & release\\
+    \tranrefpl{connStat}       & 500 & Connection statistics                & release\\
+    \bottomrule
+\end{longtable}
+
+\subsection{L2 Protocol Plugins}
+\begin{longtable}{*{4}{l}}
+    \toprule
+    {\bf Plugin Name} & {\bf Number} & {\bf Description} & {\bf Status}\\
+    \midrule\endhead%
+    \tranrefpl{arpDecode}  & 200 & ARP  & beta\\
+    \tranrefpl{cdpDecode}  & 207 & CDP  & beta\\
+    \tranrefpl{lldpDecode} & 206 & LLDP & beta\\
+    \tranrefpl{stpDecode}  & 203 & STP  & alpha\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Protocol Plugins}
+\begin{longtable}{*{4}{l}}
+    \toprule
+    {\bf Plugin Name} & {\bf Number} & {\bf Description} & {\bf Status}\\
+    \midrule\endhead%
+    \tranrefpl{dhcpDecode}      & 250 & DHCP                 & release\\
+    \tranrefpl{dnsDecode}       & 251 & DNS                  & beta\\
+    \tranrefpl{ftpDecode}       & 301 & FTP                  & release\\
+    \tranrefpl{httpSniffer}     & 310 & HTTP                 & release\\
+    \tranrefpl{icmpDecode}      & 140 & ICMP                 & release\\
+    \tranrefpl{igmpDecode}      & 204 & IGMP                 & alpha\\
+    \tranrefpl{ircDecode}       & 401 & IRC                  & beta\\
+    \tranrefpl{modbus}          & 450 & Modbus               & beta\\
+    \tranrefpl{ntpDecode}       & 205 & NTP                  & release\\
+    \tranrefpl{ospfDecode}      & 202 & OSPF                 & release\\
+    \tranrefpl{popDecode}       & 304 & POP                  & release\\
+    \tranrefpl{radiusDecode}    & 255 & RADIUS               & beta\\
+    \tranrefpl{sctpDecode}      & 135 & SCTP                 & beta\\
+    \tranrefpl{smbDecode}       & 385 & SMB                  & beta\\
+    \tranrefpl{smtpDecode}      & 303 & SMTP                 & release\\
+    \tranrefpl{snmpDecode}      & 386 & SNMP                 & beta\\
+    \tranrefpl{sshDecode}       & 309 & SSH                  & beta\\
+    \tranrefpl{sslDecode}       & 311 & SSL/TLS, OpenVPN     & release\\
+    \tranrefpl{stunDecode}      & 601 & STUN, TURN, NAT-PMP  & beta\\
+    \tranrefpl{syslogDecode}    & 260 & Syslog               & release\\
+    \tranrefpl{tcpFlags}        & 130 & TCP flags            & release\\
+    \tranrefpl{tcpStates}       & 132 & TCP states           & release\\
+    \tranrefpl{telnetDecode}    & 305 & Telnet               & release\\
+    \tranrefpl{tftpDecode}      & 300 & TFTP                 & release\\
+    \tranrefpl{voipDetector}    & 410 & VoIP                 & release\\
+    \tranrefpl{vrrpDecode}      & 220 & VRRP                 & beta\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Application Plugins}
+\begin{longtable}{*{4}{l}}
+    \toprule
+    {\bf Plugin Name} & {\bf Number} & {\bf Description} & {\bf Status}\\
+    \midrule\endhead%
+    \tranrefpl{pwX}               & 602 & Password extractor          & release\\
+    \tranrefpl{regex_pcre}        & 605 & PCRE                        & release\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Math Plugins}
+\begin{longtable}{*{4}{l}}
+    \toprule
+    {\bf Plugin Name} & {\bf Number} & {\bf Description} & {\bf Status}\\
+    \midrule\endhead%
+    \tranrefpl{descriptiveStats} & 702 & Descriptive statistics                            & release\\
+    \tranrefpl{entropy}          & 710 & Entropy                                           & beta\\
+    \tranrefpl{nFrstPkts}        & 700 & Statistics over the first $N$ packets             & release\\
+    \tranrefpl{pktSIATHisto}     & 701 & Histograms of packet size and inter-arrival times & release\\
+    \tranrefpl{wavelet}          & 720 & Wavelet                                           & beta\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Classifier Plugins}
+\begin{longtable}{*{4}{l}}
+    \toprule
+    {\bf Plugin Name} & {\bf Number} & {\bf Description} & {\bf Status}\\
+    \midrule\endhead%
+    \tranrefpl{fnameLabel}     & 899 & Classification based on filename                  & beta\\
+    \tranrefpl{nDPI}           & 112 & Classification based on content analysis          & release\\
+    \tranrefpl{geoip}          & 116 & Classification based on content analysis          & release\\
+    \tranrefpl{p0f}            & 779 & OS Classification based on content analysis (SSL) & release\\
+    \tranrefpl{tp0f}           & 117 & OS Classification based on content analysis       & release\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Output Plugins}
+\begin{longtable}{*{4}{l}}
+    \toprule
+    {\bf Plugin Name} & {\bf Number} & {\bf Description} & {\bf Status}\\
+    \midrule\endhead%
+    \tranrefpl{binSink}      & 900 & Binary output into a flow file                         & release\\
+    \tranrefpl{findexer}     & 961 & Produces a binary index mapping flow index and packets & release\\
+    \tranrefpl{jsonSink}     & 903 & Produces a JSON file                                   & release\\
+    \tranrefpl{mongoSink}    & 926 & Output into a MongoDB database                         & beta\\
+    \tranrefpl{mysqlSink}    & 925 & Output into a MySQL database                           & beta\\
+    \tranrefpl{netflowSink}  & 904 & Netflow output format for existing Cisco tools         & beta\\
+    \tranrefpl{pcapd}        & 960 & Stores packets from specific flows in pcap files       & release\\
+    \tranrefpl{psqlSink}     & 923 & Output into a PostgreSQL database                      & beta\\
+    \tranrefpl{socketSink}   & 910 & Binary output into a TCP/UDP socket                    & release\\
+    \tranrefpl{sqliteSink}   & 924 & Output into a SQLite database                          & beta\\
+    \tranrefpl{txtSink}      & 901 & Text output into a flow file                           & release\\
+    \bottomrule
+\end{longtable}
+
+\end{document}

@@ -1,0 +1,25 @@
+#!/usr/bin/env awk
+#
+# Returns true if one of the source or dest. MAC addresses is equal to 'mac'
+# If 'mac' is omitted, returns the source and destination MAC address(es)
+#
+# Dependencies:
+#   - macRecorder
+#
+# See Also:
+#   - dether
+#   - dmac
+#   - mac: alias for ether
+#   - sether
+#   - smac
+#
+# Examples:
+#   - tawk 'ether("00:11:22:33:44:55")' file.txt
+#   - tawk 'ether("00:11:22:33:44:55") { print ether() }' file.txt
+#   - tawk '{ print ether() }' file.txt
+
+@include "mac"
+
+function ether(m) {
+    return mac(m)
+}

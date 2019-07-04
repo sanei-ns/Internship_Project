@@ -1,0 +1,18 @@
+#H bit | modbusStat | Description
+#H =============================================================================
+     0 | 0x0001     | Flow is Modbus
+     1 | 0x0002     | Non-modbus protocol identifier
+     2 | 0x0004     | Unknown function code
+     3 | 0x0008     | Unknown exception code
+     4 | 0x0010     | Multiple unit identifiers
+     5 | 0x0020     | -
+     6 | 0x0040     | -
+     7 | 0x0080     | -
+     8 | 0x0100     | List of function codes truncated... increase MB_NUM_FUNC
+     9 | 0x0200     | List of function codes which caused exceptions truncated... increase MB_NUM_FEX
+    10 | 0x0400     | List of exception codes truncated... increase MB_NUM_EX
+    11 | 0x0800     | -
+    12 | 0x1000     | -
+    13 | 0x2000     | -
+    14 | 0x4000     | Snapped packet
+    15 | 0x8000     | Malformed packet

@@ -1,0 +1,10 @@
+#H bit | sslFlags | Description
+#H =============================================================================
+     0 | 0x01     | Request is SSLv2
+     1 | 0x02     | SSLv3 version on request layer different than on record layer
+     2 | 0x04     | gmt_unix_time is small (less than one year since epoch, probably seconds since boot)
+     3 | 0x08     | gmt_unix_time is more than five years in the future (probably random)
+     4 | 0x10     | Random data (28 bytes) is not random
+     5 | 0x20     | Compression (deflate) is enabled
+     6 | 0x40     | -
+     7 | 0x80     | -

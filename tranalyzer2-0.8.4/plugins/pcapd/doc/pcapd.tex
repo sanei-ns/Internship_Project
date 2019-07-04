@@ -1,0 +1,111 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {pcapd}
+    {Creates PCAP Files}
+    {Tranalyzer Development Team}
+
+\section{pcapd}\label{s:pcapd}
+
+\subsection{Description}
+The pcapd plugin can be used to create PCAP files based on some criteria such as flow indexes (\refs{pcapdnormal}) or alarms raised by other plugins (Section \refs{pcapdalarm}).
+
+\subsection{Dependencies}
+If {\tt PD\_MODE=4}, the libpcap version must be at least 1.7.2. (In this mode, the plugin uses the {\tt pcap\_dump\_open\_append()} function which was introduced in the libpcap in February 12, 2015.)
+
+\subsection{Configuration Flags}
+
+The following flags can be used to configure the plugin:
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Variable} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt PD\_MODE\_IN}  & 0 & 0: extract flows listed in input file (if {\tt --e} option was used),\\
+                        &   & \qquad or extract flows if alarm bit is set (if {\tt --e} option was not used)\\
+                        &   & 1: dump all packets\\
+    {\tt PD\_EQ}        & 1 & whether to save matching (1) or non-matching (0) flows & {\tt PD\_MODE\_IN=0}\\
+    {\tt PD\_MODE\_OUT} & 0 & 0: one pcap\\
+                        &   & 1: one pcap per flow\\
+    {\tt PD\_SPLIT}     & 1 & Split the output file (Tranalyzer {\tt --W} option)\\\\
+    {\tt PD\_FORMAT}    & 0 & Format of the input file ({\tt --e} option):\\
+                        &   & \qquad 0: flow index only,\\
+                        &   & \qquad 1: flow file format\\
+    {\tt PD\_MAX\_FD} & 128 & Maximum number of simultaneously open file descriptors & {\tt PD\_MODE\_OUT=1}\\
+    {\tt PD\_SUFFIX} & ``{\tt .pcap}'' & pcap file extension\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{PD\_MODE\_IN=0, --e option used}\label{pcapdnormal}
+The idea behind this mode ({\tt PD\_MODE\_IN=0} and Tranalyzer {\tt --e} option used) is to use {\tt awk} to extract flows of interest and then the pcapd plugin to create one or more PCAP with all those flows.
+The format of the file must be as follows:
+\begin{longtable}{ll}
+    \toprule
+    {\tt PD\_FORMAT=0} & The first column must be the flow index (the rest (optionnal) is ignored):\\
+                       & {\tt 1234\qquad\ldots}\\
+    {\tt PD\_FORMAT=1} & The second column must be the flow index:\\
+                       & {\tt A\qquad1234\qquad\ldots}\\
+    \bottomrule
+\end{longtable}
+Lines starting with {\tt`\%'}, {\tt`\#'}, a space or a tab are ignored, along with empty lines.\\
+
+Flows whose index appears in the {\tt --e} file will be dumped in a file named {\tt PREFIX\_PD\_SUFFIX}, where {\tt PREFIX} is the value given to Tranalyzer {\tt --e} option.
+Note that if {\tt PD\_EQ=0}, then flows whose index does {\bf not} appear in the file will be dumped.
+
+\subsubsection{PD\_MODE\_IN=0, --e option not used}\label{pcapdalarm}
+In this mode ({\tt PD\_MODE\_IN=0} and Tranalyzer {\tt --e} option {\bf NOT} used), every flow whose status bit {\tt FL\_ALARM=0x20000000} is set ({\tt PD\_EQ=1}) or not set ({\tt PD\_EQ=0}) will be dumped in a file named {\tt PREFIX\_PD\_SUFFIX}, where {\tt PREFIX} is the value given to Tranalyzer {\tt --w} or {\tt --W} option.
+
+\subsubsection{PD\_MODE\_IN=1}\label{pcapdall}
+In this mode, all the packets are dumped into one or more PCAP files. If Tranalyzer {\tt --W} option is used, then the pcap files will be split accordingly. For example, the following command will create PCAP files of 100MB each: {\tt tranalyzer -i eth0 -W out:100M}
+
+\subsubsection{PD\_MODE\_OUT=1}\label{pcapdoneperflow}
+In this mode, every flow will have its own PCAP file, whose name will end with the flow index.
+
+\subsection{Additional Output}
+A PCAP file with suffix {\tt PD\_SUFFIX} will be created.
+The prefix and location of the file depends on the configuration of the plugin.
+\begin{itemize}
+    \item If Tranalyzer {\tt --e} option was used, the file is named according to the {\tt --e} option.
+    \item Otherwise the file is named according to the {\tt --w} or {\tt --W} option.
+\end{itemize}
+
+\subsection{Examples}
+For the following examples, it is assumed that Tranalyzer was run as follows, with the {\em basicFlow} and {\em txtSink} plugins in their default configuration:
+\begin{center}
+    {\tt tranalyzer -r file.pcap -w out}
+\end{center}
+
+The column numbers can be obtained by looking in the file {\tt out\_headers.txt} or by using \tranrefpl{tawk}.
+
+\subsubsection{Extracting ICMP Flows}\label{pdicmp}
+To create a PCAP file containing ICMP flows only, proceed as follows:
+\begin{enumerate}
+    \item Identify the {\em ``Layer 4 protocol''} column in {\tt out\_headers.txt} (column 14):\\
+        {\tt grep "Layer 4 protocol" out\_headers.txt}
+    \item Extract all flow indexes whose protocol is ICMP (1):\\
+        {\tt awk -F'\textbackslash{}t' '\$14 == 1 \{ print \$2 \}' out\_flows.txt > out\_icmp.txt}
+    \item Configure pcapd.h as follows: {\tt PD\_MODE\_IN=0, PD\_EQ=1}
+    \item Build the pcapd plugin: {\tt cd \$T2HOME/pcapd/; ./autogen.sh}
+    \item Re-run Tranalyzer with the {\tt --e} option:\\
+        {\tt tranalyer -r file.pcap -w out -e out\_icmp.txt}
+    \item The file {\tt out\_icmp.txt.pcap} now contains all the ICMP flows.\\
+\end{enumerate}
+
+\subsubsection{Extracting Non-ICMP Flows}
+To create a PCAP file containing non-ICMP flows only, use the same procedure as that of \refs{pdicmp},
+but replace {\tt PD\_EQ=1} with {\tt PD\_EQ=0} in step 3.
+Alternatively, replace {\tt \$14==1} with {\tt \$14!=1} in step 2.
+Or if an entire flow file is preferred to the flow indexes only, set {\tt PD\_FORMAT=1} and replace {\tt print \$2} with {\tt print \$0} in step 2.
+
+%\subsection{TODO}
+%
+%\begin{itemize}
+%   \item
+%\end{itemize}
+
+\end{document}

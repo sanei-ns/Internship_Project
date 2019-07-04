@@ -1,0 +1,51 @@
+#!/usr/bin/env awk
+#
+# Returns information about hosts possibly involved in a covert channels communication.
+#
+# Dependencies:
+#   - covertChannels
+#
+# Parameters:
+#   - val
+#   - num
+#
+# If val is omitted or equal to "Flows" (case insensitive),
+# counts the number of flows.
+#
+# If num is omitted or 0, returns the full list, otherwise
+# the top (num > 0) or bottom (num < 0) num results
+#
+# Example:
+#   - tawk 'covertChans()' file.txt
+#   - tawk 'covertChans($numBytesSnt)' file.txt
+#   - tawk 'covertChans($numBytesSnt OFS $numPktsSnt)' file.txt
+#   - tawk 'covertChans("Flows", 5)' file.txt
+
+@include "aggr"
+@include "hdr"
+@include "tuple2"
+@include "_validate_col"
+
+function covertChans(val, num,        _c, _proto, _atype) {
+    _c = _validate_col("covertChannels")
+
+    if (hdr()) {
+        _proto = "CC-type"
+    } else {
+        _atype = strtonum($_c)
+        if (and(_atype, 0x0001)) _proto = "DNS " _proto        # DNS
+        if (and(_atype, 0x0002)) _proto = "ICMP-asym " _proto  # ICMP asymetric flow
+        if (and(_atype, 0x0004)) _proto = "ICMP-WL " _proto    # ICMP non-whitelisted payload
+        if (and(_atype, 0x0008)) _proto = "ICMP-BD " _proto    # ICMP bi-directional non-PING flow
+        if (and(_atype, 0x0010)) _proto = "HTTP " _proto       # HTTP GET URL-encoded
+        if (and(_atype, 0x0020)) _proto = "TCP-TS " _proto     # TCP timestamp
+        if (and(_atype, 0x0040)) _proto = "IPID " _proto       # IP ID
+        if (and(_atype, 0x0080)) _proto = "RTP-TS " _proto     # RTP timestamp
+        if (and(_atype, 0x0100)) _proto = "SkyDe " _proto      # Skype silent packets
+        gsub(/ $/, "", _proto) # remove trailing space
+    }
+
+    if (_proto) {
+        aggr(tuple2() OFS _proto, val, num)
+    }
+}

@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+#
+# Configuration file for basicFlow
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    BFO_SENSORID check "" "Output sensor ID"
+    BFO_HDRDESC_PKTCNT check "" "Enable packet count for header description"
+
+    BFO_MAC       check "" "Enable MAC addresses output"
+    BFO_ETHERTYPE check "" "Enable EtherType output"
+
+    BFO_VLAN radio "" "VLANs handling; \
+            0: Do not output VLAN information; \
+            1: Output VLAN numbers; \
+            2: Output VLAN headers as hex"
+
+    BFO_MPLS radio "" "MPLS handling; \
+            0: Do not output MPLS information; \
+            1: Output MPLS labels; \
+            2: Output MPLS headers as hex; \
+            3: Output decoded MPLS headers as label_ToS_S_TTL"
+
+    BFO_L2TP   check "" "Enable L2TP header output information"
+    BFO_GRE    check "" "Enable GRE header output information"
+    BFO_PPP    check "" "Enable PPP header output"
+    BFO_ETHIP  check "" "Enable ETHIP header output"
+    BFO_TEREDO check "" "Enable Teredo IP, Port output"
+
+    BFO_SUBNET_TEST        check "" "Enables subnet test"
+    BFO_SUBNET_TEST_L2TP   check "" "Enables subnet test on L2TP adresses"
+    BFO_SUBNET_TEST_GRE    check "" "Enables subnet test on GRE adresses"
+    BFO_SUBNET_TEST_TEREDO check "" "Enables subnet test on Teredo adresses"
+
+    BFO_SUBNET_ASN check
+            "BFO_SUBNET_TEST == 1 || BFO_SUBNET_TEST_L2TP == 1 || BFO_SUBNET_TEST_GRE == 1"
+            "Output Autonomous System Numbers (ASN)"
+    BFO_SUBNET_LL check
+            "BFO_SUBNET_TEST == 1 || BFO_SUBNET_TEST_L2TP == 1 || BFO_SUBNET_TEST_GRE == 1"
+            "Output latitude/longitude"
+    BFO_SUBNET_HEX radio
+            "BFO_SUBNET_TEST == 1 || BFO_SUBNET_TEST_L2TP == 1 || BFO_SUBNET_TEST_GRE == 1"
+            "Subnet representation; \
+                0: Two columns (country code and who), human readable; \
+                1: One column, hex ID"
+
+    BFO_MAX_HDRDESC range "" "Maximum number of headers descriptions to store: 0 255"
+    BFO_MAX_MAC     range "BFO_MAC == 1" "Maximum number of different MAC addresses: 0 255"
+    BFO_MAX_MPLS    range "BFO_MPLS > 0" "Maximum MPLS headers/tags to store: 0 255"
+    BFO_MAX_VLAN    range "BFO_VLAN > 0" "Maximum VLAN headers/numbers to store: 0 255"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

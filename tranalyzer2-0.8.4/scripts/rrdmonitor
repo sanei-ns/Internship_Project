@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+#
+# Creates and populates a RRD database
+#
+# Pipe the script to tranalyzer (in monitoring mode) as follows:
+#   - Live: t2 -i eth0 | rrdmonitor
+#   - Pcap: t2 -r file.pcap | rrdmonitor
+
+source "$(dirname "$0")/t2utils.sh"
+
+check_dependency rrdtool
+
+usage() {
+    printf "Usage:\n"
+    printf "        $SNAME [OPTION...]\n\n"
+    printf "Options:\n"
+    printf "    -d name    creates a DB file named 'name' [default: monitoring.rrd]\n"
+    printf "    -k         append data to existing database [default: create a new DB]\n"
+    printf "    -h, -?     display this help and exit\n"
+}
+
+DB="monitoring.rrd" # name of the database to create
+
+while getopts ":hkd:" OPT; do
+    case $OPT in
+        d) DB="$OPTARG";;
+        k) KEEP=1;;
+        h) usage; exit 0;;
+        :) abort_missing_arg "$OPTARG";;
+    esac
+done
+
+if [ ! -f "$DB" ]; then
+    KEEP=0
+fi
+
+$AWK -F"\t" -v db="$DB" -v k="$KEEP" '
+/^%/ {
+    # Consolidation function
+    AGGR = "AVERAGE"  # Take the average
+    #AGGR = "MIN"     # Take the lowest value
+    #AGGR = "MAX"     # Take the highest value
+    #AGGR = "LAST"    # Take the last value
+
+    # Transformation function
+    TYPE = "GAUGE"      # Keep the value as input
+    #TYPE = "COUNTER"   # Take the difference between the previous and the current value
+    #TYPE = "ABSOLUTE"  # Divide the value by the time interval
+    #TYPE = "DERIVE"    # As COUNTER, but negative values are allowed
+
+    STEP = 1    #  1s
+    #STEP = 30  # 30s
+    #STEP = 60  # 1min
+    #STEP = 300 # 5min
+
+    # Holt-Winters
+    # parameters can be updated later with rrdtool tune:
+    #   --alpha --beta --gamma --window-length
+    #   --failure-threshold --deltapos --deltaneg
+    HW_FUNC = "HWPREDICT"   # additive
+    #HW_FUNC = "MHWPREDICT" # multiplicative
+    HW_ALPHA = 0.3          # 0: ignore the present, 1: ignore the past
+    HW_BETA = 0.004         # slope/trend
+    HW_GAMMA = 0.0009       # season
+    HW_SP = 288             # seasonal period (seconds)
+    HW_ROWS = 1440
+    HW_TH = 7               # how many points out of band before failure
+    HW_WL = 9               # Window length
+
+    # First column to use for monitoring (skip report type, time and duration)
+    COLSTART = 4
+
+    # Last to use for monitoring
+    COLEND = NF
+
+    # Column holding the time
+    for (i = 1; i <= NF; i++) {
+        if (tolower($i) ~ /^time$/) {
+            TIME = i
+            break
+        }
+    }
+
+    if (!TIME) print "No time column found. Simulating a one second interval."
+
+    if (k) next # reuse existing DB
+
+    params = params " RRA:" AGGR ":0.5:1:600"   # daily
+    params = params " RRA:" AGGR ":0.5:6:700"   # weekly
+    params = params " RRA:" AGGR ":0.5:24:775"  # monthly
+    params = params " RRA:" AGGR ":0.5:288:797" # yearly
+    for (i = COLSTART; i <= COLEND; i++) {
+        gsub(/[\[\]]/, "") # remove special characters: [, ]
+        if ($i == "pktsRec" || $i == "pktsDrp" || $i == "ifDrp") {
+            params = params " DS:" $i ":COUNTER:5:0:U"
+        } else if ($i != "globalWarn" && length($i)) {
+            params = params " DS:" $i ":" TYPE ":5:0:U"
+        }
+    }
+    params = params " RRA:" HW_FUNC ":" HW_ROWS ":" HW_ALPHA ":" HW_BETA ":" HW_SP ":6"
+    params = params " RRA:SEASONAL:" HW_SP ":" HW_GAMMA ":5"
+    params = params " RRA:DEVSEASONAL:" HW_SP ":" HW_GAMMA ":5"
+    params = params " RRA:DEVPREDICT:" HW_ROWS ":7"
+    params = params " RRA:FAILURES:" HW_ROWS ":" HW_TH ":" HW_WL ":7"
+
+    next
+}
+# Create new DB
+NR == 2 && !k {
+    if (TIME) {
+        t = $TIME
+        gsub(/\.[0-9]+$/, "", t) # remove micro-/nano- seconds
+    } else {
+        t = "N"
+    }
+    params = "--start " (t-1) " --step " STEP " " params
+    system("rrdtool create \"" db "\" " params)
+}
+{
+    t = TIME ? $TIME : systime()
+
+    cmd = "rrdtool update " db " "  t
+    for (i = COLSTART; i <= COLEND; i++) {
+        if ($i !~ /0x[0-9a-fA-F]{1,8}/ && length($i)) {
+            cmd = cmd ":" $i
+        }
+    }
+    system(cmd)
+    if (!TIME) system("sleep 1")
+}' -

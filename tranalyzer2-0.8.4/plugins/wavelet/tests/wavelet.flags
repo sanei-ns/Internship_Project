@@ -1,0 +1,17 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/wavelet
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/dwt.h
+FULL            src/dwt.h
+VALID           src/dwt.h
+
+# src/define_global.h
+WAVELET_IAT     src/define_global.h
+WAVELET_SIG     src/define_global.h
+WAVELET_PREC     src/define_global.h

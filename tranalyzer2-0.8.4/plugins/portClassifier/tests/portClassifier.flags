@@ -1,0 +1,12 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/portClassifier
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/portClassifier.h
+PBC_NUM    src/portClassifier.h
+PBC_STR    src/portClassifier.h

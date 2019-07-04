@@ -1,0 +1,22 @@
+#!/usr/bin/env awk
+
+BEGIN {
+    tFirst = -1
+}
+
+hdr() {
+    next
+}
+
+tFirst < 0 {
+    tFirst = $timeFirst
+}
+
+tFirst > $timeFirst {
+    tFirst = $timeFirst
+}
+
+END {
+    print timestamp(tFirst)
+}
+

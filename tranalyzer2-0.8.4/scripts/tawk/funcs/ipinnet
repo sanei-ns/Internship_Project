@@ -1,0 +1,49 @@
+#!/usr/bin/env awk
+#
+# Tests whether an IP address belongs to a given network
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk 'ipinnet($srcIP4, "192.168.1.0", "255.255.255.0)' file.txt
+#   - tawk 'ipinnet($srcIP4, "192.168.1.0", 0xffffff00)' file.txt
+#   - tawk 'ipinnet($srcIP4, "192.168.1.0/24")' file.txt
+#   - tawk 'ipinnet($srcIP4, "192.168.1.0", 24) { print }' file.txt
+
+@include "hdr"
+@include "ip2num"
+@include "isip6"
+@include "mask2ip"
+@include "mask2ip6"
+
+function ipinnet(ip, net, mask,        _tmp, _i6, _n6) {
+    if (hdr()) return __PRIHDR__
+
+    _n6 = isip6(net)
+
+    if (!mask && index(net, "/")) {
+        split(net, _tmp, /\//)
+        net = _tmp[1]
+        if (_n6) {
+            mask = mask2ip6(_tmp[2])
+        } else {
+            mask = mask2ip(_tmp[2])
+        }
+    } else {
+        mask = ip2num(mask)
+    }
+
+    _i6 = isip6(ip)
+    if ((_n6 && !_i6) || (!_n6 && _i6)) return 0
+
+    if (mask <= 128) {
+        if (_n6) {
+            mask = mask2ip6(mask)
+        } else {
+            mask = mask2ip(mask)
+        }
+    }
+
+    return and(ip2num(ip), mask) == and(ip2num(net), mask)
+}

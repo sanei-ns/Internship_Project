@@ -1,0 +1,4 @@
+SELECT
+    EXTRACT(epoch FROM MAX("timeLast"))
+FROM
+    flow

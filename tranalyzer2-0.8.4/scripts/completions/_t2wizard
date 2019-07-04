@@ -1,0 +1,45 @@
+# Bash/ZSH completion for t2wizard
+
+_t2wizard() {
+    #compdef t2wizard
+    if type compdef &> /dev/null; then
+        local opts=(
+            '(-r -R)'{-i,-i}'[Interface to capture traffic from]:interface:_net_interfaces'
+            '(-i -R)'{-r,-r}'[PCAP file to analyse]:file:_files'
+            '(-i -r)'{-R,-R}'[List of PCAP files to analyse]:file:_files'
+            '-0[Deactivates all plugins]'
+            '-f[hashfactor]:Multiplication factor for hash table (int):'
+            '-p[Load plugins from path instead of ~/.tranalyzer/plugins]:plugin folder:_files -/'
+            '(- 1 *)'{-h,--help}'[Show help options and exit]'
+        )
+        _arguments -s -S "${opts[@]}"
+    else # BASH
+        local cur prev words cword
+        _init_completion || return
+        case $prev in
+            -i|--iface)
+                # active interfaces only
+                _available_interfaces -a
+                return
+                ;;
+            -r|--pcap|-R|--caplist)
+                _filedir
+                return
+                ;;
+            -p|--plugin-folder)
+                _filedir -d
+                return
+                ;;
+        esac
+        local args=(
+            -i --iface -r --pcap -R --caplist -0 -f --hash-factor
+            -p --plugin-folder -h -? --help)
+        COMPREPLY=($(compgen -W "${args[*]}" -- "$cur"))
+    fi
+}
+
+if type compdef &> /dev/null; then
+    compdef _t2wizard t2wizard
+else
+    complete -F _t2wizard t2wizard
+fi

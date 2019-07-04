@@ -1,0 +1,42 @@
+#!/usr/bin/env awk
+#
+# Converts a number to its human readable form, e.g., 2000 -> 2 K
+#
+# Parameters:
+#   - num      : the number to convert
+#   - [mode]   : 0: short (2K), 1: long (2000 (2K)), 2: raw (2000)
+#   - [suffix] : optional suffix
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{ print hrnum($numBytesSnt) }' file.txt         # 2000 -> 2 K
+#   - tawk '{ print hrnum($numBytesSnt, 1) }' file.txt      # 2000 -> 2000 (2 K)
+#   - tawk '{ print hrnum($numBytesSnt, 2) }' file.txt      # 2000 -> 2000
+#   - tawk '{ print hrnum($numBytesSnt, 0, "B") }' file.txt # 2000 -> 2 KB
+#   - tawk '{ print hrnum($numBytesSnt, 1, "B") }' file.txt # 2000 -> 2000 (2 KB)
+#   - tawk '{ print hrnum($numBytesSnt, 2, "B") }' file.txt # 2000 -> 2000
+
+@include "isnum"
+@include "min2"
+
+function hrnum(num, mode, suffix,        _factors, _i, _n, _units, _oldconvfmt) {
+    if (!isnum(num) || num < 1024 || mode == 2) return num
+    split(".KMGTPEZY", _units, "")
+    split("1,1e3,1e6,1e9,1e12,1e15,1e18,1e21,1e24", _factors, ",")
+    _i = min2(int(log(num) / log(2) / 10.0) + 1, 9) # awk indices start at 1...
+    if (_i < 2) {
+        _n = num
+    } else {
+        _oldconvfmt = CONVFMT
+        CONVFMT = "%.2f"
+        _n = num / _factors[_i]
+        _n = _n " " _units[_i] "" (suffix ? suffix : "")
+        if (mode == 1) {
+            _n = num " (" _n ")"
+        }
+        CONVFMT = _oldconvfmt
+    }
+    return _n
+}

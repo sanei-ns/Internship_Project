@@ -1,0 +1,15 @@
+#H radiusTunnel | Description
+#H =============================================================================
+              1 | Point-to-Point Tunneling Protocol (PPTP)
+              2 | Layer Two Forwarding (L2F)
+              3 | Layer Two Tunneling Protocol (L2TP)
+              4 | Ascend Tunnel Management Protocol (ATMP)
+              5 | Virtual Tunneling Protocol (VTP)
+              6 | IP Authentication Header in the Tunnel-mode (AH)
+              7 | IP-in-IP Encapsulation (IP-IP)
+              8 | Minimal IP-in-IP Encapsulation (MIN-IP-IP)
+              9 | IP Encapsulating Security Payload in the Tunnel-mode (ESP)
+             10 | Generic Route Encapsulation (GRE)
+             11 | Bay Dial Virtual Services (DVS)
+             12 | IP-in-IP Tunneling
+             13 | Virtual LANs (VLAN)

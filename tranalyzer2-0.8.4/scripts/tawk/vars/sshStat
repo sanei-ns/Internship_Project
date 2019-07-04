@@ -1,0 +1,10 @@
+#H bit | sshStat | Description
+#H =============================================================================
+     0 | 0x01    | Flow contains SSH protocol
+     1 | 0x02    | Keeps track of who sent the SSH banner first
+     2 | 0x04    | -
+     3 | 0x08    | -
+     4 | 0x10    | -
+     5 | 0x20    | -
+#W   6 | 0x40    | SSH version got truncated
+     7 | 0x80    | Banner does not end with CRLF or contains NULL byte

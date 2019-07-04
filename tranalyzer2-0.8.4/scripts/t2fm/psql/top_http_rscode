@@ -1,0 +1,21 @@
+-- Top HTTP response code by number of flows
+
+SELECT
+    rscode,
+    COUNT(*) AS cnt
+
+FROM (
+    SELECT
+        UNNEST("httpRSCode") AS rscode
+    FROM
+        flow
+    WHERE
+        ARRAY_LENGTH("httpRSCode", 1) > 0
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+GROUP BY rscode
+ORDER BY cnt DESC
+
+LIMIT :n

@@ -1,0 +1,84 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {sshDecode}
+    {SSH}
+    {Tranalyzer Development Team}
+
+\section{sshDecode}\label{s:sshDecode}
+
+\subsection{Description}
+This plugin analyzes SSH traffic.
+
+\subsection{Dependencies}
+This plugin requires the {\bf libssl}.
+\paragraph{Arch:} {\tt sudo pacman -S openssl}
+\paragraph{Ubuntu/Kali:} {\tt sudo apt-get install libssl-dev}
+\paragraph{OpenSUSE:} {\tt sudo zypper install libopenssl-devel}
+\paragraph{Red Hat/Fedora:} {\tt sudo yum install openssl-devel}
+\paragraph{Mac OSX:} {\tt brew install openssl}
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt SSH\_USE\_PORT} & 1 & Whether (1) or not (0) to count all packets to/from {\tt SSH\_PORT} as SSH\\
+                             && (useful if version exchange was not captured)\\
+    {\tt SSH\_DECODE}    & 0 & Decode SSH handshake messages (experimental)\\
+    {\tt SSH\_DEBUG}     & 0 & Activate debug output\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The sshDecode plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description}\\ % & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{sshStat}} & H8 & Status\\
+    {\tt sshVersion} & RS & SSH version and software\\\\
+
+    \multicolumn{3}{l}{If {\tt SSH\_DECODE=1}, the following columns are displayed:}\\\\
+
+    {\tt sshFingerprint}    & RS & SSH public key fingerprint\\
+    {\tt sshCookie}         & RS & SSH cookie\\
+    {\tt sshKEX}            & RS & SSH KEX Algorithms\\
+    {\tt sshSrvHostKeyAlgo} & RS & SSH server host key algorithms\\
+    {\tt sshEncCS}          & RS & SSH encryption algorithms client to server\\
+    {\tt sshEncSC}          & RS & SSH encryption algorithms server to client\\
+    {\tt sshMacCS}          & RS & SSH MAC algorithms client to server\\
+    {\tt sshMacSC}          & RS & SSH MAC algorithms server to client\\
+    {\tt sshCompCS}         & RS & SSH compression algorithms client to server\\
+    {\tt sshCompSC}         & RS & SSH compression algorithms server to client\\
+    {\tt sshLangCS}         & RS & SSH languages client to server\\
+    {\tt sshLangSC}         & RS & SSH languages server to client\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{sshStat}\label{sshStat}
+The {\tt sshStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf sshStat} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x01} & Flow contains SSH protocol\\
+    {\tt 0x02} & Keeps track of who sent the SSH banner first\\
+    {\tt 0x40} & SSH version got truncated\\
+    {\tt 0x80} & Banner does not end with CRLF or contains NULL byte\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Plugin Report Output}
+The number of SSH flows is reported.
+
+%\subsection{TODO}
+
+\end{document}

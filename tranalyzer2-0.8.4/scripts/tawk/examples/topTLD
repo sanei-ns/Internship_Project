@@ -1,0 +1,36 @@
+#!/usr/bin/env awk
+#
+# Returns the top N top-level domains (TLD) queried (.com, .net, ...)
+#
+# Parameters:
+#   - n: number of rows to return (0: all, n > 0: top n, n < 0: bottom n)
+#
+# Dependencies:
+#   - dnsDecode
+#
+# Examples:
+#   - tawk 'topTLD()' file.txt
+#   - tawk 'topTLD(5)' file.txt
+
+@include "aggr"
+@include "bitsanyset"
+@include "chomp"
+@include "hdr"
+@include "_validate_col"
+
+function topTLD(n,        _i, _l, _d) {
+    _validate_col("dnsQname")
+    if (__PRIHDR__ && hdr()) {
+        print $dnsQname, "Flows"
+    } else if ($dnsQname ~ /\./ && !bitsanyset($dnsStat, 0x12)) {  # Ignore NBNS and truncated entries
+        _l = split(tolower($dnsQname), _d, "\";\"")
+        gsub(/^"/, "", _d[1])  # remove leading quote
+        gsub(/"$/, "", _d[_l]) # remove trailing quote
+        for (_i = 1; _i <= _l; _i++) {
+            if (_d[_i] ~ /\.[^\.]{2,}$/) {
+                gsub(/^.+\./, "", _d[_i]);
+                aggr(chomp(_d[_i]), "flows", n)
+            }
+        }
+    }
+}

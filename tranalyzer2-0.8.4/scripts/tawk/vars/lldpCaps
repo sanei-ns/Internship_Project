@@ -1,0 +1,10 @@
+#H bit | lldpCaps | Description
+#H =============================================================================
+     0 | 0x0001   | Other
+     1 | 0x0002   | Repeater
+     2 | 0x0004   | Bridge
+     3 | 0x0008   | WLAN access point
+     4 | 0x0010   | Router
+     5 | 0x0020   | Telephone
+     6 | 0x0040   | DOCSIS cable device
+     7 | 0x0080   | Station only

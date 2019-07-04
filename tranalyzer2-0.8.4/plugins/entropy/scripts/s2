@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+USAGE="Usage: $0 <directory>"
+
+if [ -z "$1" ]
+then
+	echo $USAGE >&2
+	exit -1
+fi
+
+dir="$1"
+classes=$(echo "unknown,FTP,Mail_POP,Mail_SMTP,Mail_IMAP,DNS,IPP,HTTP,MDNS,NTP,NETBIOS,NFS,SSDP,BGP,SNMP,XDMCP,SMB,SYSLOG,DHCP,PostgreSQL,MySQL,TDS,DirectDownloadLink,I23V5,AppleJuice,DirectConnect,Socrates,WinMX,MANOLITO,PANDO,Filetopia,iMESH,Kontiki,OpenFT,Kazaa/Fasttrack,Gnutella,eDonkey,Bittorrent,OFF,AVI,Flash,OGG,MPEG,QuickTime,RealMedia,Windowsmedia,MMS,XBOX,QQ,MOVE,RTSP,Feidian,Icecast,PPLive,PPStream,Zattoo,SHOUTCast,SopCast,TVAnts,TVUplayer,VeohTV,QQLive,Thunder/Webthunder,Soulseek,GaduGadu,IRC,Popo,Jabber,MSN,Oscar,Yahoo,Battlefield,Quake,SecondLife,Steam,Halflife2,WorldofWarcraft,Telnet,STUN,IPSEC,GRE,ICMP,IGMP,EGP,SCTP,OSPF,IPinIP,RTP,RDP,VNC,PCAnywhere,SSL,SSH,USENET,MGCP,IAX,TFTP,AFP,StealthNet,Aimini,SIP,Truphone,ICMPv6,DHCPv6,Armagetron,CrossFire,Dofus,Fiesta,Florensia,Guildwars,HTTPApplicationActivesync,Kerberos,LDAP,MapleStory,msSQL,PPTP,WARCRAFT3,WorldofKungFu,MEEBO" | sed 's/,/ /g')
+
+read -r -d '' plots <<EOF
+set title "Plot by protocol"
+plot [0:9] [0:1]
+EOF
+IFS=$' '
+echo "classes=$classes"
+i=0
+for c in $classes
+do
+	echo "c=\"$c\""
+	echo "dir=\"$dir\""
+	files=$(ls -1 "$dir" 2>/dev/null | grep -E "^$c")
+
+	let "rand=($RANDOM*100)%33554431"
+	echo $rand;
+	color=$(printf "%06x" $rand)
+
+	echo "files=\"$files\""
+	echo ":: class=$c color=$color"
+
+	OLDIFS=$IFS
+	IFS=$'\n'
+	for f in $files
+	do
+			read -r -d '' plot <<EOF
+"$dir/$f" using 1 with steps linecolor rgb "#$color"
+EOF
+			if [ "$i" == "0" ]
+			then
+				plots="$plots $plot"
+				let "i+=1"
+			else
+				plots="$plots,$plot"
+			fi
+	done
+	IFS=$OLDIFS
+done
+
+echo "PLOTTING $plots"
+
+echo $plots > gnuplot_script

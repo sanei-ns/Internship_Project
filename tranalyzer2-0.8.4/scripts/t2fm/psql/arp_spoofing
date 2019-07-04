@@ -1,0 +1,13 @@
+-- Returns a list of hosts being spoofed
+
+SELECT
+    SPLIT_PART(UNNEST("MAC_IP_cnt"), '_', 1) as mac,
+    SPLIT_PART(UNNEST("MAC_IP_cnt"), '_', 2) as ip
+FROM
+    flow
+WHERE
+    ("arpStat" & x'80'::INT) != 0::INT
+    AND "timeFirst" >= to_timestamp(:time_from)
+    AND "timeLast" <= to_timestamp(:time_to)
+
+LIMIT :n

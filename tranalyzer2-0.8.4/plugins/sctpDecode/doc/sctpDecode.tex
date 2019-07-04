@@ -1,0 +1,105 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {sctpDecode}
+    {Stream Control Transmission Protocol (SCTP)}
+    {Tranalyzer Development Team}
+
+\section{sctpDecode}\label{s:sctpDecode}
+
+\subsection{Description}
+The sctpDecode plugin produces a flow based view of SCTP operations between computers for anomaly detection and troubleshooting purposes.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt SCTP\_CRC32CHK} &  0 & 1: CRC32 check                           &\\
+    {\tt SCTP\_ADL32CHK} &  0 & 1: Adler32 check                         &\\
+    {\tt SCTP\_CHNKVAL}  &  0 & 1: chunk type value, 0: chunk type field &\\
+    {\tt SCTP\_CHNKSTR}  &  0 & 1: chunk types as string                 & {\tt SCTP\_CHNKVAL=1}\\
+    {\tt SCTP\_MAXCTYPE} & 15 & 1: maximum chunk types to store/flow     & {\tt SCTP\_CHNKVAL=1}\\
+
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The sctpDecode plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{sctpStat}}  &   H8 & SCTP status                                      &\\
+    {\tt sctpNumS}            &  U16 & SCTP max Number of streams/stream number         &\\
+    {\tt sctpPID}             &  U32 & SCTP Payload ID                                  &\\
+    {\tt sctpVTag}            &  H32 & SCTP verification tag                            &\\
+    {\tt sctpTypeBf}          &  H16 & SCTP aggregated type bit field                   & {\small\tt SCTP\_CHNKVAL=0}\\
+    {\tt sctpType}            &  H8R & SCTP uniq type value                             & {\small\tt SCTP\_CHNKVAL=1\&\&SCTP\_CHNKSTR=0}\\
+    {\tt sctpTypeN}           &  SCR & SCTP uniq type name                              & {\small\tt SCTP\_CHNKVAL=1\&\&SCTP\_CHNKSTR=1}\\
+    {\tt sctpCntD\_I\_A}      & 3U16 & SCTP Data\_Init\_Abort count                     &\\
+    {\tt \nameref{sctpCFlgs}} &   H8 & SCTP aggregated chunk flag                       &\\
+    {\tt sctpCCBF}            &  H16 & SCTP aggregated error cause code bit field       &\\
+    {\tt sctpIS}              &  U16 & SCTP inbound streams                             &\\
+    {\tt sctpOS}              &  U16 & SCTP outbound streams                            &\\
+    {\tt sctpIARW}            &  U32 & SCTP Initial Advertised Receiver Window          &\\
+    {\tt sctpIARWMin}         &  U32 & SCTP Initial Advertised Receiver Window Minimum  &\\
+    {\tt sctpIARWMax}         &  U32 & SCTP Initial Advertised Receiver Window Maximum  &\\
+    {\tt sctpARW}             &    F & SCTP Advertised Receiver Window                  &\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{sctpStat}\label{sctpStat}
+The {\tt sctpStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf sctpStat} & {\bf Description}\\
+    \midrule\endhead%
+    $2^0$ (=0x01) & Adler32 error \\
+    $2^1$ (=0x02) & CRC32 error\\
+    $2^2$ (=0x04) & ---\\
+    $2^3$ (=0x08) & Chunk truncated\\
+    $2^6$ (=0x10) & ---\\
+    $2^7$ (=0x20) & Type Field overflow\\
+    $2^4$ (=0x40) & Type BF: Do not report\\
+    $2^5$ (=0x80) & Type BF: Stop processing of the packet\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{sctpCFlgs}\label{sctpCFlgs}
+The {\tt sctpCFlgs} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf sctpCFlgs} & {\bf Description}\\
+    \midrule\endhead%
+    $2^0$ (=0x01) & Last segment \\
+    $2^1$ (=0x02) & First segment \\
+    $2^2$ (=0x04) & Ordered delivery \\
+    $2^3$ (=0x08) & Possibly delay SACK \\
+    $2^6$ (=0x10) & --- \\
+    $2^7$ (=0x20) & --- \\
+    $2^4$ (=0x40) & --- \\
+    $2^5$ (=0x80) & --- \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Packet File Output}
+In packet mode ({\tt --s} option), the sctpDecode plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt sctpVerifTag}                   & H32              & Verification tag\\
+    {\tt sctpChunkType\_Sid\_Flags\_Len} & U8/S\_H8\_U16(R) & Chunk type, \hyperref[sctpCFlgs]{flags} and length\\
+    {\tt sctpNChunks}                    & U8               & Number of chunks\\
+    \bottomrule
+\end{longtable}
+
+\end{document}

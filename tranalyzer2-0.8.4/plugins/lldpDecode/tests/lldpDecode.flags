@@ -1,0 +1,14 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/lldpDecode
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+#
+# Flag name     File
+
+# src/lldpDecode.h
+LLDP_TTL_AGGR   src/lldpDecode.h
+LLDP_OPT_TLV    src/lldpDecode.h

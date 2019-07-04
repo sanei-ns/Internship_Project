@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+#
+# Configuration file for tftpDecode
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    TFTP_SAVE   check "" "Extract transferred content"
+    TFTP_MXNMLN range "" "Maximal name length: 0 255"
+    MAXCNM      range "" "Maximal length of command field: 0 255"
+
+    TFTP_F_PATH text "TFTP_SAVE == 1" "Path for extracted files"
+    TFTP_NON    text "TFTP_SAVE == 1" "No name file name"
+
+    #TFTP_CNT_LEN  range "" "Max # of cnt digits attached to file name (currently not used): 0 255"
+    #TFTP_FNDX_LEN range "" "string length of findex in decimal format: 0 255"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

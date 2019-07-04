@@ -1,0 +1,17 @@
+#H radiusAcctStatTyp | Description
+#H =============================================================================
+                   1 | Start
+                   2 | Stop
+                   3 | Interim-Update
+                   4 | -
+                   5 | -
+                   6 | -
+                   7 | Accounting-On
+                   8 | Accounting-Off
+                   9 | Tunnel-Start
+                  10 | Tunnel-Stop
+                  11 | Tunnel-Reject
+                  12 | Tunnel-Link-Start
+                  13 | Tunnel-Link-Stop
+                  14 | Tunnel-Link-Reject
+                  15 | Failed

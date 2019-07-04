@@ -1,0 +1,107 @@
+cursor = db.flow.aggregate([
+    {
+        $match : {
+            dir : "A",
+            timeFirst : { $gte : time_from },
+            timeLast  : { $lte : time_to },
+        }
+    },
+    {
+        $project : {
+            detected : {
+                $slice : [
+                    {
+                        $split : [
+                            { $toLower : "$nDPIclass" },
+                            "."
+                        ]
+                    },
+                    1
+                ]
+            },
+            expected : { $toLower : "$dstPortClass" },
+            //expected : {
+            //    $switch : {
+            //        branches : [
+            //            { case : { $eq : [ "$expected", "https" ] }, then : "ssl" },
+            //            { case : { $eq : [ "$expected", "ftp-data" ] }, then : "ftp_data },
+            //        ],
+            //        default : "$expected"
+            //    }
+            //},
+            expected_n : "$dstPortClassN",
+            bytes : {
+                $cond : {
+                    if : {
+                        $eq : [
+                            { $mod : [ "$flowStat", 2 ] },
+                            0
+                        ]
+                    },
+                    then : "$numBytesSnt",
+                    else : "$numBytesRcvd"
+                }
+            },
+            pkts : {
+                $cond : {
+                    if : {
+                        $eq : [
+                            { $mod : [ "$flowStat", 2 ] },
+                            0
+                        ]
+                    },
+                    then : "$numPktsSnt",
+                    else : "$numPktsRcvd"
+                }
+            },
+        }
+    },
+    {
+        $addFields : {
+            stdport : {
+                $in : [
+                    "$expected",
+                    "$detected",
+                ]
+            }
+        }
+    },
+    {
+        $match : {
+            stdport : false,
+            detected : { $ne : "unknown" },
+            expected : { $ne : "unknown" },
+        }
+    },
+    {
+        $group : {
+            _id : {
+                detected : "$detected",
+                expected_n : "$expected_n",
+                expected : "$expected",
+            },
+            flows : { $sum : 1 },
+            bytes : { $sum : "$bytes" },
+            pkts : { $sum : "$pkts" },
+        }
+    },
+    {
+        $sort : { bytes : -1 }
+    },
+    {
+        $limit : n
+    }
+])
+
+cursor.forEach(
+    function(e) {
+        print(
+              e._id.detected   + "\t"
+            + e._id.expected_n + "\t"
+            + e._id.expected   + "\t"
+            + e.bytes          + "\t"
+            + e.pkts           + "\t"
+            + e.flows
+        )
+    }
+)

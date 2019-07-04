@@ -1,0 +1,9 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+$httpUsrAg {
+    aggrrep($httpUsrAg, "flows", n)
+}

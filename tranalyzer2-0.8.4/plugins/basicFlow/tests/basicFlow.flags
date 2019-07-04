@@ -1,0 +1,33 @@
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/basicFlow
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/basicFlow.h
+BFO_SENSORID           src/basicFlow.h
+BFO_MAC                src/basicFlow.h
+BFO_ETHERTYPE          src/basicFlow.h
+BFO_VLAN               src/basicFlow.h
+BFO_MPLS               src/basicFlow.h
+BFO_L2TP               src/basicFlow.h
+BFO_GRE                src/basicFlow.h
+BFO_PPP                src/basicFlow.h
+BFO_ETHIP              src/basicFlow.h
+BFO_TEREDO             src/basicFlow.h
+#BFO_MAX_HDRDESC        src/basicFlow.h
+#BFO_MAX_MAC            src/basicFlow.h
+#BFO_MAX_MPLS           src/basicFlow.h
+#BFO_MAX_VLAN           src/basicFlow.h
+#BFO_SUBNET_TEST        src/basicFlow.h
+#BFO_SUBNET_TEST_L2TP   src/basicFlow.h
+#BFO_SUBNET_TEST_GRE    src/basicFlow.h
+#BFO_SUBNET_TEST_TEREDO src/basicFlow.h
+#BFO_SUBNET_ASN         src/basicFlow.h
+#BFO_SUBNET_LL          src/basicFlow.h
+#BFO_SUBNET_HEX         src/basicFlow.h
+
+# utils.h
+SUBRNG    	           src/utils.h

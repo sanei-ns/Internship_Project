@@ -1,0 +1,118 @@
+#!/usr/bin/env awk
+#
+# Split the input file into smaller more manageable files.
+#
+# The files to create can be specified as argument to the function (one comma
+# separated string) (See **s**).
+#
+# If no argument is specified, creates one file per column whose name ends
+# with Stat, e.g., dnsStat, and one for pwxType (pw) and covertChannels (cc)
+#
+# **s** Valid arguments for 's' are:
+#   - arp        - bgp        - dhcp        - dns        - ftp        - http
+#   - icmp       - igmp       - irc         - modbus     - nat        - ntp
+#   - ospf       - pop        - radius      - sctp       - smb        - smtp
+#   - ss         - stp        - syslog      - tftp       - voip       - vrrp
+#
+#   - pw (cleartext passwords)
+#   - cc (covert channels)
+#
+# **h** Valid arguments for 'h' are:
+#   - if h is empty or omitted: keep the default columns
+#       default = "dir,flowInd,timeFirst,timeLast,duration,ethVlanID,
+#               srcIP,srcIP4,srcIP6,dstIP,dstIP4,dstIP6,srcPort,dstPort,l4Proto"
+#   - if h is a non-existent column, e.g., 0: keep only relevant fields
+#   - if h starts with '+', e.g., "+flowStat,hdrDesc", keep default fields
+#     and the ones specified
+#   - else keep fields specified in h, e.g., "srcIP,dstIP"
+#
+# Parameters:
+#   - s: a comma separated list of files to create (see **s**).
+#   - k: 0: keep all columns, 1: keep only relevant columns
+#   - h: comma separated list of fields to keep in each file (see **h**)
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk 'ffsplit()' file.txt
+#   - tawk 'ffsplit("dns")' file.txt
+#   - tawk 'ffsplit("cc,dns,http")' file.txt
+#   - tawk 'ffsplit("", 1)' file.txt
+#   - tawk 'ffsplit("dns,http", 1, "+flowStat,hdrDesc")' file.txt
+#   - tawk 'ffsplit("", 1, "srcIP,dstIP")' file.txt
+
+@include "COL"
+@include "hdr"
+@include "printerr"
+@include "_validate_col"
+
+function ffsplit(s, k, h,        _h, _i, _j, _k, _n, _out, _ishdr, _prefix, _tmp) {
+    if (!__FFNAME__[1]) {
+        _prefix = gensub(/\.txt$/, "", 1, FILENAME)
+        if (s) {
+            _n = split(s, __FFSUFFIX__, ",")
+        } else {
+            for (_i = 1; _i <= NF; _i++) {
+                if (COL[_i] == "covertChannels") __FFSUFFIX__[++_n] = "cc"
+                else if (COL[_i] == "pwxType") __FFSUFFIX__[++_n] = "pw"
+                else if (COL[_i] == "flowStat"   || COL[_i] == "geoStat"     ||
+                         COL[_i] == "smbHdrStat" || COL[_i] == "smbNHdrStat" ||
+                         COL[_i] == "tcpFStat"   || COL[_i] == "tp0fStat")
+                {
+                    continue
+                } else if (match(COL[_i], /^(.+)Stat$/, _tmp)) {
+                    __FFSUFFIX__[++_n] = _tmp[1]
+                }
+            }
+            if (!_n) {
+                printerr("ffsplit: no usable column found")
+                exit 1
+            }
+        }
+        for (_i = 1; _i <= _n; _i++) {
+            __FFNAME__[_i] = _prefix "_" __FFSUFFIX__[_i] ".txt"
+            if (__FFSUFFIX__[_i] == "cc") __FFIELD__[_i] = "covertChannels"
+            else if (__FFSUFFIX__[_i] == "pw") __FFIELD__[_i] = "pwxType"
+            else __FFIELD__[_i] = __FFSUFFIX__[_i] "Stat"
+            _validate_col(__FFIELD__[_i])
+        }
+        _h = "dir,flowInd,timeFirst,timeLast,duration,ethVlanID," \
+             "srcIP,srcIP4,srcIP6,dstIP,dstIP4,dstIP6,srcPort,dstPort,l4Proto"
+        if (!h) h = _h
+        else if (h ~ /^+/) h = _h "," substr(h, 2)
+        _k = split(h, __FFKEEP__, ",")
+    }
+
+    _n = length(__FFNAME__)
+
+    if (hdr()) _ishdr = 1
+
+    for (_i = 1; _i <= _n; _i++) {
+        if (strtonum($COL[__FFIELD__[_i]]) || _ishdr) {
+            if (!k) {
+                print >> __FFNAME__[_i]
+            } else {
+                _out = ""
+                for (_j = 1; _j <= NF; _j++) {
+                    if (COL[_j] ~ "^" __FFSUFFIX__[_i]) {
+                        _out = _out OFS $_j
+                    } else {
+                        for (_k = 1; _k <= length(__FFKEEP__); _k++) {
+                            if (COL[_j] == __FFKEEP__[_k]) {
+                                _out = _out OFS $_j
+                                break
+                            }
+                        }
+                    }
+                }
+                # discard leading OFS
+                _out = substr(_out, 2)
+                if (_ishdr && _out !~ "^" __HDRSEP__) {
+                    _out = __HDRSEP__ " " _out
+                }
+                print _out >> __FFNAME__[_i]
+            }
+        }
+    }
+}

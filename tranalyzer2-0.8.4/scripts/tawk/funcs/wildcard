@@ -1,0 +1,36 @@
+#!/usr/bin/env awk
+#
+# Print all columns whose name matches the regular expression 'expr'
+# If expr is preceded by an exclamation mark, returns all columns whose
+# name does NOT match 'expr'
+#
+# Parameters:
+#   - expr : the expression to match
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{ print wildcard("dns.*") }' file.txt
+#   - tawk '{ print wildcard("!^dhcp") }' file.txt
+#   - tawk '{ print wildcard(".*Pass.*") }' file.txt
+#   - tawk '{ print wildcard("^(src|dst)Ip") }' file.txt
+#   - tawk 'wildcard("^dns.*") ~ /facebook/' file.txt
+#   - tawk 'wildcard("dns.*") ~ /facebook/ { print $srcIP4 }' file.txt
+#   - tawk 'http() { print wildcard("^http") }' file.txt
+
+@include "COL"
+
+function wildcard(expr,        _i, _str, _nm) {
+    if (expr ~ /^!/) {
+        gsub(/^!/, "", expr)
+        _nm = 1
+    }
+    for (_i = 1; _i <= NF; _i++) {
+        if ((!_nm && COL[_i] ~ expr) || (_nm && COL[_i] !~ expr)) {
+            _str = _str OFS $_i
+        }
+    }
+    gsub("^" OFS, "", _str) # remove leading OFS
+    return _str
+}

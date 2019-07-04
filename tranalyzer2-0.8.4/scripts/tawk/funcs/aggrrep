@@ -1,0 +1,54 @@
+#!/usr/bin/env awk
+#
+# Performs aggregation of repetitive values and stores the sum of val.
+#
+# If 'val' is omitted, the empty string or equal to "Flows" (case insensitive),
+# counts the number of flows.
+#
+# If num is omitted or 0, returns the full list, otherwise the top (num > 0) or
+# bottom (num < 0) num results
+#
+# If ign_e is omitted or 0, consider all values, otherwise ignore emtpy values
+#
+# Results are sorted according to the first value of val.
+#
+# Parameters:
+#   - fields  : the repetitive value to aggregate
+#   - [val]   : tab separated list of values to aggregate [default: "flows"]
+#   - [num]   : number of records to return [default: all]
+#   - [ign_e] : ignore empty values [default: consider all values]
+#   - [sep]   : separator character [default: ";"]
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - aggr
+#
+# Examples:
+#   - tawk 'aggrrep($httpUsrAg)' file.txt
+#   - tawk 'shost("1.2.3.4") && !dnet("1.2.3.0/24") {
+#         aggrrep($dnsAName)
+#     }' file.txt
+#   - tawk 'shost("1.2.3.4") && !dnet("1.2.3.0/24") {
+#         aggrrep($dnsAName, $numPktsSnt)
+#     }' file.txt
+#   - tawk 'shost("1.2.3.4") && !dnet("1.2.3.0/24") {
+#         aggrrep($dnsAName, $numBytesSnt OFS "Flows")
+#     }' file.txt
+#   - tawk 'aggrrep($httpUsrAg, "flows", 10, 1)' file.txt
+
+@include "aggr"
+
+function aggrrep(fields, val, num, ign_e, sep,        _i, _f, _l) {
+    if (!sep) sep = ";"
+    if (fields ~ /^".*"$/) sep = "\"" sep "\""
+    _l = split(fields, _f, sep)
+    gsub(/^"/, "", _f[1])  # remove leading quote
+    gsub(/"$/, "", _f[_l]) # remove trailing quote
+    for (_i = 1; _i <= _l; _i++) {
+        if (!ign_e || length(_f[_i])) {
+            aggr(_f[_i], val, num)
+        }
+    }
+}

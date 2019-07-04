@@ -1,0 +1,45 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {mongoSink} % Plugin name
+    {MongoDB} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{mongoSink}\label{s:mongoSink}
+
+\subsection{Description}
+The mongoSink plugin outputs flow files to MongoDB.
+
+\subsection{Dependencies}
+
+\subsubsection{External Libraries}
+This plugin depends on the {\bf libmongoc} library.
+\paragraph{Ubuntu:} {\tt sudo apt-get install libmongoc-dev}
+\paragraph{Arch:} {\tt sudo pacman -S mongo-c-driver}
+\paragraph{Mac OS X:} {\tt brew install mongo-c-driver}
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt MONGO\_QRY\_LEN}    & 2048               & Max length for query\\
+    {\tt MONGO\_HOST}        & {\tt "127.0.0.1"}  & Address of the database\\
+    {\tt MONGO\_PORT}        & {\tt "27017"}      & Port the database is listening to\\
+    {\tt MONGO\_DBNAME}      & {\tt "tranalyzer"} & Name of the database\\
+    {\tt MONGO\_TABLE\_NAME} & {\tt "flow"}       & Name of the database flow table\\
+    {\tt MONGO\_NUM\_DOCS}   & 1                  & Number of documents (flows) to write in bulk\\\\
+
+    {\tt BSON\_SUPPRESS\_EMPTY\_ARRAY} & 1 & Whether or not to output empty fields\\
+    {\tt BSON\_DEBUG}                  & 0 & Print debug messages\\
+    \bottomrule
+\end{longtable}
+
+\end{document}

@@ -1,0 +1,27 @@
+#!/usr/bin/env awk
+#
+# Returns true if the protocol number is equal to 132 (SCTP)
+#
+# Parameters:
+#   - [p] : the protocol to test [default: $l4Proto]
+#
+# Dependencies:
+#   - basicFlow
+#
+# See Also:
+#   - proto
+#
+# Examples:
+#   - tawk 'sctp()' file.txt
+#   - tawk 'sctp() { print $srcIP4 }' file.txt
+#   - tawk 'sctp($l4Proto)' file.txt
+#   - tawk 'sctp($l4Proto) { print $srcIP4 }' file.txt
+
+@include "hdr"
+@include "proto"
+
+function sctp(p) {
+    if (hdr()) return __PRIHDR__
+    if (p) return p == 132
+    else return proto(132)
+}

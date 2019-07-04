@@ -1,0 +1,18 @@
+#H bit | telCmdBF | Description
+#H =============================================================================
+     0 | 0x0001   | SE - End SubNeg
+     1 | 0x0002   | NOP - No Op
+     2 | 0x0004   | Data Mark
+     3 | 0x0008   | Break
+     4 | 0x0010   | Int process
+     5 | 0x0020   | Abort output
+     6 | 0x0040   | Are You There?
+     7 | 0x0080   | Erase char
+     8 | 0x0100   | Erase line
+     9 | 0x0200   | Go ahead!
+    10 | 0x0400   | SB - SubNeg
+    11 | 0x0800   | WILL use
+    12 | 0x1000   | WON'T use
+    13 | 0x2000   | DO use
+    14 | 0x4000   | DON'T use
+    15 | 0x8000   | IAC

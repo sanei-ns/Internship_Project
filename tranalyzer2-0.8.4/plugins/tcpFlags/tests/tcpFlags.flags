@@ -1,0 +1,19 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/tcpFlags
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/tcpFlags.h
+SPKTMD_SEQACKREL    src/tcpFlags.h
+RTT_ESTIMATE        src/tcpFlags.h
+IPCHECKSUM          src/tcpFlags.h
+WINDOWSIZE          src/tcpFlags.h
+WINMIN              src/tcpFlags.h
+SEQ_ACK_NUM         src/tcpFlags.h
+FRAG_ANALYZE	    src/tcpFlags.h
+NAT_BT_EST          src/tcpFlags.h
+SCAN_DETECTOR	    src/tcpFlags.h

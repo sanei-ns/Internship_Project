@@ -1,0 +1,260 @@
+0x0000	Null LSAP
+0x0002	Individual LLC Sublayer Mgt
+0x0003	Group LLC Sublayer Mgt
+0x0004	SNA Path Control
+0x0006	Reserved for DoD
+0x0018 	Texas Instruments
+0x0042 	IEEE 802.1 Bridge Spanning Tree Protocol (STP)
+0x004E 	EIA-RS 511
+0x005E 	ISI IP
+0x007E 	ISO 8208 (X.25 over IEEE 802.2 Type LLC)
+0x0080 	Xerox Network Systems (XNS)
+0x0086 	Nestar
+0x008E 	ProWay-LAN (IEC 955)
+0x0098 	ARPANET Address Resolution Protocol (ARP)
+0x00a6 	RDE (route determination entity)
+0x00aa 	SNAP Extension Used
+0x00bc 	Banyan Vines
+0x00e0 	Novell Netware
+0x00f0 	IBM NetBIOS
+0x00f4 	IBM LAN Management
+0x00f8 	IBM Remote Program Load (RPL)
+0x00fa 	Ungermann-Bass
+0x00fe	OSI protocols ISO CLNS IS 8473
+0x0101-0x01FF 	Experimental Protocols
+0x0105	Multi-Layer-Switching (MLS)
+0x010b	Per-VLAN Spanning Tree Protocol (PvSTP)
+0x0111 	Unidirectional Link Detection (UDLD)
+0x0200 	XEROX PUP
+0x0201 	PUP Addr Trans
+0x0400 	Nixdorf
+0x0600 	XEROX NS IDP - DLOG
+0x0661 	DLOG
+0x0800 	Internet Protocol version 4 (IPv4)
+0x0801 	X.75 Internet
+0x0802 	NBS Internet
+0x0803 	ECMA Internet
+0x0804 	Chaosnet
+0x0805 	X.25 Level 3
+0x0806 	Address Resolution Protocol (ARP)
+0x0807 	XNS Compatability
+0x0808 	Frame Relay ARP
+0x081C 	Symbolics Private
+0x0842 	Wake-on-LAN
+0x0888-0x088A 	Xyplex
+0x0900 	Ungermann-Bass net debugr
+0x0A00 	Xerox IEEE802.3 PUP
+0x0A01 	PUP Addr Trans
+0x0BAD 	Banyan VINES
+0x0BAE 	VINES Loopback
+0x0BAF 	VINES Echo
+0x1001-0x100F 	Berkeley Trailer encap/IP
+0x1600 	Valid Systems
+0x2000	Cisco Discovery Protocol (CDP)
+0x2004 	Dynamic Trunk Protocol (DTP)
+0x200E	Cisco Discovery Protocol (CDP)
+0x22F0 	Audio Video Transport Protocol (AVTP)
+0x22F3 	IETF TRILL Protocol
+0x22F4 	L2-IS-IS
+0x4242 	PCS Basic Block Protocol
+0x5208 	BBN Simnet
+0x6000 	DEC Unassigned (Exp.)
+0x6001 	DEC MOP Dump/Load
+0x6002 	DEC MOP Remote Console
+0x6003 	DEC DECNET Phase IV Route
+0x6003 	DECnet Phase IV
+0x6004 	DEC LAT
+0x6005 	DEC Diagnostic Protocol
+0x6006 	DEC Customer Protocol
+0x6007 	DEC LAVC, SCA
+0x6008-0x6009 	DEC Unassigned
+0x6010-0x6014 	3Com Corporation
+0x6558 	Trans Ether Bridging
+0x6559 	Raw Frame Relay
+0x7000 	Ungermann-Bass download
+0x7002 	Ungermann-Bass dia/loop
+0x7020-0x7029 	LRT
+0x7030 	Proteon
+0x7034 	Cabletron
+0x8003 	Cronus VLN
+0x8004 	Cronus Direct
+0x8005 	HP Probe
+0x8006 	Nestar
+0x8008 	AT&T
+0x8010 	Excelan
+0x8013 	SGI diagnostics
+0x8014 	SGI network games
+0x8015 	SGI reserved
+0x8016 	SGI bounce server
+0x8019 	Apollo Domain
+0x802E 	Tymshare
+0x802F 	Tigan, Inc.
+0x8035 	Reverse Address Resolution Protocol (RARP)
+0x8036 	Aeonic Systems
+0x8038 	DEC LANBridge
+0x8039-0x803C 	DEC Unassigned
+0x803D 	DEC Ethernet Encryption
+0x803E 	DEC Unassigned
+0x803F 	DEC LAN Traffic Monitor
+0x8040-0x8042 	DEC Unassigned
+0x8044 	Planning Research Corp.
+0x8046 	AT&T
+0x8047 	AT&T
+0x8049 	ExperData
+0x805B 	Stanford V Kernel exp.
+0x805C 	Stanford V Kernel prod.
+0x805D 	Evans & Sutherland
+0x8060 	Little Machines
+0x8062 	Counterpoint Computers
+0x8065 	Univ. of Mass. @ Amherst
+0x8066 	Univ. of Mass. @ Amherst
+0x8067 	Veeco Integrated Auto.
+0x8068 	General Dynamics
+0x8069 	AT&T
+0x806A 	Autophon
+0x806C 	ComDesign
+0x806D 	Computgraphic Corp.
+0x806E-0x8077 	Landmark Graphics Corp.
+0x807A 	Matra
+0x807B 	Dansk Data Elektronik
+0x807C 	Merit Internodal
+0x807D-0x807F 	Vitalink Communications
+0x8080 	Vitalink TransLAN III
+0x8081-0x8083 	Counterpoint Computers
+0x809B 	AppleTalk (Ethertalk)
+0x809C-0x809E 	Datability
+0x809F 	Spider Systems Ltd.
+0x80A3 	Nixdorf Computers
+0x80A4-0x80B3 	Siemens Gammasonics Inc.
+0x80C0-0x80C3 	DCA Data Exchange Cluster
+0x80C4 	Banyan Systems
+0x80C5 	Banyan Systems
+0x80C6 	Pacer Software
+0x80C7 	Applitek Corporation
+0x80C8-0x80CC 	Intergraph Corporation
+0x80CD-0x80CE 	Harris Corporation
+0x80CF-0x80D2 	Taylor Instrument
+0x80D3-0x80D4 	Rosemount Corporation
+0x80D5 	IBM SNA Service on Ether
+0x80DD 	Varian Associates
+0x80DE-0x80DF 	Integrated Solutions TRFS
+0x80E0-0x80E3 	Allen-Bradley
+0x80E4-0x80F0 	Datability
+0x80F2 	Retix
+0x80F3 	AppleTalk Address Resolution Protocol (AARP)
+0x80F4-0x80F5 	Kinetics
+0x80F7 	Apollo Computer
+0x80FF 	Wellfleet Communications
+0x8100 	VLAN-tagged frame (IEEE 802.1Q) & Shortest Path Bridging IEEE 802.1aq
+0x8101-0x8103 	Wellfleet Communications
+0x8107-0x8109 	Symbolics Private
+0x8130 	Hayes Microcomputers
+0x8131 	VG Laboratory Systems
+0x8132-0x8136 	Bridge Communications
+0x8137-0x8138 	Novell, Inc. IPX
+0x8139-0x813D 	KTI
+0x8148 	Logicraft
+0x8149 	Network Computing Devices
+0x814A 	Alpha Micro
+0x814C 	SNMP
+0x814D 	BIIN
+0x814E 	BIIN
+0x814F 	Technically Elite Concept
+0x8150 	Rational Corp
+0x8151-0x8153 	Qualcomm
+0x815C-0x815E 	Computer Protocol Pty Ltd
+0x8164-0x8166 	Charles River Data System
+0x817D 	XTP
+0x817E 	SGI/Time Warner prop.
+0x8180 	HIPPI-FP encapsulation
+0x8181 	STP, HIPPI-ST
+0x8182 	Reserved for HIPPI-6400
+0x8183 	Reserved for HIPPI-6400
+0x8184-0x818C 	Silicon Graphics prop.
+0x818D 	Motorola Computer
+0x819A-0x81A3 	Qualcomm
+0x81A4 	ARAI Bunkichi
+0x81A5-0x81AE 	RAD Network Devices
+0x81B7-0x81B9 	Xyplex
+0x81CC-0x81D5 	Apricot Computers
+0x81D6-0x81DD 	Artisoft
+0x81E6-0x81EF 	Polygon
+0x81F0-0x81F2 	Comsat Labs
+0x81F3-0x81F5 	SAIC
+0x81F6-0x81F8 	VG Analytical
+0x8203-0x8205 	Quantum Software
+0x8204 	QNX Qnet
+0x8221-0x8222 	Ascom Banking Systems
+0x823E-0x8240 	Advanced Encryption Syste
+0x8263-0x826A 	Charles River Data System
+0x827F-0x8282 	Athena Programming
+0x829A-0x829B 	Inst Ind Info Tech
+0x829C-0x82AB 	Taurus Controls
+0x82AC-0x8693 	Walker Richer & Quinn
+0x8694-0x869D 	Idea Courier
+0x869E-0x86A1 	Computer Network Tech
+0x86A3-0x86AC 	Gateway Communications
+0x86DB 	SECTRA
+0x86DD 	Internet Protocol version 6 (IPv6)
+0x86DE 	Delta Controls
+0x86DF 	ATOMIC
+0x86E0-0x86EF 	Landis & Gyr Powers
+0x8700-0x8710 	Motorola
+0x876B 	TCP/IP Compression
+0x876C 	IP Autonomous Systems
+0x876D 	Secure Data
+0x8808 	IEEE Std 802.3 - Ethernet Passive Optical Network (EPON)
+0x8809 	Slow Protocols (IEEE 802.3)
+0x880B 	Point-to-Point Protocol (PPP)
+0x880C 	General Switch Management Protocol (GSMP)
+0x8819 	CobraNet
+0x8847 	MPLS unicast
+0x8848 	MPLS multicast
+0x8861 	Multicast Channel Allocation Protocol (MCAP)
+0x8863 	PPPoE Discovery Stage
+0x8863 	PPP over Ethernet (PPPoE) Discovery Stage
+0x8864 	PPPoE Session Stage
+0x8870	Jumbo Frames
+0x887B 	HomePlug 1.0 MME
+0x888E 	EAP over LAN (IEEE 802.1X)
+0x8892 	PROFINET Protocol
+0x889A 	HyperSCSI (SCSI over Ethernet)
+0x88A2 	ATA over Ethernet
+0x88A4 	EtherCAT Protocol
+0x88A8 	IEEE Std 802.1Q - Service VLAN tag identifier (S-Tag)
+0x88A8 	Provider Bridging (IEEE 802.1ad) & Shortest Path Bridging IEEE 802.1aq
+0x88AB 	Ethernet Powerlink[citation needed]
+0x88B5 	IEEE Std 802 - Local Experimental Ethertype
+0x88B6 	IEEE Std 802 - Local Experimental Ethertype
+0x88B7 	IEEE Std 802 - OUI Extended Ethertype
+0x88C7 	IEEE Std 802.11 - Pre-Authentication (802.11i)
+0x88CC 	IEEE Std 802.1AB - Link Layer Discovery Protocol (LLDP)
+0x88CD 	SERCOS III
+0x88E1 	HomePlug AV MME[citation needed]
+0x88E3 	Media Redundancy Protocol (IEC62439-2)
+0x88E5 	MAC security (IEEE 802.1AE)
+0x88F5 	IEEE Std 802.1Q - Multiple VLAN Registration Protocol (MVRP)
+0x88F6 	IEEE Std 802.1Q - Multiple Multicast Registration Protocol (MMRP)
+0x88F7 	Precision Time Protocol (IEEE 1588)
+0x8902 	IEEE 802.1ag Connectivity Fault Management (CFM) Protocol
+0x8906 	Fibre Channel over Ethernet (FCoE)
+0x890D 	IEEE Std 802.11 - Fast Roaming Remote Request (802.11r)
+0x8914 	FCoE Initialization Protocol
+0x8915 	RDMA over Converged Ethernet (RoCE)
+0x8917 	IEEE Std 802.21 - Media Independent Handover Protocol
+0x8929 	IEEE Std 802.1Qbe - Multiple I-SID Registration Protocol
+0x892F 	High-availability Seamless Redundancy (HSR)
+0x893B 	TRILL Fine Grained Labeling (FGL)
+0x8940 	IEEE Std 802.1Qbg - ECP Protocol (also used in 802.1BR)
+0x8946 	TRILL RBridge Channel
+0x8947 	GeoNetworking as defined in ETSI EN 302 636-4-1
+0x8A96-0x8A97 	Invisible Software
+0x9000 	Loopback
+0x9001 	3Com(Bridge) XNS Sys Mgmt
+0x9002 	3Com(Bridge) TCP-IP Sys
+0x9003 	3Com(Bridge) loop detect
+0x9100 	Q-in-Q
+0xCAFE 	Veritas Low Latency Transport (LLT) for Veritas Cluster Server
+0xFF00 	BBN VITAL-LanBridge cache
+0xFF00-0xFF0F 	ISC Bunker Ramo
+0xFFFF 	Reserved

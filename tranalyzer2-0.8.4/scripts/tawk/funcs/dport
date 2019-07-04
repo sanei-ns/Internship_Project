@@ -1,0 +1,35 @@
+#!/usr/bin/env awk
+#
+# Returns true if the destination port is equal to 'p'
+# If 'p' is omitted, returns the destination port
+#
+# Dependencies:
+#   - basicFlow
+#
+# See Also:
+#   - port : source or destination port
+#   - sport: source port
+#
+# Examples:
+#   - tawk 'dport(80)' file.txt
+#   - tawk 'dport("53;80")' file.txt
+#   - tawk 'dport("6000-6008")' file.txt
+#   - tawk '{ print dport() }' file.txt
+
+@include "hdr"
+@include "_validate_col"
+
+function dport(p,        _dp, _i, _l, _ports) {
+    _dp = _validate_col("dstPort", _my_dstPort)
+    if (!p || (__PRIHDR__ && hdr())) return $_dp
+    _dp = strtonum($_dp)
+    if (match(p, /^(0x[[:xdigit:]]+|[0-9]+)-(0x[[:xdigit:]]+|[0-9]+)$/, _ports)) {
+        return (_dp >= strtonum(_ports[1]) && _dp <= strtonum(_ports[2]))
+    } else if (p ~ /^(0x[[:xdigit:]]+|[0-9]+)(;(0x[[:xdigit:]]+|[0-9]+))*$/) {
+        _l = split(p, _ports, /;/)
+        for (_i = 1; _i <= _l; _i++) {
+            if (_dp == strtonum(_ports[_i])) return 1
+        }
+        return 0
+    }
+}

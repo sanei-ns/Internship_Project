@@ -1,0 +1,57 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {netflowSink}
+    {Output to any netflow collector}
+    {Tranalyzer Development Team}
+
+\section{netflowSink}\label{s:netflowSink}
+
+\subsection{Description}
+This plugin is an interface of Tranalyzer to a netflow collector.
+
+\subsection{Dependencies}
+
+\subsubsection{Other Plugins}
+This plugin requires the \tranrefpl{basicFlow}, \tranrefpl{basicStats} and \tranrefpl{tcpFlags} plugins.\\
+In addition, the \tranrefpl{macRecorder} plugin is recommended, but optional.
+%If a configuration in the core or these plugins is changed, recompile the respective plugin and netflowSink, or
+%use {\tt t2build -R} to recompile the presently used plugins.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+
+%\subsection{netflowSink.h}
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt NF\_SERVADD}   & {\tt "127.0.0.1"} & Destination address\\
+    {\tt NF\_DPORT}     & 9995              & Destination port\\
+    {\tt NF\_SOCKTYP}   & 0                 & Socket type: 0: UDP; 1: TCP\\
+    {\tt NF\_VER}       & 9                 & Netflow version 9 or 10\\
+    {\tt NF\_NUM4FLWS}  & 200               & Max \# of IPv4 flows in one message\\
+    {\tt NF\_NUM6FLWS}  & 100               & Max \# of IPv6 flows in one message\\
+    \bottomrule
+\end{longtable}
+
+
+\subsection{Example}
+To collect T2 flow data with {\bf nfcapd}, use the following command:
+\begin{center}
+{\tt nfcapd -T all -B 1000000 -n wurst,127.0.0.1,.}
+\end{center}
+
+%\subsection{TODO}
+%
+%\begin{itemize}
+%   \item
+%\end{itemize}
+
+\end{document}

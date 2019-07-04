@@ -1,0 +1,41 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+!bitsanyset($flowStat, 0xc000) {  # IPv4/6 only
+    next
+}
+
+# A flows
+!bitsallset($flowStat, 1) {
+    _dip = _validate_col("dstIP;dstIP4;dstIP6", _my_dstIP)
+    if (dstIPCC != 0) {
+        country = toupper($dstIPCC)
+        if (country ~ /^[0-9]/) country = "--"
+        else if (country == "FF" || country == "--") country = "N/A"
+    } else if (dstIpCountry == 0) {
+        if (privip($_dip)) country = "--"
+        else country = "N/A"
+    } else {
+        country = $dstIpCountry
+    }
+    aggr($_dip OFS country, "flows", n)
+}
+
+# B flows
+bitsallset($flowStat, 1) {
+    _sip = _validate_col("srcIP;srcIP4;srcIP6", _my_srcIP)
+    if (srcIPCC != 0) {
+        country = toupper($srcIPCC)
+        if (country ~ /^[0-9]/) country = "--"
+        else if (country == "FF" || country == "--") country = "N/A"
+    } else if (srcIpCountry == 0) {
+        if (privip($_sip)) country = "--"
+        else country = "N/A"
+    } else {
+        country = $srcIpCountry
+    }
+    aggr($_sip OFS country, "flows", n)
+}

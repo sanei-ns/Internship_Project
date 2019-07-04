@@ -1,0 +1,19 @@
+#!/usr/bin/env awk
+#
+# Start Time - first seen
+#
+# Dependencies:
+#   - basicFlow
+#
+# Example:
+#   - tawk '{ print ts() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function ts(        _c, _ms) {
+    _c = _validate_col("timeFirst", _my_timeFirst)
+    if (hdr()) return "Date first seen"
+    _ms = gensub(/^[0-9]+\.([0-9]{3})[0-9]+/, "\\1", 1, $_c)
+    return strftime("%F %T", $_c, 1) "." _ms # UTC
+}

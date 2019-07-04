@@ -1,0 +1,22 @@
+#!/usr/bin/env awk
+#
+# Returns true if source or destination IP is equal to 'ip' or belongs to 'ip', e.g., 1.2.3.4/24
+# If 'ip' is omitted, returns the source and destination IP
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - host: alias for net
+#
+# Examples:
+#   - tawk 'net("1.2.3.4")' file.txt
+#   - tawk 'net("1.2.3.4/24")' file.txt
+#   - tawk 'net(0x01020304) { print net() }' file.txt
+#   - tawk '{ print net() }' file.txt
+
+@include "host"
+
+function net(ip) {
+    return host(ip)
+}

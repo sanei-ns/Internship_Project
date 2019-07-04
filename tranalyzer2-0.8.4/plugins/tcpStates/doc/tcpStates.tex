@@ -1,0 +1,90 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \documentclass[a4paper,10pt]{article}
+}
+
+\begin{document}
+
+\trantitle
+    {tcpStates}
+    {TCP Connection Tracker}
+    {Tranalyzer Development Team} % author(s)
+
+\section{tcpStates}\label{s:tcpStates}
+
+\subsection{Description}
+The tcpStates plugin tracks the actual state of a TCP connection, by analyzing the flags set in the packet header. The plugin recognizes and reports non-compliant behavior.
+
+\subsection{Configuration Flags}
+None.
+%The following flags can be used to control the output of the plugin:
+%\begin{longtable}{ccl}
+%    \toprule
+%    {\bf Name} & {\bf Default} & {\bf Description} \\
+%    \midrule\endhead%
+%    {\tt TCPSTATES\_PRINT} & 1 & Whether (1) or not (0) to output the state\\
+%    \bottomrule
+%\end{longtable}
+
+\subsection{Flow File Output}
+The tcpStates plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt\nameref{tcpStates}} & H8 & TCP state machine anomalies\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{tcpStates}\label{tcpStates}
+The {\tt tcpStates} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf tcpStates} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt 0x01} & Malformed connection establishment \\
+    {\tt 0x02} & Malformed teardown \\
+    {\tt 0x04} & Malformed flags during established connection \\
+    {\tt 0x08} & Packets detected after teardown \\
+    {\tt 0x10} & Packets detected after reset \\
+    {\tt 0x40} & Reset from sender \\
+    {\tt 0x80} & Potential evil behavior (scan)\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{Flow Timeouts}
+The tcpStates plugin also changes the timeout values of a flow according to its recognized state:
+\begin{longtable}{llr}
+    \toprule
+    {\bf State} & {\bf Description} & {\bf Timeout (seconds)} \\
+    \midrule\endhead%
+    New & Three way handshake is encountered & 120 \\
+    Established & Connection established & 610 \\
+    Closing & Hosts are about to close the connection & 120 \\
+    Closed & Connection closed & 10 \\
+    Reset & Connection reset encountered by one of hosts & 0.1 \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{Differences to the Host TCP State Machines}
+The plugin state machine (\reff{fig:tcpstates}) and the state machines usually implemented in hosts differ in some cases. Major differences are caused by the benevolence of the plugin. For example, if a connection has not been established in a correct way, the plugin treats the connection as established, but sets the {\em malformed connection establishment} flag. The reasons for this benevolence are the following:
+\begin{itemize}
+    \item A flow might have been started before invocation of Tranalyzer2.
+    \item A flow did not finish before Tranalyzer2 terminated.
+    \item Tranalyzer2 did not detect every packet of a connection, for example due to a router misconfiguration.
+    \item Flows from malicious programs may show suspicious behavior.
+    \item Packets may be lost {\bf after} being captured by Tranalyzer2 but {\bf before} they reached the opposite host.
+\end{itemize}
+
+\begin{figure}[!ht]
+    \centering
+    \tranimg[height=0.8\textheight]{tcp_states_plugin.png}
+    \caption{State machine of the tcpState plugin}
+    \label{fig:tcpstates}
+\end{figure}
+
+\subsection{Plugin Report Output}
+The aggregated \nameref{tcpStates} anomalies is reported.
+
+\end{document}

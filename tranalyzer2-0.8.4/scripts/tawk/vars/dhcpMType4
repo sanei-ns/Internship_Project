@@ -1,0 +1,10 @@
+#H bit | dhcpMType4 | Description
+#H =============================================================================
+     1 | 0x0002     | Discover Message
+     2 | 0x0004     | Offer Message
+     3 | 0x0008     | Request Message
+     4 | 0x0010     | Decline Message
+     5 | 0x0020     | Acknowledgement Message
+     6 | 0x0040     | Negative Acknowledgement Message
+     7 | 0x0080     | Release Message
+     8 | 0x0100     | Informational Message

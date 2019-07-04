@@ -1,0 +1,38 @@
+-- Top TCP source port by number of bytes
+
+SELECT
+    port,
+    SUM(bytes) AS cnt
+
+FROM (
+    -- A flows
+    SELECT
+        "srcPort" AS port,
+        "numBytesSnt" AS bytes
+    FROM
+        flow
+    WHERE
+        ("flowStat"::BIGINT & 1) = 0::BIGINT
+        AND "l4Proto" = 6
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+
+    UNION ALL
+
+    -- B flows
+    SELECT
+        "dstPort" AS port,
+        "numBytesRcvd" AS bytes
+    FROM
+        flow
+    WHERE
+        ("flowStat"::BIGINT & 1) = 1::BIGINT
+        AND "l4Proto" = 6
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+GROUP BY port
+ORDER BY cnt DESC
+
+LIMIT :n

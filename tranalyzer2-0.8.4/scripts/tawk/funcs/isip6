@@ -1,0 +1,20 @@
+#!/usr/bin/env awk
+#
+# Returns true if 'v' is an IPv6 address
+#
+# Parameters:
+#   - v : the value to test
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk 'isip6($dstIP4)' file.txt
+#   - tawk 'isip6($srcIP6) { print }' file.txt
+#   - tawk '{ print isip6("::1") }' file.txt
+
+@include "hdr"
+
+function isip6(v) {
+    return (v ~ /:/ || (__PRIHDR__ && hdr()))
+}

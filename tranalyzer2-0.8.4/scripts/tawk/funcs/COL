@@ -1,0 +1,32 @@
+#!/usr/bin/env awk
+#
+# Provides access to column names through their indexes
+# and to column indexes through their names
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{ print COL[l4Proto] }' file.txt
+#   - tawk '{ print COL[3] }' file.txt
+#   - tawk -v colnum=3 '{ print COL[colnum] }' file.txt
+#   - tawk '{ print $COL["l4Proto"] }' file.txt
+#   - tawk -v colname="l4Proto" '{ print $COL[colname] }' file.txt
+
+@include "hdr"
+
+hdr() {
+    __HDROFF__ = ($1 == __HDRSEP__) ? 1 : 0
+    for (_i = 1 + __HDROFF__; _i <= NF; _i++) {
+        _j = _i - __HDROFF__
+        if (_i == 1 + __HDROFF__) {
+            COL[_j] = gensub("^" __HDRSEP__ "\\s*", "", 1, $_i)
+        } else {
+            COL[_j] = $_i
+        }
+        COL[COL[_j]] = _i
+    }
+    _i = 0
+    _j = 0
+    if (!__PRIHDR__) next
+}

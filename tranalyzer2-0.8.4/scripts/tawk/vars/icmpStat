@@ -1,0 +1,4 @@
+#H bit | icmpStat | Description
+#H =============================================================================
+     0 | 0x01     | Flow is ICMP
+     4 | 0x10     | WANG2 Microsoft bandwidth test

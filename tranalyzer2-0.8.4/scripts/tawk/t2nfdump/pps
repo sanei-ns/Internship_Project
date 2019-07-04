@@ -1,0 +1,18 @@
+#!/usr/bin/env awk
+#
+# pps - packets per second
+#
+# Dependencies:
+#   - basicStats
+#
+# Example:
+#   - tawk '{ print pps() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function pps(        _c) {
+    _c = _validate_col("pktps", _my_pktps)
+    if (hdr()) return "pps"
+    return $_c
+}

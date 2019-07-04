@@ -1,0 +1,15 @@
+#!/usr/bin/env awk
+#
+# MPLS label 4
+#
+# Dependencies:
+#   - basicStats
+#
+# Example:
+#   - tawk '{ print mpls4() }' file
+
+@include "_mplsi"
+
+function mpls4() {
+    return _mplsi(4)
+}

@@ -1,0 +1,355 @@
+#!/usr/bin/env bash
+#
+# 2D/3D plot for Tranalyzer2
+#
+# Usage: t2plot [OPTION...] <FILE>
+#
+# Format of the input file:
+#   - First row is the header (column names), may start with a '%'
+#   - Two or more columns tab separated
+#   - Columns to plot can be selected with -o option
+#
+# Example:
+#   tawk '{ print shost(), dhost() }' f_flows.txt | t2plot -pt
+#   tawk '{ print $srcIP, $timeFirst, $connSip }' f_flows.txt | t2plot
+#   t2plot FILE_with_two_or_three_columns.txt
+#   t2plot -o "26:28" file_with_many_columns.txt
+#   t2plot -o "numBytesSnt:numBytesRcvd" file_with_many_columns.txt
+
+source "$(dirname "$0")/t2utils.sh"
+
+check_dependency gnuplot
+
+usage() {
+    echo "Usage:"
+    echo "    $SNAME [OPTION...] <FILE>"
+    echo
+    echo "Optional arguments:"
+    echo "    -lx               Use logscale for X axis"
+    echo "    -ly               Use logscale for Y axis"
+    echo "    -lz               Use logscale for Z axis"
+    echo
+    echo "    -pl               Use lines instead of impulses"
+    echo "    -pt               Use points instead of impulses"
+    echo
+    echo "    -g                Display a grid in the background"
+    echo
+    echo "    -ts size          Size of the title [$TSIZE]"
+    echo "    -ls size          Size of the labels [$LSIZE]"
+    echo "    -ks size          Size of the keys/tics [$KSIZE]"
+    echo
+    echo "    -sx begin:end     Set x range"
+    echo "    -sy begin:end     Set y range"
+    echo "    -sz begin:end     Set z range"
+    echo
+    echo "    -o x:y[:z]        Order of columns to display, e.g., 1:2 or 2:1:3"
+    echo "    -v rotx,rotz      View of graphics, e.g., 60,30"
+    echo
+    echo "    -ws w,h           Window size (width,height) [$WSIZE]"
+    echo "    -fs               Maximise window size (fullscreen)"
+    echo
+    echo "    -r [num]          Refresh the graph every num-seconds [$DEFAULT_REFRESH]"
+    echo
+    echo "    -tx               Label for X axis"
+    echo "    -ty               Label for Y axis"
+    echo "    -tz               Label for Z axis"
+    echo
+    echo "    -t title          Main title of the plot [$TITLE]"
+    echo "    -s title          Subtitle of the plot [$SUBTITLE]"
+    echo
+    echo "    -e, --examples    Show usage examples, then exit"
+    echo
+    echo "    -h, --help        Show this help, then exit"
+}
+
+examples() {
+    echo
+    printinf "# Plot data from a file with 2 or 3 columns"
+    printf "t2plot FILE_with_two_or_three_columns.txt\n\n"
+
+    printinf "# Plot columns 26 and 28 from a file with many columns"
+    printf "t2plot -o \"26:28\" file_with_many_columns.txt\n\n"
+
+    printinf "# Plot columns named 'numBytesSnt' and 'numBytesRcvd' from a file with many columns"
+    printf "t2plot -o \"numBytesSnt:numBytesRcvd\" file_with_many_columns.txt\n\n"
+
+    printinf "# Plot source and destination IP"
+    printf "tawk '{ print shost(), dhost() }' f_flows.txt | t2plot -pt\n\n"
+
+    printinf "# Plot source IP, time, and number of connections from this source IP"
+    printf "tawk '{ print \$srcIP, \$timeFirst, \$connSip }' f_flows.txt | t2plot\n\n"
+
+    printinf "# Plot the distribution of packets over TCP ports"
+    printf "protStat -tcp f_protocols.txt | t2plot\n\n"
+}
+
+cleanup() {
+    local ret=$1
+    if [ "$(pgrep -P $$ | wc -l)" -gt 1 ]; then
+        printinf "Killing all subprocesses..."
+        kill -- -$$
+    fi
+    exit $ret
+}
+
+# default values
+FILE="-"
+TITLE="Tranalyzer2"
+STYLE="impulses"
+
+WSIZE="800,600"  # Window size (width, height)
+TSIZE=16         # title size
+LSIZE=10         # label size
+KSIZE=8          # key/tics size
+
+DEFAULT_REFRESH=10 # Refreshing the graph is required for mouse interaction
+
+# options
+while [ $# -ne 0 ]; do
+    case "$1" in
+        -tx|--xlabel)
+            validate_next_arg "$1" "$2"
+            TX="$2"
+            shift
+            ;;
+        -ty|--ylabel)
+            validate_next_arg "$1" "$2"
+            TY="$2"
+            shift
+            ;;
+        -tz|--zlabel)
+            validate_next_arg "$1" "$2"
+            TZ="$2"
+            shift
+            ;;
+        -s|--subtitle)
+            validate_next_arg "$1" "$2"
+            SUBTITLE="$2"
+            shift
+            ;;
+        -t|--title)
+            validate_next_arg "$1" "$2"
+            TITLE="$2"
+            shift
+            ;;
+        -sx|--xrange)
+            validate_next_arg_exists "$1" "$2"
+            if [ -n "$(perl -pe 's/^-?[0-9]+(.[0-9]*)?:-?[0-9]+(.[0-9]*)?$//' <<< "$2")" ]; then
+                printerr "Invalid argument for option '$1': expected begin:end; found '$2'"
+                abort_with_help
+            fi
+            SETX="$2"
+            shift
+            ;;
+        -sy|--yrange)
+            validate_next_arg_exists "$1" "$2"
+            if [ -n "$(perl -pe 's/^-?[0-9]+(.[0-9]*)?:-?[0-9]+(.[0-9]*)?$//' <<< "$2")" ]; then
+                printerr "Invalid argument for option '$1': expected begin:end; found '$2'"
+                abort_with_help
+            fi
+            SETY="$2"
+            shift
+            ;;
+        -sz|--zrange)
+            validate_next_arg_exists "$1" "$2"
+            if [ -n "$(perl -pe 's/^-?[0-9]+(.[0-9]*)?:-?[0-9]+(.[0-9]*)?$//' <<< "$2")" ]; then
+                printerr "Invalid argument for option '$1': expected begin:end; found '$2'"
+                abort_with_help
+            fi
+            SETZ="$2"
+            shift
+            ;;
+        -o|--order)
+            validate_next_arg "$1" "$2"
+            if [ -n "$(perl -pe 's/^[[:alnum:]_]+:[[:alnum:]_]+(:[[:alnum:]_]+)?$//' <<< "$2")" ]; then
+                printerr "Invalid argument for option '$1': expected x:y or x:y:z; found '$2'"
+                abort_with_help
+            fi
+            ORDER="$2"
+            shift
+            ;;
+        -v|--rotate)
+            validate_next_arg "$1" "$2"
+            if [ -n "$(perl -pe 's/^[0-9]+(.[0-9]*)?,[0-9]+(.[0-9]*)?$//' <<< "$2")" ]; then
+                printerr "Invalid argument for option '$1': expected rotx,rotz; found '$2'"
+                abort_with_help
+            fi
+            VIEW="$2"
+            shift
+            ;;
+        -ts|--tsize|--t-size|--title-size)
+            validate_next_num "$1" "$2"
+            TSIZE="$2"
+            shift
+            ;;
+        -ls|--lsize|--l-size|--label-size)
+            validate_next_num "$1" "$2"
+            LSIZE="$2"
+            shift
+            ;;
+        -ks|--ksize|--k-size|--key-size|--tics-size)
+            validate_next_num "$1" "$2"
+            KSIZE="$2"
+            shift
+            ;;
+        -ws|--wsize|--win-size|--window-size)
+            validate_next_arg "$1" "$2"
+            if [ -n "$(perl -pe 's/^[1-9][0-9]*,[1-9][0-9]*$//' <<< "$2")" ]; then
+                printerr "Invalid argument for option '$1': expected width,height; found '$2'"
+                abort_with_help
+            fi
+            WSIZE="$2"
+            shift
+            ;;
+        -fs|--fullscreen)
+            if [ "$(uname)" = "Darwin" ]; then
+                WSIZE="$(system_profiler SPDisplaysDataType | $AWK '/^\s*Resolution:/ { print $2/2 "," $4/2; exit }')"
+            else
+                WSIZE="$(xrandr | $AWK '/\*/ { sub(/x/, ","); print $1; exit }')"
+            fi
+            ;;
+        -r|--refresh)
+            if [ -n "$2" ] && [ -z "$(tr -d '0-9' <<< "$2")" ]; then
+                REFRESH="$2"
+                shift
+            else
+                REFRESH="$DEFAULT_REFRESH"
+            fi
+            ;;
+        -g|--grid) GRID=1;;
+        -lx|--log-x) LX=1;;
+        -ly|--log-y) LY=1;;
+        -lz|--log-z) LZ=1;;
+        -pl|--points) STYLE="lines";;
+        -pt|--points) STYLE="points";;
+        -e|--examples) examples; exit 0;;
+        -h|-\?|--help) usage; exit 0;;
+        *)
+            if [ ! -f "$1" ]; then
+                abort_option_unknown "$1"
+            fi
+            FILE="$1"
+            ;;
+    esac
+    shift
+done
+
+if [ "$FILE" == "-" ] && [ -t 0 ]; then
+    abort_required_file
+fi
+
+# Setup signal handler
+trap "trap - SIGTERM && cleanup 1" HUP INT QUIT TERM
+trap "cleanup \$?" EXIT
+
+$TAWK -t \
+        -v lx="$LX" -v ly="$LY" -v lz="$LZ" \
+        -v sx="$SETX" -v sy="$SETY" -v sz="$SETZ" \
+        -v vw="$VIEW" -v ord="$ORDER" -v style="$STYLE" \
+        -v tx="$TX" -v ty="$TY" -v tz="$TZ" -v subtitle="$SUBTITLE" \
+        -v title="$TITLE" -v tsize="$TSIZE" -v lsize="$LSIZE" \
+        -v ksize="$KSIZE" -v wsize="$WSIZE" -v grid="$GRID" \
+        -v refresh="$REFRESH" '
+
+BEGIN {
+    print "set term qt size " wsize (refresh ? "" : " persist")
+    print "set title \"" title "\" font \"Times-Bold," tsize "\""
+    print "set style data " style
+    print "set key font \"Times-Bold," ksize "\""
+    print "set tics font \"Times-Bold," ksize "\""
+    print "set ticslevel 0"
+
+    if (grid) print "set grid"
+
+    if (lx) print "set logscale x"
+    if (ly) print "set logscale y"
+    if (lz) print "set logscale z"
+
+    if (sx) print "set xrange[" sx "]"
+    if (sy) print "set yrange[" sy "]"
+    if (sz) print "set zrange[" sz "]"
+
+    if (vw) print "set view " vw
+}
+
+NR == 1 {
+    gsub(/^%\s*/, "") # Remove leading '%' if present
+
+    for (i = 1; i <= NF; i++) {
+        COLNUM[$i] = i
+    }
+
+    if (!ord) ord = (NF == 3 ? "1:2:3" : "1:2")
+    _ordsize = split(ord, _ord, ":")
+    for (i = 1; i <= _ordsize; i++) {
+        _ordnum[i] = (match(_ord[i], /^[0-9]+$/) ? _ord[i] : COLNUM[_ord[i]])
+        if (!_ordnum[i] || _ordnum[i] > NF) {
+            error = "Column " _ord[i] " does not exist"
+            exit(1)
+        }
+    }
+
+    # Use hex representation for src/dst IPv4
+    split("xyz", xyz, "")
+    for (i = 1; i <= _ordsize; i++) {
+        v = _ordnum[i]
+        if ($v ~ /^srcIP[46]?$/ || $v ~ /^dstIP[46]?$/) {
+            print "set format " xyz[i] " \"0x%08x\""
+            to_convert[i] = v
+        }
+    }
+
+    if (!tx) tx = $(_ordnum[1])
+    if (!ty) ty = $(_ordnum[2])
+
+    if (subtitle) {
+        subtitle = "title \"" subtitle "\""
+    } else {
+        subtitle = "notitle"
+    }
+
+    printf "set xlabel \"" tx "%s\" font \"Times-Bold," lsize "\"\n", lx ? " [log]" : ""
+    printf "set ylabel \"" ty "%s\" font \"Times-Bold," lsize "\"\n", ly ? " [log]" : ""
+
+    if (_ordsize == 2) {
+        print "plot \"-\" u 1:2 " subtitle " with " style
+    } else {
+        if (!tz) tz = $(_ordnum[3])
+        printf "set zlabel \"" tz "%s\" rotate by 90 font \"Times-Bold," lsize "\"\n", lz ? " [log]" : ""
+        print "splot \"-\" u 1:2:3 " subtitle " with " style
+    }
+}
+
+NR > 1 {
+    str = ""
+    for (i = 1; i <= _ordsize; i++) {
+        val = $(_ordnum[i])
+        if (to_convert[i]) {
+            val = ip2num(val)
+        }
+        str = str "\t" val
+    }
+
+    gsub(/^\t*/, "", str) # remove leading tab
+
+    printf "%s\n", str
+}
+
+END {
+    if (error) {
+        printerr(error)
+    } else {
+        print "e"
+        # Refresh the graph every "refresh" seconds
+        if (refresh) {
+            print "while (1) {"
+            print "    pause " refresh
+            print "    refresh"
+            print "}"
+        }
+    }
+}
+
+' "$FILE" | gnuplot &
+
+wait < <(jobs -p)

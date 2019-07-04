@@ -1,0 +1,34 @@
+#!/usr/bin/env awk
+#
+# Returns true if the destination IP is equal to 'ip' or belongs to 'ip', e.g., 1.2.3.4/24
+# If 'ip' is omitted, returns the destination IP
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - dnet: alias for dhost
+#
+# Examples:
+#   - tawk 'dhost("1.2.3.4")' file.txt
+#   - tawk 'dhost("1.2.3.4/24")' file.txt
+#   - tawk 'dhost(0x01020304) { print $srcIP4 }' file.txt
+#   - tawk '{ print dhost() }' file.txt
+
+@include "hdr"
+@include "ip2num"
+@include "ipinnet"
+@include "_validate_col"
+
+function dhost(ip,        _dip, _i6, _d6) {
+    _dip = _validate_col("dstIP;dstIP4;dstIP6", _my_dstIP)
+    if (!ip || (__PRIHDR__ && hdr())) return $_dip
+    if (index(ip, "/") != 0) {
+        return ipinnet($_dip, ip)
+    } else if (length(ip) > 0) {
+        _i6 = isip6(ip)
+        _d6 = isip6($_dip)
+        if ((_i6 && !_d6) || (!_i6 && _d6)) return 0
+        return ip2num($_dip) == ip2num(ip)
+    }
+}

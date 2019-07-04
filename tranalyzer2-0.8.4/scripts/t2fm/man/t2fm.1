@@ -1,0 +1,133 @@
+.TH T2FM "1" "October 2018" "0.2" "User Commands"
+
+.SH NAME
+\fIt2fm\fR \- Generates a PDF/LaTeX report from a PCAP, Tranalyzer flow file or database (Mongo or PostgreSQL).
+
+.SH SYNOPSIS
+\fBt2fm\fI [\fIOPTION\fR...] <\fIINPUT\fR>
+
+.SH DESCRIPTION
+\fBt2fm\fR can be used to generate a PDF report summarising the traffic contained in a PCAP, a Tranalyzer flow file or database (Mongo or PostgreSQL). It uses \fBTranalyzer\fR to produce a flow file and \fBtawk\fR to analyse it.
+
+.SH INPUT
+.TP
+\fB\-i\fR \fIiface\fR
+Interface to capture traffic from
+.TP
+\fB\-r\fR \fIpcap\fR
+PCAP file to analyse
+.TP
+\fB\-R\fR \fIlist\fR
+List of PCAP files to analyse
+.TP
+\fB\-F\fR \fIfile\fR
+Flow file to analyse
+.TP
+\fB\-m\fR \fIdbname\fR
+Mongo database to use to generate the report
+.TP
+\fB\-p\fR \fIdbname\fR
+PostgreSQL database to use to generate the report
+
+.SH OPTIONS
+.TP
+\fB\-T\fR \fIfrom\fR \fIto\fR
+Only consider data between from and to [-m and -p only]
+.TP
+\fB\-b\fR
+Configure and build Tranalyzer2 and the plugins
+.TP
+\fB\-A\fR
+Automatically open the generated PDF
+.TP
+\fB\-f\fR \fIfactor\fR
+Hash table multiplication factor
+.TP
+\fB\-o\fR \fIfolder\fR
+Output folder
+.TP
+\fB\-w\fR \fIprefix\fR
+Output prefix
+.TP
+\fB\-t\fR \fItitle\fR
+Set the report title
+.TP
+\fB\-a\fR \fIauthor\fR
+Set the report author
+.TP
+\fB\-C\fR \fIcolor\fR
+Set the charts color (red, orange, gray!25, ...)
+.TP
+\fB\-L\fR
+Do not use logarithmic scale for axis
+.TP
+\fB\-H\fR
+Output raw numbers instead of human readable
+.TP
+\fB\-HH\fR
+Output raw and human readable numbers
+.TP
+\fB\-n\fR \fInum\fR
+Compute top \fInum\fR statistics for tables [default: 10]
+.TP
+\fB\-c\fR \fInum\fR
+Compute top \fInum\fR statistics for charts [default: 5]
+.TP
+\fB\-\-copyright\fR [\fItext\fR]
+Print a copyright notice at the bottom of every page
+.TP
+\fB\-\-watermark\fR [\fItext\fR]
+Print a watermark on every page
+.TP
+\fB\-?\fR, \fB\-h\fR, \fB\-\-help\fR
+Show help options and exit
+
+.SH FILES
+\fIt2fm.load\fR
+.RS
+List of \fBTranalyzer\fR plugins to load in order to generate the full PDF report
+
+.SH ""
+\fIt2fm.patch\fR
+.RS
+Patch to configure \fBTranalyzer\fR and the plugins as required to generate the report
+
+.SH ""
+\fIt2fm_template.tex\fR
+.RS
+Template for the final report
+
+.SH ""
+\fImongo/*\fR
+.RS
+MongoDB scripts to collect the required statistics
+
+.SH ""
+\fIpsql/*\fR
+.RS
+PostgreSQL scripts to collect the required statistics
+
+.SH ""
+\fItawk/*\fR
+.RS
+tawk scripts to collect the required statistics
+
+.SH AUTHORS
+\fBt2fm\fR was written by the Tranalyzer Development Team
+
+.SH BUGS
+Please send problems, bugs, questions and suggestions to:
+
+.ti +8
+\fItranalyzer@rdit.ch\fR
+
+.SH DISTRIBUTION
+The latest version of \fBt2fm\fR can be found at \fIhttps://tranalyzer.com\fR
+
+.SH "SEE ALSO"
+\fItawk\fR(1), \fItranalyzer\fR(1)
+
+The full documentation for \fBt2fm\fR is available at
+
+.ti +8
+\fIhttps://tranalyzer.com/downloads/doc/documentation.pdf\fR

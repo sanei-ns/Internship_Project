@@ -1,0 +1,17 @@
+#!/usr/bin/env awk
+#
+# Returns the 2 tuple (source IP and destination IP)
+#
+# Dependencies:
+#   - basicFlow
+#
+# Examples:
+#   - tawk '{ print tuple2() }' file.txt
+
+@include "_validate_col"
+
+function tuple2(        _dip, _sip) {
+    _sip = _validate_col("srcIP;srcIP4;srcIP6", _my_srcIP)
+    _dip = _validate_col("dstIP;dstIP4;dstIP6", _my_dstIP)
+    return $_sip OFS $_dip
+}

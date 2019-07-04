@@ -1,0 +1,31 @@
+#!/usr/bin/env awk
+#
+# Returns true if val begins with the prefix 'pre'
+# If ign is 1, performs a case insensitive comparison
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - hasprefixi
+#   - hassuffix
+#   - hassuffixi
+#
+# Examples:
+#   - tawk 'hasprefix($srcIP4, "192")' file.txt
+#   - tawk 'hasprefix("facebook", "face") { print }' file.txt
+
+@include "hdr"
+@include "unquote"
+
+function hasprefix(val, pre, ign,        _plen, _vlen) {
+    if (hdr()) return __PRIHDR__
+    val = unquote(val)
+    if (ign) {
+        val = tolower(val)
+        pre = tolower(pre)
+    }
+    _vlen = length(val)
+    _plen = length(pre)
+    return _plen <= _vlen && substr(val, 1, _plen) == pre
+}

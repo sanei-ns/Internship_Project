@@ -1,0 +1,48 @@
+#H bit | dhcpHWType            | Description
+#H =============================================================================
+     0 | 0x0000 0000 0000 0001 | -
+     1 | 0x0000 0000 0000 0002 | Ethernet
+     2 | 0x0000 0000 0000 0004 | Experimental Ethernet
+     3 | 0x0000 0000 0000 0008 | Amateur Radio AX.25
+
+     4 | 0x0000 0000 0000 0010 | Proteon ProNET TOken Ring
+     5 | 0x0000 0000 0000 0020 | Chaos
+     6 | 0x0000 0000 0000 0040 | IEEE 802
+     7 | 0x0000 0000 0000 0080 | ARCNET
+
+     8 | 0x0000 0000 0000 0100 | Hyperchannel
+     9 | 0x0000 0000 0000 0200 | Lanstar
+    10 | 0x0000 0000 0000 0400 | Autonet Short Address
+    11 | 0x0000 0000 0000 0800 | LocalTalk
+
+    12 | 0x0000 0000 0000 1000 | LocalNet (IBM PCNet or SYTEK LocalNet)
+    13 | 0x0000 0000 0000 2000 | Ultra link
+    14 | 0x0000 0000 0000 4000 | SMDS
+    15 | 0x0000 0000 0000 8000 | Frame Relay
+
+    16 | 0x0000 0000 0001 0000 | ATM, Asynchronous Transmission Mode
+    17 | 0x0000 0000 0002 0000 | HDLC
+    18 | 0x0000 0000 0004 0000 | Fibre Channel
+    19 | 0x0000 0000 0008 0000 | ATM, Asynchronous Transmission Mode
+
+    20 | 0x0000 0000 0010 0000 | Serial Line
+    21 | 0x0000 0000 0020 0000 | ATM, Asynchronous Transmission Mode
+    22 | 0x0000 0000 0040 0000 | MIL-STD-188-220
+    23 | 0x0000 0000 0080 0000 | Metricom
+
+    24 | 0x0000 0000 0100 0000 | IEEE 1394.1995
+    25 | 0x0000 0000 0200 0000 | MAPOS
+    26 | 0x0000 0000 0400 0000 | Twinaxia
+    27 | 0x0000 0000 0800 0000 | EUI-64
+
+    28 | 0x0000 0000 1000 0000 | HIPARP
+    29 | 0x0000 0000 2000 0000 | IP and ARP over ISO 7816-3
+    30 | 0x0000 0000 4000 0000 | ARPSec
+    31 | 0x0000 0000 8000 0000 | IPsec tunnel
+
+    32 | 0x0000 0001 0000 0000 | Infiniband
+    33 | 0x0000 0002 0000 0000 | CAI, TIA-102 Project 25 Common Air Interface
+    34 | 0x0000 0004 0000 0000 | Wiegand Interface
+    35 | 0x0000 0008 0000 0000 | Pure IP
+
+#I  63 | 0x8000 0000 0000 0000 | All values bigger than 62 are reported here

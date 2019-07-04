@@ -1,0 +1,12 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/ircDecode
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/ftpDecode.h
+IRC_SAVE        src/ircDecode.h
+IRC_BITFIELD    src/ircDecode.h

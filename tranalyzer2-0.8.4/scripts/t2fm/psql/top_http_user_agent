@@ -1,0 +1,21 @@
+-- Top HTTP user-agent by number of flows
+
+SELECT
+    user_agent,
+    COUNT(*) AS cnt
+
+FROM (
+    SELECT
+        UNNEST("httpUsrAg") AS user_agent
+    FROM
+        flow
+    WHERE
+        ARRAY_LENGTH("httpUsrAg", 1) > 0
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+GROUP BY user_agent
+ORDER BY cnt DESC
+
+LIMIT :n

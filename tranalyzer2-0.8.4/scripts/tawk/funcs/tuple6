@@ -1,0 +1,21 @@
+#!/usr/bin/env awk
+#
+# Returns the 6 tuple (source IP and port, destination IP and port, protocol, VLAN ID)
+#
+# Dependencies:
+#   - basicFlow
+#
+# Examples:
+#   - tawk '{ print tuple6() }' file.txt
+
+@include "_validate_col"
+
+function tuple6(        _dp, _dip, _pr, _sip, _sp) {
+    _sip = _validate_col("srcIP;srcIP4;srcIP6", _my_srcIP)
+    _dip = _validate_col("dstIP;dstIP4;dstIP6", _my_dstIP)
+    _sp  = _validate_col("srcPort", _my_srcPort)
+    _dp  = _validate_col("dstPort", _my_dstPort)
+    _pr  = _validate_col("l4Proto", _my_l4Proto)
+    _validate_col("ethVlanID")
+    return $_sip OFS $_sp OFS $_dip OFS $_dp OFS $_pr OFS $ethVlanID
+}

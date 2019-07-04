@@ -1,0 +1,38 @@
+# Total packets: 109404 (109.40 K)
+# Total bytes: 94032732 (94.03 M)
+# L2/3 Protocol	             Packets	               Bytes	Description
+0x0800	               90878 [ 83.07%]	            92882782 [ 98.78%]	Internet Protocol version 4 (IPv4)
+0x0806	               18469 [ 16.88%]	             1144790 [  1.22%]	Address Resolution Protocol (ARP)
+0x86dd	                  57 [  0.05%]	                5160 [  0.01%]	Internet Protocol version 6 (IPv6)
+
+
+# Total IPv4 packets: 90878 (90.88 K) [83.07%]
+# Total IPv6 packets: 57 [0.05%]
+# L4 Protocol	             Packets	               Bytes	Description
+  6	               89704 [ 81.99%]	            92749288 [ 98.64%]	Transmission Control Protocol (TCP)
+ 17	                1228 [  1.12%]	              138390 [  0.15%]	User Datagram Protocol (UDP)
+ 58	                   3 [  0.00%]	                 264 [  0.00%]	Internet Control Message Protocol for IPv6 (ICMPv6)
+
+
+# Total TCP packets: 89704 (89.70 K) [81.99%]
+# Total TCP bytes: 92749288 (92.75 M) [98.64%]
+# TCP Port	             Packets	               Bytes	Description
+ 8080	               88218 [ 98.34%]	            92654822 [ 99.90%]	HTTP Alternate (see port 80)
+24639	                1392 [  1.55%]	               85376 [  0.09%]	
+42372	                  30 [  0.03%]	                3365 [  0.00%]	
+42560	                  10 [  0.01%]	                 829 [  0.00%]	
+54652	                  27 [  0.03%]	                2448 [  0.00%]	
+54712	                  27 [  0.03%]	                2448 [  0.00%]	
+
+
+# Total UDP packets: 1228 (1.23 K) [1.12%]
+# Total UDP bytes: 138390 (138.39 K) [0.15%]
+# UDP Port	             Packets	               Bytes	Description
+   67	                  68 [  5.54%]	               23392 [ 16.90%]	Bootstrap Protocol Server
+  137	                 773 [ 62.95%]	               73670 [ 53.23%]	NETBIOS Name Service
+  138	                  90 [  7.33%]	               21567 [ 15.58%]	NETBIOS Datagram Service
+ 1947	                  13 [  1.06%]	                1092 [  0.79%]	hlserver
+ 5355	                 114 [  9.28%]	                8021 [  5.80%]	Link Local Multicast Name Resolution
+13364	                 165 [ 13.44%]	               10230 [  7.39%]	
+15000	                   1 [  0.08%]	                  94 [  0.07%]	Hypack Data Aquisition
+55905	                   4 [  0.33%]	                 324 [  0.23%]	

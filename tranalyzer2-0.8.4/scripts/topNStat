@@ -1,0 +1,283 @@
+#!/usr/bin/env bash
+#
+# Generates sorted lists of all the columns (names or numbers) provided.
+
+source "$(dirname "$0")/t2utils.sh"
+
+usage() {
+    printf "Usage:\n"
+    printf "    $SNAME [-h|-e|-l] file_flows.txt <columns...>\n"
+    printf "             [-n=topN|-bottomN] [-p=min%%|-max%%]\n"
+    printf "             [-c=[f|p|b|colN]] [-f=\"filter\"] [icmp|tcp|udp]\n\n"
+    printf "Columns can be specified as follows:\n"
+    printf "    - Column names, e.g., srcIP4\n"
+    printf "    - Column numbers, e.g., 8\n"
+    printf "    - Ranges of column numbers, e.g., 8-11\n"
+    printf "    - Aggregation of column names, e.g., srcPort:dstPort:l4Proto\n"
+    printf "    - Aggregation of column numbers, e.g., 8:10 or 8:10:11\n\n"
+    printf "Optional arguments:\n"
+    printf "    -f=F    only display results which match the filter [EXPERIMENTAL]\n"
+    printf "    -c=C    compute statistics in terms of number of flows [default],\n"
+    printf "            packets or bytes\n"
+    printf "    -n=N    limit the number of displayed results (> 0: topN, < 0: bottomN)\n"
+    printf "    -p=P    only display results whose probability is >= or <= than p%%\n\n"
+    printf "    -l=N    list the column numbers and names as N columns, then exit\n"
+    printf "    -e      display some examples, then exit\n"
+    printf "    -h      display this help, then exit\n\n"
+    printf "Filters can be specified using the '-f' option or one of the following keywords:\n"
+    printf "    icmp    only display results for ICMP flows\n"
+    printf "    tcp     only display results for TCP flows\n"
+    printf "    udp     only display results for UDP flows\n"
+}
+
+examples() {
+    printf "Examples:\n"
+    printf "    Generate the list of the top 10 talkers (in terms of number of flows):\n"
+    printf "        topNStat file_flows.txt -n=10 srcIP4\n\n"
+    printf "    Generate the list of the bottom 5 protocols:\n"
+    printf "        topNStat file_flows.txt -n=-5 12\n\n"
+    printf "    Generate the sorted lists of srcIP4 and dstIP4 with probabilty >= 50%%:\n"
+    printf "        topNStat file_flows.txt 7 9 -p=50\n\n"
+    printf "    Generate the sorted lists of srcPort and dstPort with prob. <= 10%%:\n"
+    printf "        topNStat file_flows.txt srcPort dstPort -p=-10\n\n"
+    printf "    Generate the list of the top 5 srcIP4,srcPort,dstIP4,dstPort,l4Proto:\n"
+    printf "        topNStat file_flows.txt 7-11 -n=5\n\n"
+    printf "    Generate the sorted list of srcIP4->dstIP4 pairs:\n"
+    printf "        topNStat file_flows.txt 7:9\n\n"
+    printf "    Generate the sorted list of srcIP4->dstIP4->dstPort tuples:\n"
+    printf "        topNStat file_flows.txt 7:9:10\n\n"
+    printf "    Generate the sorted list of dstPort for UDP:\n"
+    printf "        topNStat file_flows.txt 10 -f=\"11==17\"\n\n"
+    printf "    Generate the sorted list of dstIP4 for UDP, dstPort 53:\n"
+    printf "        topNStat file_flows.txt 9 -f=\"11 == 17 && 10 == 53\"\n\n"
+    printf "    Generate the sorted list of srcIP4 for TCP or UDP flows:\n"
+    printf "        topNStat file_flows.txt 9 -f=\"l4Proto == 6 || l4Proto == 17\"\n\n"
+    printf "    Count the number of UDP or TCP flows with dstPort 80:\n"
+    printf "        # Filter is applied from left to right\n"
+    printf "        topNStat file_flows.txt 9 -f=\"12==6 || 11==17 && 10==80\"\n\n"
+    printf "    Generate the sorted lists of srcPort and dstPort for UDP:\n"
+    printf "        # Count is based on the number of packets\n"
+    printf "        topNStat file_flows.txt srcPort dstPort udp -c=p\n"
+}
+
+listcols() {
+    $TAWK -l "$1" "$FILE"
+}
+
+TOPFUNC=head
+
+declare -a COLS
+
+while [ $# -ne 0 ]; do
+    case "$1" in
+        -f=*) FILTER="${1#*=}";;
+        -n=-*) N="${1#*=-}"; TOPFUNC=tail;;
+        -n=*) N="${1#*=}";;
+        -p=-*) MAXP="${1#*=-}";;
+        -p=*) MINP="${1#*=}";;
+        -c=*) C="${1#*=}";;
+        -l=*) LISTCOLS="${1#*=}";;
+        -l) LISTCOLS=1;;
+        # Ranges of column numbers
+        [0-9]*-[0-9]*)
+            i0=$(cut -d- -f1 <<< "$1")
+            iN=$(cut -d- -f2 <<< "$1")
+            COLS=("${COLS[@]}" "$(seq $i0 $iN)")
+            ;;
+        icmp) FILTER="l4Proto == 1";;
+        tcp) FILTER="l4Proto == 6";;
+        udp) FILTER="l4Proto == 17";;
+        -e) examples; exit 0;;
+        -h|-\?|--help) usage; exit 0;;
+        *)
+            if [ -f "$1" ]; then
+                FILE="$1"
+            else
+                COLS=("${COLS[@]}" "$1")
+            fi
+            ;;
+    esac
+    shift
+done
+
+if [ ! -f "$FILE" ]; then
+    abort_required_file
+fi
+
+if [ ! -z "$LISTCOLS" ]; then
+    listcols "$LISTCOLS"
+    exit 0
+fi
+
+if [ ${#COLS[@]} -eq 0 ]; then
+    printerr "At least on column name or number is expected"
+    abort_with_help
+fi
+
+if [ -z "$N" ]; then
+    N=$(wc -l "$FILE" | $AWK '{ print $1 }')
+fi
+
+for i in ${COLS[@]}; do
+    $AWK -F'\t' -v name="$i" -v count="$C" '
+        /^%/ && $1 ~ /%[[:space:]]*dir$/ {
+            sub(/^%[[:space:]]*/, "");
+            split(name, n, ":");
+            # check the column numbers
+            for (i = 1; i <= length(n); i++) {
+                if (n[i] ~ /^[0-9]+$/) {
+                    if (n[i] > NF) {
+                        printf "Error: column %d does not exist\n", n[i];
+                        error = 1;
+                    }
+                } else {
+                    found = 0;
+                    for (c = 1; c <= NF; c++) {
+                        if (n[i] == $c) {
+                            found = 1;
+                            n[i] = c;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        printf "Error: column %s does not exist\n", n[i];
+                        error = 1;
+                    }
+                }
+            }
+            if (count && count != "f") {
+                if (count == "p") colname = "numPktsSnt";
+                else if (count == "b") colname = "numBytesSnt";
+                else if (count ~ /^[0-9]$/ && count <= NF) colname = $count;
+                else colname = count;
+                for (c = 1; c <= NF; c++) {
+                    if ($c == colname) { found = 1; break }
+                }
+                if (!found) {
+                    printf "Error: column %s does not exist\n", colname;
+                    error = 1;
+                }
+            }
+            if (!error) {
+                # print column names
+                printf "%s", $n[1];
+                for (i = 2; i <= length(n); i++) {
+                    printf ":%s", $n[i];
+                }
+            }
+            exit(error);
+        }' "$FILE"
+
+    if [ $? -eq 1 ]; then
+        continue
+    fi
+    printf "\tCount\tProbability[%%]\n"
+
+    $AWK -F'\t' -v name="$i" -v filter="$FILTER" -v minP="$MINP" -v maxP="$MAXP" -v count="$C" '
+        function chomp(s) {
+            s = gensub(/^[[:space:]]*/, "", "", s); # remove leading spaces
+            s = gensub(/[[:space:]]*$/, "", "", s); # remove trailing spaces
+            return s;
+        }
+
+        BEGIN {
+            if (!maxP) maxP = 100;
+            split(filter, f, /[[:space:]]*[!=<>&|^]{1,2}[[:space:]]*/, seps);
+            for (i = 1; i <= length(f); i++) f[i] = chomp(f[i]);
+            for (i = 1; i <= length(seps); i++) seps[i] = chomp(seps[i]);
+        }
+
+        # Read column names
+        /^%/ && $1 ~ /%[[:space:]]*dir$/ {
+            sub(/^%[[:space:]]*/, "");
+            split(name, n, ":");
+            for (i = 1; i <= length(n); i++) {
+                if (n[i] ~ /^[0-9]+$/) {
+                    col[i] = n[i];
+                } else {
+                    for (c = 1; c <= NF; c++) {
+                        if (n[i] == $c) {
+                            col[i] = c;
+                            break;
+                        }
+                    }
+                }
+            }
+            for (i = 1; i <= length(f); i += 2) {
+                if (f[i] !~ /^[0-9]+$/) {
+                    # replace column names by numbers
+                    for (c = 1; c <= NF; c++) {
+                        if (f[i] == $c) {
+                            f[i] = c;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (count && count != "f") {
+                if (count == "p") colname = "numPktsSnt";
+                else if (count == "b") colname = "numBytesSnt";
+                else if (count ~ /^[0-9]$/) colname = $count;
+                else colname = count;
+                for (c = 1; c <= NF; c++) {
+                    if ($c == colname) { cc = c; break; }
+                }
+            }
+            next;
+        }
+
+        !(/^%/ || /^#/) {
+            if (count && count != "f") total += $cc;
+            else total++;
+            if (filter) {
+                j = 1;
+                for (s = 1; s <= length(f); s += 2) {
+                    a = $strtonum(f[s]);
+                    b = f[s+1];
+                    r[j] = 0;
+                    switch (seps[s]) {
+                        case "==": if (a == b) r[j] = 1; break;
+                        case "!=": if (a != b) r[j] = 1; break;
+                        case ">=": if (a >= b) r[j] = 1; break;
+                        case "<=": if (a <= b) r[j] = 1; break;
+                        case ">" : if (a >  b) r[j] = 1; break;
+                        case "<" : if (a  < b) r[j] = 1; break;
+                        case "&" : if (and(strtonum(a), strtonum(b))) r[j] = 1; break;
+                        case "|" : if (or (strtonum(a), strtonum(b))) r[j] = 1; break;
+                        case "^" : if (xor(strtonum(a), strtonum(b))) r[j] = 1; break;
+                    }
+                    j++;
+                }
+                j = 1;
+                res = r[j++];
+                for (s = 2; s <= length(seps); s += 2) {
+                    switch (seps[s]) {
+                        case "&&": res = res && r[j]; break;
+                        case "||": res = res || r[j]; break;
+                        default: res = 0; break; # invalid filter => false
+                    }
+                    j++;
+                }
+                if (!res) next;
+            }
+            key = $col[1];
+            for (i = 2; i <= length(col); i++) {
+                key = key ":" $col[i];
+            }
+            if (count && count != "f") array[key] += $cc;
+            else array[key]++;
+        }
+
+        END {
+            if (total) {
+                for (k in array) {
+                    p = 100*array[k]/total;
+                    if (p >= minP && p <= maxP) printf "%s\t%d\t%9.6f\n", k, array[k], p;
+                }
+            }
+        }
+    ' "$FILE" | sort -rnk2 -t$'\t' | $TOPFUNC -"$N"
+    echo
+done
+
+unset -v COLS

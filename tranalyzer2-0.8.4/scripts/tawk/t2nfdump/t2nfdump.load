@@ -1,0 +1,48 @@
+#!/usr/bin/env awk
+#
+# Provides access to Tranalyzer fields with nfdump functions
+#
+# Dependencies:
+#   - basicFlow
+#   - basicStats
+#   - tcpFlags
+#
+# Example:
+#    - nfdump: nfdump -r file -o 'fmt:%sap -> %dap'
+#    - tawk  : tawk '{ print sap() " -> " dap() }' file
+
+@include "bpp"
+@include "bps"
+@include "byt"
+@include "da"
+@include "dap"
+@include "dp"
+@include "flg"
+@include "ibyt"
+@include "ipkt"
+@include "mpls"
+@include "mpls1"
+@include "mpls10"
+@include "mpls2"
+@include "mpls3"
+@include "mpls4"
+@include "mpls5"
+@include "mpls6"
+@include "mpls7"
+@include "mpls8"
+@include "mpls9"
+@include "_mplsi"
+@include "obyt"
+@include "oextended"
+@include "oline"
+@include "olong"
+@include "opkt"
+@include "pkt"
+@include "pps"
+@include "pr"
+@include "sa"
+@include "sap"
+@include "sp"
+@include "td"
+@include "te"
+@include "ts"

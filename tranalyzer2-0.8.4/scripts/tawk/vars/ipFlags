@@ -1,0 +1,18 @@
+#H bit | ipFlags | Description
+#H =============================================================================
+#W   0 | 0x0001  | IP options corrupt
+#I   1 | 0x0002  | IPv4 packets out of order
+#I   2 | 0x0004  | IPv4 ID roll over
+#W   3 | 0x0008  | IP fragment below minimum
+#W   4 | 0x0010  | IP fragment out of range
+     5 | 0x0020  | More Fragment bit
+     6 | 0x0040  | IPv4: Don't Fragment bit, IPv6: reserve bit
+     7 | 0x0080  | Reserve bit
+#E   8 | 0x0100  | Fragmentation position error
+#E   9 | 0x0200  | Fragmentation sequence error
+#E  10 | 0x0400  | L3 checksum error
+#E  11 | 0x0800  | L4 checksum error
+#W  12 | 0x1000  | L3 header length snapped
+    13 | 0x2000  | Packet interdistance = 0
+    14 | 0x4000  | Packet interdistance < 0
+#W  15 | 0x8000  | TCP SYN flag with L7 content

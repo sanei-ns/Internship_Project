@@ -1,0 +1,27 @@
+# Mapping between Tranalyzer column names and other program names
+#
+# Note that if a column name is already defined as a function in tawk, then
+# the column name will be prefixed with an underscore, e.g., proto -> proto_
+#
+# The following naming conventions is used:
+#   _my_t2ColName = other_prog_col_name # Column description
+
+BEGIN {
+    #_my_flowInd       = flowInd        # Flow index
+    #_my_pktNo         = pktNo          # Packet number
+    #_my_srcIP         = srcIP          # Source IP
+    #_my_srcPort       = srcPort        # Source port
+    #_my_dstIP         = dstIP          # Destination IP
+    #_my_dstPort       = dstPort        # Destination IP
+    #_my_l4Proto       = l4Proto        # Protocol
+    #_my_timeFirst     = timeFirst      # Time of the first packet seen
+    #_my_timeLast      = timeLast       # Time of the last packet seen
+    #_my_duration      = duration       # Flow duration
+    #_my_numBytesRcvd  = numBytesRcvd   # Number of bytes received
+    #_my_numBytesSnt   = numBytesSnt    # Number of bytes sent
+    #_my_numPktsRcvd   = numPktsRcvd    # Number of packets received
+    #_my_numPktsSnt    = numPktsSnt     # Number of packets sent
+    #_my_avePktSize    = avePktSize     # Average packet size (bytes)
+    #_my_bytps         = bytps          # Bytes per seconds
+    #_my_pktps         = pktps          # Packets per seconds
+}

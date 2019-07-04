@@ -1,0 +1,37 @@
+#!/usr/bin/env awk
+#
+# Returns true if one of the destination MAC addresses is equal to 'mac'
+# If 'mac' is omitted, returns the destination MAC address(es)
+#
+# Dependencies:
+#   - macRecorder
+#
+# See Also:
+#   - dether: alias for dmac
+#   - ether
+#   - mac
+#   - sether
+#   - smac
+#
+# Examples:
+#   - tawk 'dmac("00:11:22:33:44:55")' file.txt
+#   - tawk '{ print dmac() }' file.txt
+
+@include "hdr"
+@include "splitc"
+@include "_validate_col"
+
+function dmac(m,        _c, _i, _l, _macs, _reps, _str) {
+    _c = _validate_col("srcMac_dstMac_numP")
+    _l = split($_c, _reps, ";");
+    if (__PRIHDR__ && hdr()) return splitc($_l, 2)
+    for (_i = 1; _i <= _l; _i++) {
+        split(_reps[_i], _macs, "_");
+        if (length(m) == 0) {
+            if (_i == 1) _str = _macs[2]
+            else if (_str !~ _macs[2]) _str = _str ";" _macs[2] # ignore reps
+        } else if (_macs[2] ~ m) return 1
+    }
+    if (length(m) == 0) return _str
+    return 0
+}

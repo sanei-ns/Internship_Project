@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+#
+# Configuration file for pcapd
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    PD_MODE_IN radio "" "Input mode; \
+            0: extract flows listed in input file (if -e option was used), \
+               or extract flows if alarm bit is set (if -e option was not used); \
+            1: dump all packets"
+
+    PD_EQ radio "PD_MODE_IN == 0" "; \
+            0: Save non matching flows; \
+            1: Save matching flows"
+
+    PD_MODE_OUT radio "" "Output mode; \
+            0: one pcap; \
+            1: one pcap per flow"
+
+    PD_SPLIT check "" "Split the output file (Tranalyzer -W option)"
+
+    PD_FORMAT radio "PD_MODE_IN == 0"  "Format of the input file (-e option); \
+            0: flow index only; \
+            1: flow file format"
+
+    PD_MAX_FD range "PD_MODE_OUT == 1"
+        "Maximum number of simultaneously open file descriptors: 1 4096"
+
+    PD_SUFFIX text "" "PCAP file extension"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

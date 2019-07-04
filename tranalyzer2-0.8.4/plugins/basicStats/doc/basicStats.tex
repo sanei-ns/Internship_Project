@@ -1,0 +1,124 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {basicStats}
+    {Basic Statistics}
+    {Tranalyzer Development Team} % author(s)
+
+\section{basicStats}\label{s:basicStats}
+
+\subsection{Description}
+The basicStats plugin supplies basic layer four statistics for each flow.
+
+\subsection{Dependencies}
+
+%\subsubsection{External Libraries}
+%This plugin depends on ...
+
+\subsubsection{Other Plugins}
+If the \tranrefpl{basicFlow} plugin is loaded, then the country of the IPs with the most bytes and packets transmitted is displayed in the final report.
+
+%\subsubsection{Required Files}
+%The file ... is required.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt BS\_AGGR\_CNT} & 0 & 1: add A+B counts, 0: A+B counts off\\
+    {\tt BS\_REV\_CNT}  & 1 & 1: add reverse counts from opposite flow, 0: native send counts\\
+    {\tt BS\_STATS}     & 1 & Output statistics (min, max, average, \ldots)\\\\
+
+    {\tt BS\_PL\_STATS}  & 1 & 1: Packet Length statistics\\
+    {\tt BS\_IAT\_STATS} & 1 & 1: IAT statistics\\\\
+
+    \multicolumn{4}{l}{If {\tt BS\_STATS==1}, the following additional flags can be used:}\\\\
+
+    {\tt BS\_VAR}    &     0 & Output the variance \\
+    {\tt BS\_STDDEV} &     1 & Output the standard deviation \\
+    {\tt BS\_XCLD}   &     0 & 0: do not exclude any value from statistics,\\
+                     &       & 1: include (BS\_XMIN,UINT16\_MAX],\\
+                     &       & 2: include [0,BS\_XMAX),\\
+                     &       & 3: include [BS\_XMIN,BS\_XMAX]\\
+                     &       & 4: exclude (BS\_XMIN,BS\_XMAX)\\
+    {\tt BS\_XMIN}   &     1 & minimal included/excluded from statistics & {\tt BS\_XCLD>0}\\
+    {\tt BS\_XMAX}   & 65535 & maximal included/excluded from statistics & {\tt BS\_XCLD>0}\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The basicStats plugin outputs the following fields:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt numPktsSnt}     & U64 & Number of transmitted packets            & \\
+    {\tt numPktsRcvd}    & U64 & Number of received packets               & {\tt BS\_REV\_CNT=1}\\
+    {\tt numPktsRTAggr}  & U64 & Number of received + transmitted packets & {\tt BS\_AGGR\_CNT=1}\\\\
+
+    {\tt numBytesSnt}    & U64 & Number of transmitted bytes            & \\
+    {\tt numBytesRcvd}   & U64 & Number of received bytes               & {\tt BS\_REV\_CNT=1}\\
+    {\tt numBytesRTAggr} & U64 & Number of received + transmitted bytes & {\tt BS\_AGGR\_CNT=1}\\\\
+
+    \multicolumn{4}{l}{If {\tt BS\_STATS=1}, the following columns, whose value depends on {\tt BS\_XCLD}, are provided}\\\\
+
+    \multicolumn{4}{l}{If {\tt BS\_PL\_STATS=1}, the following five columns are displayed}\\\\
+
+    {\tt minPktSz}   & U16 & Minimum layer 3 packet size\\
+    {\tt maxPktSz}   & U16 & Maximum layer 3 packet size\\
+    {\tt avePktSize} &   F & Average layer 3 packet size\\
+    {\tt varPktSize} &   F & Variance layer 3 packet size           & {\tt BS\_VAR=1}\\
+    {\tt stdPktSize} &   F & Standard deviation layer 3 packet size & {\tt BS\_STDDEV=1}\\\\
+
+    \multicolumn{4}{l}{If {\tt BS\_IAT\_STATS=1}, the following five columns are displayed}\\\\
+
+    {\tt minIAT}     &   F & Minimum IAT\\
+    {\tt maxIAT}     &   F & Maximum IAT\\
+    {\tt aveIAT}     &   F & Average IAT\\
+    {\tt varIAT}     &   F & Variance IAT           & {\tt BS\_VAR=1}\\
+    {\tt stdIAT}     &   F & Standard deviation IAT & {\tt BS\_STDDEV=1}\\\\
+
+    {\tt pktps}      &   F & Sent packets per second\\
+    {\tt bytps}      &   F & Sent bytes per second\\\\
+
+    {\tt pktAsm}     &   F & Packet stream asymmetry\\
+    {\tt bytAsm}     &   F & Byte stream asymmetry\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Packet File Output}
+In packet mode ({\tt --s} option), the basicFlow plugin outputs the following columns:
+\begin{longtable}{ll}
+    \toprule
+    {\bf Column} & {\bf Description}\\% & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt pktLen} & Packet size on the wire\\
+    {\tt l7Len}  & L7 length\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Plugin Report Output}
+The IP of biggest packets/bytes talker and packets/bytes counts are reported.
+
+%\subsection{Custom File Output}
+%Non-standard output
+%
+%\subsection{Example Output}
+%
+%\subsection{Known Bugs and Limitations}
+%
+%\subsection{TODO}
+%\begin{itemize}
+%    \item TODO1
+%    \item TODO2
+%\end{itemize}
+
+\end{document}

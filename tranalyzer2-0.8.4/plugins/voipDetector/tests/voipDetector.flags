@@ -1,0 +1,14 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/voipDetector
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/voipDetector.h
+VOIP_ANALEN     src/voipDetector.h
+VOIP_RM_DIR     src/voipDetector.h
+VOIP_V_SAVE     src/voipDetector.h
+VOIP_PLDOFF     src/voipDetector.h

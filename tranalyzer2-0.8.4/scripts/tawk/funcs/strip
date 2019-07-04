@@ -1,0 +1,23 @@
+#!/usr/bin/env awk
+#
+# Removes leading and trailing spaces from a string
+#
+# Parameters:
+#   - s : the string to strip
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - lstrip
+#   - rstrip
+#   - chomp
+#
+# Examples:
+#   - tawk '{ print strip("  str  ") }' file.txt
+
+function strip(s) {
+    gsub(/^\s*/, "", s) # remove leading spaces
+    gsub(/\s*$/, "", s) # remove trailing spaces
+    return s
+}

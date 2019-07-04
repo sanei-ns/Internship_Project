@@ -1,0 +1,29 @@
+#!/usr/bin/env awk
+#
+# nfdump extended output format
+#
+# Dependencies:
+#   - basicFlow
+#   - basicStats
+#   - tcpFlags
+#
+# Example:
+#   - tawk '{ print oextended() }' file
+
+@include "bpp"
+@include "bps"
+@include "byt"
+@include "dap"
+@include "flg"
+@include "pkt"
+@include "pps"
+@include "pr"
+@include "sap"
+@include "td"
+@include "ts"
+
+function oextended() {
+    return ts() OFS td() OFS pr() OFS sap() OFS "->" OFS dap() OFS flg() OFS \
+           pkt() OFS byt() OFS pps() OFS bps() OFS bpp()
+           #tos() OFS pkt() OFS byt() OFS pps() OFS bps() OFS bpp() #OFS fl()
+}

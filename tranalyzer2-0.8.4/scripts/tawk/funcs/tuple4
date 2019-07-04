@@ -1,0 +1,19 @@
+#!/usr/bin/env awk
+#
+# Returns the 4 tuple (source IP and port, destination IP and port)
+#
+# Dependencies:
+#   - basicFlow
+#
+# Examples:
+#   - tawk '{ print tuple4() }' file.txt
+
+@include "_validate_col"
+
+function tuple4(        _dp, _dip, _sip, _sp) {
+    _sip = _validate_col("srcIP;srcIP4;srcIP6", _my_srcIP)
+    _dip = _validate_col("dstIP;dstIP4;dstIP6", _my_dstIP)
+    _sp  = _validate_col("srcPort", _my_srcPort)
+    _dp  = _validate_col("dstPort", _my_dstPort)
+    return $_sip OFS $_sp OFS $_dip OFS $_dp
+}

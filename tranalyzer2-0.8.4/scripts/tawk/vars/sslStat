@@ -1,0 +1,18 @@
+#H bit | sslStat | Description
+#H =============================================================================
+     0 | 0x0001  | Message had mismatched version
+     1 | 0x0002  | Record was too long (max 16384)
+     2 | 0x0004  | Record was malformed, e.g., invalid value
+#W   3 | 0x0008  | Certificate had expired
+     4 | 0x0010  | Connection was closed due to fatal alert
+     5 | 0x0020  | Connection was renegotiated (existed before)
+     6 | 0x0040  | Peer not allowed to send heartbeat requests
+#W   7 | 0x0080  | Cipher list truncated... increase SSL_MAX_CIPHER
+#W   8 | 0x0100  | Extension list truncated... increase SSL_MAX_EXT
+#W   9 | 0x0200  | Protocol list truncated... increase SSL_MAX_PROTO
+#W  10 | 0x0400  | Protocol name truncated... increase SSL_PROTO_LEN
+#W  11 | 0x0800  | EC or EC formats list truncated... increase SSL_MAX_EC or SSL_MAX_EC_FORMATS
+#W  12 | 0x1000  | Certificate is blacklisted
+#W  13 | 0x2000  | Weak cipher detected (Null, DES, RC4 (RFC7465), ADH, 40/56 bits)
+#W  14 | 0x4000  | Weak protocol detected (SSL 2.0, SSL 3.0)
+#W  15 | 0x8000  | Weak key detected

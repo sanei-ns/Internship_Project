@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+#
+# Extracts ICMP and parent flows from a flow file.
+#
+# Usage: icmpX [OPTION...] file_flows.txt
+
+source "$(dirname "$0")/../../scripts/t2utils.sh"
+
+ALL=0  # 0: only ICMP flows with parents
+       # 1: all ICMP flows and parents
+IDX=0  # 0: print entire flows
+       # 1: Only print flow indices
+
+usage() {
+    echo "$SNAME - Extracts ICMP and parent flows for a flow file"
+    echo
+    echo "Usage: $SNAME [OPTION...] file_flows.txt"
+    echo
+    echo "Optional arguments:"
+    echo "    -a    extract all ICMP flows (with or without parents)"
+    echo "          (default: only ICMP flows with parents)"
+    echo "    -i    only print flow indexes (default: print the whole flow)"
+    echo "    -n    do not print the header (columns name)"
+    echo
+    echo "    -h    display this help, then exit"
+}
+
+while [ $# -ne 0 ]; do
+    case "$1" in
+        -a) ALL=1;;
+        -i) IDX=1;;
+        -n) HDR="-H";;
+        -h|-\?|--help) usage; exit 0;;
+         *)
+            if [ ! -f "$1" ]; then
+                abort_option_unknown "$1"
+            fi
+            INFILE="$1"
+            ;;
+    esac
+    shift
+done
+
+if [ ! -f "$INFILE" ]; then
+    abort_required_file
+fi
+
+$TAWK $HDR -v all=$ALL -v idx=$IDX '
+BEGIN {
+    _validate_col(flowInd, "flowInd")
+    _validate_col(l4Proto, "l4Proto")
+    _validate_col(icmpPFindex, "icmpPFindex")
+}
+
+/^#/ {
+    next # skip comments
+}
+
+# Print header
+__PRIHDR__ && NR != FNR && hdr() {
+    if (idx) {
+        print $flowInd
+    } else {
+        print
+    }
+    next
+}
+
+/^%/ {
+    next # skip special comments
+}
+
+NR == FNR && (icmp() || icmp6()) {
+    if (all == 1) {
+        if (idx == 1) {
+            if ($icmpPFindex > 0) print $icmpPFindex
+            print $flowInd
+        } else {
+            fidx[$flowInd] = 1
+            if ($icmpPFindex > 0) fidx[$icmpPFindex] = 1
+        }
+    } else {
+        if ($icmpPFindex > 0) {
+            if (idx == 1) {
+                print $icmpPFindex "\n" $flowInd
+            } else {
+                fidx[$icmpPFindex] = 1
+                fidx[$flowInd] = 1
+            }
+        }
+    }
+    next
+}
+
+NR != FNR && idx == 1 {
+    exit
+}
+
+# Print the flows
+NR != FNR && $flowInd in fidx {
+    print
+}
+
+' "$INFILE" "$INFILE"

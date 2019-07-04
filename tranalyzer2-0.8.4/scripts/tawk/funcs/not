@@ -1,0 +1,16 @@
+#!/usr/bin/env awk
+#
+# Returns the logical negation of a query q.
+# This function must be used to keep the header when negating a query.
+#
+# Examples:
+#   - tawk 'not(privip($dstIP4))' file.txt      # This will print the header
+#   - tawk '!privip($dstIP4) || hdr()' file.txt # This will print the header
+#   - tawk '!privip($dstIP4)' file.txt          # This will NOT print the header
+
+@include "hdr"
+
+function not(q) {
+    if (hdr()) return __PRIHDR__
+    else return !q
+}

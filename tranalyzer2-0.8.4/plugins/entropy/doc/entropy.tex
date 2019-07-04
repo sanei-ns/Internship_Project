@@ -1,0 +1,65 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {entropy}
+    {Entropy}
+    {Tranalyzer Development Team}
+
+\section{entropy}\label{s:entropy}
+
+\subsection{Description}
+The entropy plugin calculates the entropy of the snapped IP payload distribution.
+The calculation of the entropy demands a number elements equal to the SQR(alphabet) = 16 in the default case.
+The size of the alphabet is variable. By default, one byte = 256 characters.
+Two other key parameters, a binary and text based ratio, in combination with the entropy serve as input for AI for content and application classification. The character and binary ratio denote the degree of text or binary content respectively. \\
+
+The entropy plugin operates in two modes:
+\begin{itemize}
+    \item entropy payload
+    \item entropy payload + time series
+\end{itemize}
+
+and for production purposes by default deactivated. The parameter {\tt ENT\_MAXPBIN} controls the
+size of the alphabet and {\tt ENT\_ALPHA\_D} the output of the payload character distribution per flow.
+
+\subsubsection{Entropy Time Series (Experimental)}
+The reason for this flow file addition is the exploration of entropy chunks
+calculated over the whole payload as a series.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\% & {\bf Flags}\\
+    \midrule\endhead%
+    %{\tt ENT\_MAXPBIN} & {\tt (1 <{}< 8)} & N = 8 Bit Word, vocabulary: 256\\
+    {\tt ENT\_THRES} & 1 & calc entropy only if number of payload bytes > \\
+    {\tt ENT\_ALPHA\_D} & 0 & 1: print Alphabet distribution in flow file\\
+    {\tt ENT\_D\_OFFSET} & 0 & start of entropy calc in payload\\\\
+    \multicolumn{3}{l}{The following flags are experimental for the MAC anomaly detection end report:}\\\\
+    {\tt ENT\_FLOW} & 0 & global flow entropy: 1: entropy, 0 output; 2: + distribution\\
+    {\tt ENT\_NTUPLE} & 55 & \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The entropy plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt PyldEntropy}  &    F & Payload entropy: no entropy calculated:-1.0 \\
+    {\tt PyldChRatio}  &    F & Payload Character ratio \\
+    {\tt PyldBinRatio} &    F & Payload Binary ratio \\
+    {\tt Pyldlen}      &  U32 & Payload length          & {\tt ENT\_ALPHA\_D=1}\\
+    {\tt PyldHisto}    & RU32 & Payload histogram       & {\tt ENT\_ALPHA\_D=1}\\
+    \bottomrule
+\end{longtable}
+
+\end{document}

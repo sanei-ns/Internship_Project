@@ -1,0 +1,12 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/ftpDecode
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/ftpDecode.h
+FTP_SAVE    src/ftpDecode.h
+BITFIELD    src/ftpDecode.h

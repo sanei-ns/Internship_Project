@@ -1,0 +1,5 @@
+1	RPL_WELCOME	"Welcome to the Internet Relay Network <nick>!<user>@<host>"
+2	RPL_YOURHOST	"Your host is <servername>, running version <ver>"
+3	RPL_CREATED	"This server was created <date>"
+4	RPL_MYINFO	"<servername> <version> <available user modes> <available channel modes>"
+5	RPL_BOUNCE	"Try server <server name>, port <port number>"

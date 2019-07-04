@@ -1,0 +1,109 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {smtpDecode}
+    {Simple Mail Transfer Protocol (SMTP)}
+    {Tranalyzer Development Team}
+
+\section{smtpDecode}\label{s:smtpDecode}
+
+\subsection{Description}
+The smtpDecode plugin processes MAIL header and content information of a flow. The idea is to identify
+certain mail features and CNAMES. User defined compiler switches are in {\em smtpDecode.h}.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt SMTP\_SAVE} & 0 & 1: save content to SMTP\_F\_PATH \\
+    {\tt SMTP\_BTFLD} & 0 & 1: Bitfield coding of SMTP commands \\
+    {\tt SMTP\_RCTXT} & 1 & 1: print response code text \\
+    {\tt SMTP\_MXNMLN} & 70 & maximal name length \\
+    {\tt SMTP\_MXUNMLN} & 25 & maximal user length \\
+    {\tt SMTP\_MXPNMLN} & 15 & maximal PW length \\
+    {\tt MAXCNM} & 8 & maximal number rec,trans codes\\
+    {\tt MAXUNM} & 5 & maxiaml number server names  \\
+    {\tt MAXPNM} & 5 & maxiaml number server names  \\
+    {\tt MAXSNM} & 8 & maximal number of server addresses\\
+    {\tt MAXRNM} & 8 & maximal number of rec EMail addresses \\
+    {\tt MAXTNM} & 8 & maximal number of trans EMail addresses\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The smtpDecode plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{smtpStat}} & H8 & Status \\
+    {\tt \nameref{smtpCBF}} & H16 & Command bit field & {\tt BITFIELD=1}\\
+    {\tt smtpCC} & RSC & Command Codes \\
+    {\tt smtpRC} & RI16 & Response Codes \\
+    {\tt smtpUsr} & RS & SMTP Users \\
+    {\tt smtpPW} & RS & SMTP Passwords \\
+    {\tt smtpSANum} & I8 & number of Server addresses \\
+    {\tt smtpESANum} & I8 & number of email sender addresses \\
+    {\tt smtpERANum} & I8 & number of email receiver addresses \\
+    {\tt smtpSA} & RS & Server send addresses \\
+    {\tt smtpESA} & RS & Email send addresses \\
+    {\tt smtpERA} & RS & Email receive addresses \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{smtpStat}\label{smtpStat}
+The {\tt smtpStat} column describes the errors encountered during the flow lifetime:
+\begin{longtable}{rll}
+    \toprule
+    {\bf smtpStat} & {\bf Name} & {\bf Description} \\
+    \midrule\endhead%
+    $2^0$ (=0x01) & SMTP\_INIT & SMTP ports found\\
+    $2^1$ (=0x02) & SMTP\_AUTP & Authentication pending\\
+    $2^2$ (=0x04) & SMTP\_DTP & data download pending, {\tt SMTP\_SAVE=1}\\
+    $2^3$ (=0x08) & PWSTATE & User PW pending\\
+    $2^4$ (=0x10) & SMTP\_PWF & flow write finished, {\tt SMTP\_SAVE=1}\\
+    $2^5$ (=0x20) & --- & --- \\
+    $2^6$ (=0x40) & SMTP\_FERR & File error, {\tt SMTP\_SAVE=1}\\
+    $2^7$ (=0x80) & SMTP\_OVFL & array overflow \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{smtpCBF}\label{smtpCBF}
+The {\tt smtpCBF} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf smtpCBF} & {\bf Description} \\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0001}) & HELO\\
+    $2^{1}$  (={\tt 0x0002}) & EHLO\\
+    $2^{2}$  (={\tt 0x0004}) & MAIL\\
+    $2^{3}$  (={\tt 0x0008}) & RCPT\\
+    $2^{4}$  (={\tt 0x0010}) & DATA\\
+    $2^{5}$  (={\tt 0x0020}) & RSET\\
+    $2^{6}$  (={\tt 0x0040}) & SEND\\
+    $2^{7}$  (={\tt 0x0080}) & SOML\\
+    $2^{8}$  (={\tt 0x0100}) & SAML\\
+    $2^{9}$  (={\tt 0x0200}) & VRFY\\
+    $2^{10}$ (={\tt 0x0400}) & EXPN\\
+    $2^{11}$ (={\tt 0x0800}) & HELP\\
+    $2^{12}$ (={\tt 0x1000}) & NOOP\\
+    $2^{13}$ (={\tt 0x2000}) & QUIT\\
+    $2^{14}$ (={\tt 0x4000}) & TURN\\
+    $2^{15}$ (={\tt 0x8000}) & AUTH\\
+    \bottomrule
+\end{longtable}
+
+\subsection{TODO}
+\begin{itemize}
+    \item fragmentation
+\end{itemize}
+
+\end{document}

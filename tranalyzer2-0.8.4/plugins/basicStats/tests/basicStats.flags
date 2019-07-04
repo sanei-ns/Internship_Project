@@ -1,0 +1,16 @@
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/basicStats
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/basicStats.h
+BS_REV_CNT    src/basicStats.h
+BS_AGRR_CNT   src/basicStats.h
+BS_STATS      src/basicStats.h
+BS_PL_STATS   src/basicStats.h
+BS_IAT_STATS  src/basicStats.h
+BS_VARSTD     src/basicStats.h
+BS_XCLD       src/basicStats.h

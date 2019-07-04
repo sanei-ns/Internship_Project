@@ -1,0 +1,10 @@
+#H bit | voipStat | Description
+#H =============================================================================
+     0 | 0x01     | RTP detected
+     1 | 0x02     | RTCP detected
+     2 | 0x04     | SIP detected
+     3 | 0x08     | -
+     4 | 0x10     | RTP extension header
+     5 | 0x20     | RTP content write operation
+     6 | 0x40     | RTP packet loss detected
+     7 | 0x80     | RTP new frame header flag

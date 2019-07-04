@@ -1,0 +1,26 @@
+#!/usr/bin/env awk
+#
+# Returns true if 'ip' is a loopback address
+#   IPv4: 127.0.0.0/8
+#   IPv6: ::1
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk 'loopback($dstIP4)' file.txt
+#   - tawk '!loopback($dstIP6) { print }' file.txt
+
+@include "hdr"
+@include "ip6compress"
+@include "ipinnet"
+@include "isip"
+
+function loopback(ip) {
+    if (hdr()) return __PRIHDR__
+    if (isip(ip)) {
+        return ipinnet(ip, "127.0.0.0/8")
+    } else {
+        return ip6compress(ip) == "::1"
+    }
+}

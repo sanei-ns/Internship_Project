@@ -1,0 +1,137 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {PDF Report Generation from PCAP using t2fm}
+    {Tutorial} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{PDF Report Generation from PCAP using t2fm}\label{t2fm_tutorial}
+
+\subsection{Introduction}
+This tutorial presents {\tt t2fm}, a script which generates a PDF report out of a PCAP file. Information provided in the report includes top source and destination addresses and ports, protocols and applications, DNS and HTTP activity and potential warnings, such as executable downloads or SSH connections. %As highlighted in this tutorial, the script is straightforward to use. % TODO
+
+\subsection{Prerequisites}\label{s:t2fm-prereq}
+For this tutorial, it is assumed the user has a basic knowledge of Tranalyzer and that the file {\tt t2\_aliases} has been sourced in {\tt\textasciitilde{}/.bashrc} or {\tt\textasciitilde{}/.bash\_aliases} as follows\footnote{Refer to the file {\tt README.md} or to the documentation for more details} (make sure to replace {\tt\$T2HOME} with the actual path, e.g., {\tt\$HOME/tranalyzer2-0.7.0lm1/trunk}):\\
+\begin{verbatim}
+# $HOME/.bashrc
+
+if [ -f "$T2HOME/scripts/t2_aliases" ]; then
+    . "$T2HOME/scripts/t2_aliases"             # Note the leading `.'
+fi
+\end{verbatim}
+
+    \subsubsection{Required plugins}
+        The following plugins must be loaded for {\tt t2fm} to produce a useful report:
+        \begin{multicols}{3}
+            \begin{itemize}
+                \item \tranrefpl{basicFlow}
+                \item \tranrefpl{basicStats}
+                \item \tranrefpl{txtSink}
+            \end{itemize}
+        \end{multicols}
+
+    \subsubsection{Optional plugins}
+        The following plugins are optional:
+        \begin{multicols}{3}
+            \begin{itemize}
+                \item \tranrefpl{arpDecode}
+                \item \tranrefpl{dnsDecode}
+                \item \tranrefpl{geoip}
+                \item \tranrefpl{pwX}
+                \item \tranrefpl{sshDecode}
+                \item \tranrefpl{sslDecode}
+                \item \tranrefpl{httpSniffer}, configured as follows\footnote{This is only required to report information about EXE downloaded}:
+                    \begin{itemize}
+                        \item {\tt HTTP\_SAVE\_IMAGE=1}
+                        \item {\tt HTTP\_SAVE\_VIDEO=1}
+                        \item {\tt HTTP\_SAVE\_AUDIO=1}
+                        \item {\tt HTTP\_SAVE\_MSG=1}
+                        \item {\tt HTTP\_SAVE\_TEXT=1}
+                        \item {\tt HTTP\_SAVE\_APPL=1}
+                    \end{itemize}
+                \item \tranrefpl{nDPI}, configured as follows:
+                    \begin{itemize}
+                        \item {\tt NDPI\_OUTPUT\_STR=1}
+                    \end{itemize}
+                \item \tranrefpl{portClassifier}, configured as follows:
+                    \begin{itemize}
+                        \item {\tt PBC\_NUM=1}
+                        \item {\tt PBC\_STR=1}
+                    \end{itemize}
+            \end{itemize}
+        \end{multicols}
+~\\\\
+If one of those plugin is not loaded, messages like {\tt N/A: dnsDecode plugin required} will be displayed in the PDF where the information could not be accessed.
+
+    \subsubsection{Packages}
+        The following packages are required to build the PDF:
+        \begin{multicols}{3}
+            \begin{itemize}
+                \item texlive-latex-extra
+                \item texlive-fonts-recommended
+            \end{itemize}
+        \end{multicols}
+
+\subsection{Step-by-Step Instructions (PCAP to PDF)}\label{t2fm-pcap-pdf}
+
+For simplicity, this tutorial assumes the user wants a complete report, i.e., requires all of the optional plugins.
+
+\begin{enumerate}
+    \item Make sure all the plugins are configured as described in Section \ref{s:t2fm-prereq}
+    \item Build Tranalyzer and the plugins
+        \footnote{Hint: use the tab completion to avoid typing the full name of all the plugins: {\tt t2build tr<tab>~\ldots~ht<tab>~\ldots}}:\\
+        {\tt t2build tranalyzer2 basicFlow basicStats txtSink arpDecode dnsDecode geoip \textbackslash{}}\\
+        {\tt httpSniffer nDPI portClassifier pwX sshDecode sslDecode}\\
+        (Note that those first two steps can be omitted if {\tt t2fm --b} option is used)
+    \item Run {\tt t2fm} directly on the PCAP file (the report will be named {\tt file.pdf}):\\
+        {\tt t2fm -r file.pcap}
+    \item Open the generated PDF report {\tt file.pdf}:\\
+        {\tt evince file.pdf}
+\end{enumerate}
+
+\subsection{Step-by-Step Instructions (flow file to PDF)}
+Alternatively, if you prefer to run Tranalyzer yourself or already have access to a flow file, replace step 3 with the following steps:
+\begin{enumerate}
+    \item Follow point 1 and 2 from \refs{t2fm-pcap-pdf}
+    \item Run Tranalyzer on a pcap file as follows:\\
+        {\tt t2 -r file.pcap -w out}
+    \item The previous command should have created the following files:\\
+        {\tt out\_headers.txt\\out\_flows.txt}
+    \item Run the {\tt t2fm} script on the flow file generated previously:\\
+        {\tt t2fm -F out\_flows.txt}
+\end{enumerate}
+
+\subsection{Step-by-Step Instructions (MongoDB / PostgreSQL to PDF)}
+If the \tranrefpl{mongoSink} or \tranrefpl{psqlSink} plugins were loaded, t2fm can use the created databases to generate the report (faster).
+\begin{enumerate}
+    \item Follow point 1 and 2 from \refs{t2fm-pcap-pdf}\footnote{{\tt HTTP\_SAVE\_*} do not need to be set as EXE downloads detection is currently not implemented in the DB backends}
+    \item Build the \tranrefpl{mongoSink} or \tranrefpl{psqlSink} plugin:
+        \begin{itemize}
+            \item {\bf mongoDB:~}{\tt t2build mongoSink}\\
+            \item {\bf postgreSQL:~}{\tt t2build psqlSink}\\
+        \end{itemize}
+    \item Run Tranalyzer on a pcap file as follows:\\
+        {\tt t2 -r file.pcap -w out}
+    \item Run the {\tt t2fm} script on the database generated previously:
+        \begin{itemize}
+            \item {\bf mongoDB:~}{\tt t2fm -m tranalyzer}
+            \item {\bf postgreSQL:~}{\tt t2fm -p tranalyzer}
+        \end{itemize}
+\end{enumerate}
+
+When generating a report from a database a time range to query can be specified with the {\tt --T} option.
+The complete format is as follows: {\tt YYYY-MM-DD HH:MM:SS.USEC([+-]OFFSET|Z)}, e.g., {\tt 2018-10-01 12:34:56.912345+0100}.
+Note that only the required fields must be specified, e.g., {\tt 2018-09-01} is equivalent to {\tt 2018-09-01 00:00:00.000000}.
+For example, to generate a report from the 1st of September to the 11. of October 2018 at 14:59 from a PostgreSQL database, run the following command:
+{\tt t2fm -p tranalyzer -T "2018-09-01"  "2018-10-11 14:59"}
+
+\subsection{Conclusion}
+This tutorial has presented how {\tt t2fm} can be used to create a PDF report summarising the traffic contained in a PCAP file. Although not discussed in this tutorial, it is also possible to use {\tt t2fm} on a live interface ({\tt --i} option) or on a list of PCAP files ({\tt --R} option). For more details, refer to {\tt t2fm} man page or use {\tt t2fm --{}--help}.
+
+\end{document}

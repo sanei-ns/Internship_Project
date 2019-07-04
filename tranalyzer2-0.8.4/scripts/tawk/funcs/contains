@@ -1,0 +1,31 @@
+#!/usr/bin/env awk
+#
+# Returns true if 'val' contains 'txt'
+# If ign is 1, performs a case insensitive comparison
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - containsi
+#   - cvalcontains
+#   - cvalcontainsi
+#   - rvalcontains
+#   - rvalcontainsi
+#   - valcontains
+#   - valcontainsi
+#
+# Examples:
+#   - tawk 'contains($httpURL, "php")' file.txt
+#   - tawk 'contains($httpURL, "admin) { print $httpURL }' file.txt
+
+@include "hdr"
+
+function contains(val, txt, ign) {
+    if (hdr()) return __PRIHDR__
+    if (ign) {
+        val = tolower(val)
+        txt = tolower(txt)
+    }
+    return index(val, txt)
+}

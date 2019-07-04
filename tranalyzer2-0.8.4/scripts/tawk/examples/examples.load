@@ -1,0 +1,20 @@
+#!/usr/bin/env awk
+#
+# Include all the examples
+
+@include "covertChans"
+@include "dnsZT"
+@include "exeDL"
+@include "httpHostsURL"
+@include "nonstdports"
+@include "passwords"
+@include "postQryStr"
+@include "ssh"
+@include "topDnsA"
+@include "topDnsIp4"
+@include "topDnsIp6"
+@include "topDnsQ"
+@include "topHttpMimesST"
+@include "topHttpMimesT"
+@include "topSLD"
+@include "topTLD"

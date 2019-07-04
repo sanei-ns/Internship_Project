@@ -1,0 +1,71 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {macRecorder}
+    {MAC addresses}
+    {Tranalyzer Development Team} % author(s)
+
+\section{macRecorder}\label{s:macRecorder}
+
+\subsection{Description}
+The macRecorder plugin provides the source- and destination MAC address as well as the number of packets detected in the flow separated by an underscore. If there is more than one combination of MAC addresses, e.g., due to load balancing or router misconfiguration, the plugin prints all recognized MAC addresses separated by semicolons. The number of distinct source- and destination MAC addresses can be output by activating the {\tt MR\_NPAIRS} flag. The {\tt MR\_MANUF} flags controls the output of the manufacturers for the source and destination addresses. The representation of MAC addresses can be altered using the {\tt MR\_MAC\_FMT} flag.
+
+\subsection{Dependencies}
+
+\subsubsection{Required Files}
+The file {\tt manuf.txt} is required if {\tt MR\_MANUF > 0} and file {\tt maclbl.txt} is required if {\tt MR\_MACLBL > 0}.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt MR\_MAC\_FMT} & 1  & Format for MAC addresses. 0: hex, 1: mac, 2: int\\
+    {\tt MR\_NPAIRS}   & 1  & Whether (1) or not (0) to report number of distinct pairs\\
+    {\tt MR\_MANUF}    & 1  & 0: no manufacturers, 1: short names, 2: long names\\
+    {\tt MR\_MACLBL}   & 0  & 0: no mac label, 1: mac labeling\\
+    {\tt MR\_MAX\_MAC} & 16 & max number of output MAC address per flow\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The macRecorder plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt macPairs} & U32 & Number of distinct src/dst MAC addresses pairs & {\tt MR\_NPAIRS=1}\\
+    {\tt srcMac\_dstMac\_numP} & H64\_H64\_U64 & Src/Dst MAC addresses, number of packets & {\tt MR\_MAC\_FMT=0}\\
+    {\tt srcMac\_dstMac\_numP} & MAC\_MAC\_U64 & Src/Dst MAC addresses, number of packets & {\tt MR\_MAC\_FMT=1}\\
+    {\tt srcMac\_dstMac\_numP} & U64\_U64\_U64 & Src/Dst MAC addresses, number of packets & {\tt MR\_MAC\_FMT=2}\\
+    {\tt srcManuf\_dstManuf} & SC\_SC & Src/Dst MAC manufacturers & {\tt MR\_MANUF=1}\\
+    {\tt srcManuf\_dstManuf} & S\_S   & Src/Dst MAC manufacturers & {\tt MR\_MANUF=2}\\
+    {\tt srcLbl\_dstLbl}     & S\_S   & Src/Dst MAC label         & {\tt MR\_MACLBL>0}\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Packet File Output}
+In packet mode ({\tt --s} option), the macRecorder plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt srcManuf} & Source MAC manufacturer      & {\tt MR\_MANUF=1}\\
+    {\tt dstManuf} & Destination MAC manufacturer & {\tt MR\_MANUF=1}\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Example Output}
+Consider a host with MAC address {\tt aa:aa:aa:aa:aa:aa} in a local network requesting a website from a public server. Due to load balancing, the opposite flow can be split and transmitted via two routers with MAC addresses {\tt bb:bb:bb:bb:bb:bb} and {\tt cc:cc:cc:cc:cc:cc}. The macRecorder plugin then produces the following output:
+\begin{center}
+    {\tt bb:bb:bb:bb:bb:bb\_aa:aa:aa:aa:aa:aa\_667;cc:cc:cc:cc:cc:cc\_aa:aa:aa:aa:aa:aa\_666}
+\end{center}
+
+\end{document}

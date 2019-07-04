@@ -1,0 +1,18 @@
+#H telCmdC | Description
+#H =============================================================================
+      0xf0 | Subnegotiation End
+      0xf1 | No Operation
+      0xf2 | Data Mark
+      0xf3 | Break
+      0xf4 | Interrupt Process
+      0xf5 | Abort Output
+      0xf6 | Are You There
+      0xf7 | Erase Character
+      0xf8 | Erase Line
+      0xf9 | Go Ahead
+      0xfa | Subnegotiation
+      0xfb | Will Perform
+      0xfc | Won't Perform
+      0xfd | Do Perform
+      0xfe | Don't Perform
+      0xff | Interpret As Command

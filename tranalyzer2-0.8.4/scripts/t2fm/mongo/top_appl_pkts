@@ -1,0 +1,40 @@
+cursor = db.flow.aggregate([
+    {
+        $match : {
+            dir : "A",
+            timeFirst : { $gte : time_from },
+            timeLast  : { $lte : time_to },
+        }
+    },
+    {
+        $project : {
+            pkts : { $add : [ "$numPktsSnt", "$numPktsRcvd" ] },
+            ndpiclass : {
+                $split : [ "$nDPIclass", "." ]
+            }
+        }
+    },
+    {
+        $group : {
+            _id : {
+                $arrayElemAt : [ "$ndpiclass", 0 ]  // master protocol only
+            },
+            count : { $sum : "$pkts" }
+        }
+    },
+    {
+        $sort : { count : -1 }
+    },
+    {
+        $limit : n
+    }
+])
+
+cursor.forEach(
+    function(e) {
+        print(
+              e._id + "\t"
+            + e.count
+        )
+    }
+)

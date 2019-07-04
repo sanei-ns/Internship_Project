@@ -1,0 +1,147 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {pktSIATHisto}
+    {Packet Size and Inter-Arrival Time Histograms}
+    {Tranalyzer Development Team} % author(s)
+
+\section{pktSIATHisto}\label{s:pktSIATHisto}
+
+\subsection{Description}
+The pktSIATHisto plugin records the PL and IAT of a flow. While the PL reflects the bin, the IAT is divided by default into statistical bins
+to conserve memory / flow, see example below. Where the low precision is reserved for the most prominent IAT of all known codecs. Nevertheless, it can be configured
+by the user in any arbitrary way. If the memory is not sufficient then decrease HASHCHAINTABLE\_BASE\_SIZE in tranalyzer.h.
+\begin{center}
+    \begin{tabular}{cl}
+        \toprule
+        {\bf Bin} & {\bf Range of IAT(default)} \\
+        \midrule
+        0 -- 199 & 0 ms (incl.) -- 200 ms (excl.), partitioned into bins of 1 ms \\
+        200 -- 239 & 200 ms (incl.) -- 400 ms (excl.), partitioned into bins of 5 ms \\
+        240 -- 299 & 400 ms (incl.) -- 1 sec. (excl.), partitioned into bins of 10 ms \\
+        300 & for all IAT higher than 1 sec. \\
+        \bottomrule
+    \end{tabular}
+\end{center}
+
+\subsection{Configuration Flags}
+%The following flags can be used to control the output of the plugin:
+
+Classifying tasks may require other IAT binning. Then the bin limit {\tt IATBINBu} and the binsize {\tt IATBINWu} constants in {\em pktSIATHisto.h} need to be adapted as being indicated below using 6 different classes of bins:
+
+\begin{lstlisting}
+#define IATSECMAX 6 // max # of section in statistics;
+                    // last section comprises all elements > IATBINBu6
+
+
+#define IATBINBu1   50// bin boundary of section one: [0, 50)ms
+#define IATBINBu2   200
+#define IATBINBu3   1000
+#define IATBINBu4   10000
+#define IATBINBu5   100000
+#define IATBINBu6 1000000
+
+#define IATBINWu1   10// bin width 1ms
+#define IATBINWu2   5
+#define IATBINWu3   10
+#define IATBINWu4   20
+#define IATBINWu5   50
+#define IATBINWu6   100
+
+#define IATBINNu1   IATBINBu1 / IATBINWu1// # of bins in section one
+#define IATBINNu2   (IATBINBu2 - IATBINBu1) / IATBINWu2 + IATBINNu1
+#define IATBINNu3   (IATBINBu3 - IATBINBu2) / IATBINWu3 + IATBINNu2
+#define IATBINNu4   (IATBINBu4 - IATBINBu3) / IATBINWu4 + IATBINNu3
+#define IATBINNu5   (IATBINBu5 - IATBINBu4) / IATBINWu5 + IATBINNu4
+#define IATBINNu6   (IATBINBu6 - IATBINBu5) / IATBINWu6 + IATBINNu5
+
+\end{lstlisting}
+
+The number of bin sections is defined by {\tt IATSECMAX}, default is 3. The static fields {\tt IATBinBu} and {\tt IATBinWu}
+need to be adapted when {\tt IATSECMAX} is changed. The static definition in curly brackets of the constant fields
+{\tt IATBinBu[]}, {\tt IATBinBu[]} and {\tt IATBinBu[]} must adapted as well to the maximal bin size. The constant {\tt IATBINUMAX}
+including his two dimensional packet length, IAT statistics is being used by the descriptive statistics plugin
+and can suit as a raw input for subsequent statistical classifiers, such as Bayesian networks or C5.0 trees. \\
+
+The user is able to customize the output by changing several define statements in the header file {\em pktSIATHisto.h}. Every change requires a recompilation of the plugin using the {\em autogen.sh} script.\\
+{\tt HISTO\_PRINT\_BIN == 0}, the default case, selects the number of the IAT bin, while 1 supplies the lower bound of the IAT bin's range.\\
+As being outlined in the Descriptive Statistics plugin the output of the plugin can be suppressed by defining {\tt PRINT\_HISTO} to zero.\\
+For specific applications in the AI regime, the distribution can be directed into a separate file if the value {\tt PRINT\_HISTO\_IN \_SEPARATE\_FILE} is different from zero. The suffix for the distribution file is defined by the {\tt HISTO\_FILE\_SUFFIX} define. All switches are listed below:
+
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} & {\bf Flags} \\
+    \midrule\endhead%
+    {\tt\small HISTO\_NODEPOOL\_FACTOR}  & 17 & multiplication factor redblack tree nodepool\\
+                                         %&    & sizeof(nodepool) = HISTO\_NODEPOOL\_FACTOR * mainHashMap->hashChainTableSize\\
+    {\tt\small PRINT\_HISTO}             & 1 & print histo to flow file\\
+    {\tt\small HISTO\_PRINT\_BIN}        & 0 & Bin number; 0: Minimum of assigned inter arrival time.\\
+                                         &   & Example: Bin = 10 -> iat = [50:55) -> min(iat) = 50ms\\
+    {\tt\small HISTO\_EARLY\_CLEANUP}    & 0 & after onFlowTerminate tree information is destroyed.\\
+                                         &   & {\bf MUST} be 0 if dependent plugins are loaded\\
+    %{\tt\small HISTO\_DEBUG}            & 0 & \\
+    {\tt\small PSI\_XCLD}                & 0 & 1: include (BS\_XMIN,UINT16\_MAX] & \\
+    {\tt\small PSI\_XMIN}                & 1 & minimal packet length starts at PSI\_XMIN & {\small\tt PSI\_XCLD==1}\\
+    {\tt\small PSI\_MOD}                 & 0 & > 1 : Modulo factor of packet length & \\
+    {\tt\small IATSECMAX}                & 3 & max \# of sections in statistics,\\
+                                         &   & last section comprises all elements > IATBINBuN & {\small\tt PSI\_XCLD==1}\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The pktSIATHisto plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt tCnt} & U32 & Packet size inter-arrival time number of tree entries & \\
+    {\tt Ps\_IatBin\_Cnt\_} & R(U16\_4xU32) & Packet size inter-arrival time bin histogram & {\tt HISTO\_PRINT\_BIN=0}\\
+    {\tt \quad PsCnt\_IatCnt}\\
+    {\tt Ps\_Iat\_Cnt\_} & R(U16\_4xU32) & Packet size min inter-arrival time of bin histo & {\tt HISTO\_PRINT\_BIN=1}\\
+    {\tt \quad PsCnt\_IatCnt}\\
+    \bottomrule
+\end{longtable}
+
+All PL-IAT bins greater than zero are appended for each flow in the {\tt PREFIX\_flows.txt} file using the
+following format:
+\begin{center}
+    {\tt [ps]\_[IAT]\_[\# packets]\_[\# of packets PL]\_[\# of packets IAT]}
+\end{center}
+the PL-IAT bins are separated by semicolons. The IAT value is the lower bound of the IAT range of a bin.
+
+\subsection{Post-Processing}
+By invoking the script {\tt statGplt} under {\em trunk/scripts} files are generated for the 2/3 dim statistics in a Gnuplot/Excel/SPSS column oriented format. The format is:
+\begin{itemize}
+    \item For the 3D case: {\bf PL} {\tt <tab>} {\bf IAT} {\tt <tab>} {\bf count}
+    \item For the 2D case: {\bf PL} {\tt <tab>} {\bf count}
+\end{itemize}
+
+\subsection{Example Output}
+Consider a single flow with the following PL and IAT values:
+\begin{center}
+    \begin{tabular}{cccc}
+        \toprule
+        {\bf Packet number} & {\bf PL (bytes)} & {\bf IAT (ms)} & {\bf IAT bin}\\
+        \midrule
+        1 & 50 & 0    &  0 \\
+        2 & 70 & 88.2 & 17 \\
+        3 & 70 & 84.3 & 16 \\
+        4 & 70 & 92.9 & 18 \\
+        5 & 70 & 87.1 & 17 \\
+        6 & 60 & 91.6 & 18 \\
+        \bottomrule
+    \end{tabular}
+\end{center}
+Packet number two and five have the same PL-IAT combination. Packets number two to five have the same PL and number two and five as well as the number four and six fall within the same IAT bin. Therefore the following sequence is generated:
+\begin{center}
+    {\tt 50\_0\_1\_1\_1 ; 60\_90\_1\_1\_2 ; 70\_80\_1\_4\_1 ; 70\_85\_2\_4\_2 ; 70\_90\_1\_4\_2}
+\end{center}
+Note that for better readability spaces are inserted around the semicolons which will not exist in the text based flow file!
+
+\end{document}

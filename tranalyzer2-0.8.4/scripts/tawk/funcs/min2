@@ -1,0 +1,20 @@
+#!/usr/bin/env awk
+#
+# Returns the mininum value between a and b
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - max
+#   - max2
+#   - max3
+#   - min
+#   - min3
+#
+# Examples:
+#   - tawk '{ print min2(1, 2) }' file.txt
+
+function min2(a, b) {
+    return (a < b ? a : b)
+}

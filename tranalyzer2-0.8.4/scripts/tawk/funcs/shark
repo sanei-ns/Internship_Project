@@ -1,0 +1,1043 @@
+#!/usr/bin/env awk
+#
+# Query flow files according to Wireshark's syntax
+#
+# Parameters:
+#   - q: the wireshark query to perform
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk 'shark("http.host") ~ "google"' file.txt
+#   - tawk '{ print shark("http.cookie") }' file.txt
+#   - tawk '{ h = shark("http.host"); if (h) print h }' file.txt
+
+@include "bitsallset"
+@include "hdr"
+@include "icmp"
+@include "igmp"
+@include "not"
+@include "printerr"
+@include "sctp"
+@include "splitc"
+@include "tcp"
+@include "udp"
+@include "_validate_col"
+
+function shark(q,        _p) {
+    if (!__PRIHDR__ && hdr()) next
+    q = tolower(q)
+    match(q, /^([^\.]+)(\.(.*))?$/, _p)
+    switch (_p[1]) {
+        # A
+        case "arp"    : return _shark_arp(_p[3])
+        case "ayiya"  : return _shark_ayiya(_p[3])
+        # B
+        case "bgp"    : return _shark_bgp(_p[3])
+        # C
+        case "capwap" : return _shark_capwap(_p[3])
+        case "cdp"    : return _shark_cdp(_p[3])
+        # D
+        case "dhcp"   : return _shark_dhcp(_p[3])
+        case "dhcpv6" : return _shark_dhcpv6(_p[3])
+        case "dns"    : return _shark_dns(_p[3])
+        # E
+        case "eth"    : return _shark_eth(_p[3])
+        case "etherip": return _shark_etherip(_p[3])
+        case "erspan" : return _shark_erspan(_p[3])
+        # F
+        case "frame"  : return _shark_frame(_p[3])
+        # G
+        case "geneve" : return _shark_geneve(_p[3])
+        case "gre"    : return _shark_gre(_p[3])
+        case "gtp"    : return _shark_gtp(_p[3])
+        # H
+        case "http"   : return _shark_http(_p[3])
+        # I
+        case "icmp"   : return _shark_icmp(_p[3])
+        case "igmp"   : return _shark_igmp(_p[3])
+        case "ip"     : return _shark_ip(_p[3])
+        case "ipv6"   : return _shark_ipv6(_p[3])
+        # L
+        case "l2tp"   : return _shark_l2tp(_p[3])
+        case "lldp"   : return _shark_lldp(_p[3])
+        # M
+        case "mpls"   : return _shark_mpls(_p[3])
+        # N
+        case "nbns"   : return _shark_nbns(_p[3])
+        case "ntp"    : return _shark_ntp(_p[3])
+        # Q
+        case "quic"   : return _shark_quic(_p[3])
+        # S
+        case "sctp"   : return _shark_sctp(_p[3])
+        case "ssdp"   : return _shark_ssdp(_p[3])
+        case "ssh"    : return _shark_ssh(_p[3])
+        # T
+        case "tcp"    : return _shark_tcp(_p[3])
+        case "teredo" : return _shark_teredo(_p[3])
+        # U
+        case "udp"    : return _shark_udp(_p[3])
+        # V
+        case "vlan"   : return _shark_vlan(_p[3])
+        case "vxlan"  : return _shark_vxlan(_p[3])
+        default:
+            _shark_error(q)
+    }
+}
+
+function _shark_error(q1, q2) {
+    printerr("Wireshark query '" q1 "" (q2 ? "." : "") q2 "' not yet implemented")
+    exit(1)
+}
+
+function _shark_arp(q,        _c) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x40)) next
+    switch (q) {
+        case "":
+            return 1
+        case "dst.hw_mac":
+            _c = _validate_col("arpTargetMAC")
+            return $_c
+        case "dst.proto_ipv4":
+            _c = _validate_col("arpTargetIP")
+            return $_c
+        case "hw.size":
+            _c = _validate_col("arpHwSize")
+            return $_c
+        case "hw.type":
+            _c = _validate_col("arpHwType")
+            return $_c
+        case "isgratuitous":
+            _c = _validate_col("arpStat")
+            return bitsallset($_c, 0x08)
+        case "opcode":
+            _c = _validate_col("arpOpcode")
+            return $_c
+        case "proto.size":
+            _c = _validate_col("arpProtoSize")
+            return $_c
+        case "proto.type":
+            _c = _validate_col("arpProtoType")
+            return $_c
+        case "src.hw_mac":
+            _c = _validate_col("arpSenderMAC")
+            return $_c
+        case "src.proto_ipv4":
+            _c = _validate_col("arpSenderIP")
+            return $_c
+        default:
+            _shark_error("arp", q)
+    }
+}
+
+function _shark_ayiya(q,        _c) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x100000)) next
+    switch (q) {
+        case "":
+            return 1
+        default:
+            _shark_error("ayiya", q)
+    }
+}
+
+function _shark_bgp(q,        _c) {
+    _c = _validate_col("bgpStat")
+    if (!strtonum($_c) && !hdr()) next
+    switch (q) {
+        case "open.holdtime":
+            _c = _validate_col("bgpHTime")
+            return $_c
+        case "open.identifier":
+            _c = _validate_col("bgpSrcId_dstId")
+            return splitc($_c, 1)
+        case "open.myas":
+            _c = _validate_col("bgpSrcAS_dstAS")
+            return splitc($_c, 1)
+        case "open.version":
+            _c = _validate_col("bgpVersion")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("bgp", q)
+    }
+}
+
+function _shark_dhcp(q,        _c) {
+    _c = _validate_col("dhcpStat")
+    if (!strtonum($_c) && !hdr()) next
+    switch (q) {
+        case "file":
+            _c = _validate_col("dhcpBootFile")
+            return $_c
+        case "hops":
+            _c = _validate_col("dhcpHopCnt")
+            return $_c
+        case "hw.type":
+            _c = _validate_col("dhcpHWTyp")
+            return $_c
+        case "ip.client":
+            _c = _validate_col("dhcpCliIP")
+            return $_c
+        case "ip.relay":
+            _c = _validate_col("dhcpRelay")
+            return $_c
+        case "ip.server":
+            _c = _validate_col("dhcpNextServer")
+            return $_c
+        case "ip.your":
+            _c = _validate_col("dhcpYourIP")
+            return $_c
+        case "secs":
+            _c = _validate_col("dhcpMaxSecEl")
+            return $_c
+        case "server":
+            _c = _validate_col("dhcpSrvName")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("dhcp", q)
+    }
+}
+
+function _shark_capwap(q,        _c) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x800000)) next
+    switch (q) {
+        case "":
+            return 1
+        default:
+            _shark_error("capwap", q)
+    }
+}
+
+function _shark_cdp(q,        _c, _d) {
+    _c = _validate_col("cdpStat")
+    if (!strtonum($_c) && !hdr()) next
+    switch (q) {
+        case "capabilities":
+            _c = _validate_col("cdpCaps")
+            return $_c
+        case "capabilities.host":
+            _c = _validate_col("cdpCaps")
+            return bitsallset($_c, 0x10)
+        case "capabilities.igmp_capable":
+            _c = _validate_col("cdpCaps")
+            return bitsallset($_c, 0x20)
+        case "capabilities.repeater":
+            _c = _validate_col("cdpCaps")
+            return bitsallset($_c, 0x40)
+        case "capabilities.router":
+            _c = _validate_col("cdpCaps")
+            return bitsallset($_c, 0x01)
+        case "capabilities.src_bridge":
+            _c = _validate_col("cdpCaps")
+            return bitsallset($_c, 0x04)
+        case "capabilities.switch":
+            _c = _validate_col("cdpCaps")
+            return bitsallset($_c, 0x08)
+        case "capabilities.trans_bridge":
+            _c = _validate_col("cdpCaps")
+            return bitsallset($_c, 0x02)
+        case "deviceid":
+            _c = _validate_col("cdpDevice")
+            return $_c
+        case "duplex":
+            _c = _validate_col("cdpDuplex")
+            return $_c
+        case "native_vlan":
+            _c = _validate_col("cdpNVLAN")
+            return $_c
+        case "platform":
+            _c = _validate_col("cdpPlatform")
+            return $_c
+        case "pordid":
+            _c = _validate_col("cdpPort")
+            return $_c
+        case "ttl":
+            _c = _validate_col("cdpTTL")
+            return $_c
+        case "version":
+            _c = _validate_col("cdpVersion")
+            return $_c
+        case "vtp_management_domain":
+            _c = _validate_col("cdpVTPMngmtDomain")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("cdp", q)
+    }
+}
+
+function _shark_dhcpv6(q,        _c, _d) {
+    _c1 = _validate_col("dhcpStat")
+    _c2 = _validate_col("flowStat")
+    if (!(strtonum($_c1) && bitsallset($_c2, 0x8000)) && !hdr()) next
+    switch (q) {
+        #case "client_fqdn":
+        case "":
+            return 1
+        default:
+            _shark_error("dhcpv6", q)
+    }
+}
+
+function _shark_dns(q,        _c) {
+    _c = _validate_col("dnsStat")
+    # Ignore nbns
+    if ((!strtonum($_c) || bitsallset($_c, 0x2)) && !hdr()) next
+    switch (q) {
+        case "a":
+            _c = _validate_col("dns4Aaddress")
+            return $_c
+        case "aaaa":
+            _c = _validate_col("dns6Aaddress")
+            return $_c
+        case "cname":
+            _c = _validate_col("dnsAPname")
+            return $_c
+        case "count.add_rr":
+            _c = _validate_col("dnsCntQu_Asw_Aux_Add")
+            return splitc($_c, 4)
+        case "count.answers":
+            _c = _validate_col("dnsCntQu_Asw_Aux_Add")
+            return splitc($_c, 2)
+        case "count.queries":
+            _c = _validate_col("dnsCntQu_Asw_Aux_Add")
+            return splitc($_c, 1)
+        case "qry.name":
+            _c = _validate_col("dnsQname")
+            return $_c
+        case "resp.name":
+            _c = _validate_col("dnsAname")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("dns", q)
+    }
+}
+
+function _shark_eth(q,        _c) {
+    switch (q) {
+        case "dst":
+            _c = _validate_col("dstMac")
+            return $_c
+        case "src":
+            _c = _validate_col("srcMac")
+            return $_c
+        case "type":
+            _c = _validate_col("ethType")
+            return $_c
+        default:
+            _shark_error("eth", q)
+    }
+}
+
+function _shark_etherip(q,        _c) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x40000)) next
+    switch (q) {
+        case "":
+            return 1
+        default:
+            _shark_error("etherip", q)
+    }
+}
+
+function _shark_erspan(q,        _c) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x4000000)) next
+    switch (q) {
+        case "":
+            return 1
+        default:
+            _shark_error("erspan", q)
+    }
+}
+
+function _shark_frame(q,        _c) {
+    switch (q) {
+        case "len":
+            _c = _validate_col("pktLen")
+            return $_c
+        case "number":
+            _c = _validate_col("pktNo")
+            return $_c
+        case "protocols":
+            _c = _validate_col("hdrDesc")
+            return $_c
+        case "time":
+            _c = _validate_col("time")
+            return $_c
+        case "time_delta":
+            _c = _validate_col("pktIAT")
+            return $_c
+        default:
+            _shark_error("frame", q)
+    }
+}
+
+function _shark_geneve(q,        _c) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x20000000)) next
+    switch (q) {
+        case "":
+            return 1
+        default:
+            _shark_error("geneve", q)
+    }
+}
+
+function _shark_gre(q,        _c) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x1000)) next
+    switch (q) {
+        case "":
+            return 1
+        default:
+            _shark_error("gre", q)
+    }
+}
+
+function _shark_gtp(q,        _c) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x200000)) next
+    switch (q) {
+        case "":
+            return 1
+        default:
+            _shark_error("gtp", q)
+    }
+}
+
+function _shark_http(q,        _c) {
+    _c = _validate_col("httpStat")
+    if (!bitsallset($_c, 0x8)) next
+    switch (q) {
+        case "cookie":
+            _c = _validate_col("httpCookies")
+            return $_c
+        case "host":
+            _c = _validate_col("httpHosts")
+            return $_c
+        case "location":
+            _c = _validate_col("httpLoc")
+            return $_c
+        case "referer":
+            _c = _validate_col("httpRefrr")
+            return $_c
+        case "server":
+            _c = _validate_col("httpServ")
+            return $_c
+        case "user_agent":
+            _c = _validate_col("httpUsrAg")
+            return $_c
+        case "x_forwarded_for":
+            _c = _validate_col("httpXFor")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("http", q)
+    }
+}
+
+function _shark_icmp(q,        _c, _d) {
+    if (!icmp()) next
+    switch (q) {
+        case "checksum":
+            _c = _validate_col("l4HdrChkSum")
+            return $_c
+        case "checksum.status":
+            _c = _validate_col("l4HdrChkSum")
+            _d = _validate_col("l4CalChkSum")
+            return ($_c == $_d)
+        case "type":
+            _c = _validate_col("icmpType_Code")
+            return splitc($_c, 1)
+        case "code":
+            _c = _validate_col("icmpType_Code")
+            return splitc($_c, 2)
+        case "":
+            return 1
+        default:
+            _shark_error("icmp", q)
+    }
+}
+
+function _shark_igmp(q,        _c, _d) {
+    if (!igmp()) next
+    switch (q) {
+        case "checksum":
+            _c = _validate_col("l4HdrChkSum")
+            return $_c
+        case "checksum.status":
+            _c = _validate_col("l4HdrChkSum")
+            _d = _validate_col("l4CalChkSum")
+            return ($_c == $_d)
+        case "":
+            return 1
+        default:
+            _shark_error("igmp", q)
+    }
+}
+
+function _shark_ip(q,        _c, _d) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x4000)) next
+    switch (q) {
+        case "checksum":
+            _c = _validate_col("ipHdrChkSum")
+            return $_c
+        case "checksum.status":
+            _c = _validate_col("ipHdrChkSum")
+            _d = _validate_col("ipCalChkSum")
+            return ($_c == $_d)
+        case "dst":
+            _c = _validate_col("dstIP4")
+            return $_c
+        case "flags":
+            _c = _validate_col("ipFrag")
+            return rshift(strtonum($_c), 13)
+        case "flags.rb":
+            _c = _validate_col("ipFrag")
+            return bitsallset($_c, 0x8000)
+        case "flags.df":
+            _c = _validate_col("ipFrag")
+            return bitsallset($_c, 0x4000)
+        case "flags.mf":
+            _c = _validate_col("ipFrag")
+            return bitsallset($_c, 0x2000)
+        case "frag_offset":
+            _c = _validate_col("ipFrag")
+            return lshift(and(strtonum($_c), 0x1fff), 3)
+        case "geoip.dst_city":
+            _c = _validate_col("dstIpCity")
+            return $_c
+        case "geoip.dst_country":
+            _c = _validate_col("dstIPCC;dstIpCountry")
+            return $_c
+        case "geoip.dst_lat":
+            _c = _validate_col("dstIPLng_Lat;dstIpLatitude")
+            if (_c == dstIPLng_Lat) return splitc($_c, 2)
+            else return $_c
+        case "geoip.dst_lon":
+            _c = _validate_col("dstIPLng_Lat;dstIpLongitude")
+            if (_c == dstIPLng_Lat) return splitc($_c, 1)
+            else return $_c
+        case "geoip.src_city":
+            _c = _validate_col("srcIpCity")
+            return $_c
+        case "geoip.src_country":
+            _c = _validate_col("srcIPCC;srcIpCountry")
+            return $_c
+        case "geoip.src_lat":
+            _c = _validate_col("srcIPLng_Lat;srcIpLatitude")
+            if (_c == srcIPLng_Lat) return splitc($_c, 2)
+            else return $_c
+        case "geoip.src_lon":
+            _c = _validate_col("srcIPLng_Lat;srcIpLongitude")
+            if (_c == srcIPLng_Lat) return splitc($_c, 1)
+            else return $_c
+        case "id":
+            _c = _validate_col("ipID")
+            return $_c
+        case "proto":
+            return proto()
+        case "src":
+            _c = _validate_col("srcIP4")
+            return $_c
+        case "tos":
+            _c = _validate_col("ipTOS")
+            return $_c
+        case "ttl":
+            _c = _validate_col("ipTTL")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("ip", q)
+    }
+}
+
+function _shark_ipv6(q,        _c, _d) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x8000)) next
+    switch (q) {
+        case "checksum":
+            _c = _validate_col("ipHdrChkSum")
+            return $_c
+        case "checksum.status":
+            _c = _validate_col("ipHdrChkSum")
+            _d = _validate_col("ipCalChkSum")
+            return ($_c == $_d)
+        case "dst":
+            _c = _validate_col("dstIP6")
+            return $_c
+        case "geoip.dst_city":
+            _c = _validate_col("dstIpCity")
+            return $_c
+        case "geoip.dst_country":
+            _c = _validate_col("dstIPCC;dstIpCountry")
+            return $_c
+        case "geoip.dst_lat":
+            _c = _validate_col("dstIPLng_Lat;dstIpLatitude")
+            if (_c == dstIPLng_Lat) return splitc($_c, 2)
+            else return $_c
+        case "geoip.dst_lon":
+            _c = _validate_col("dstIPLng_Lat;dstIpLongitude")
+            if (_c == dstIPLng_Lat) return splitc($_c, 1)
+            else return $_c
+        case "geoip.src_city":
+            _c = _validate_col("srcIpCity")
+            return $_c
+        case "geoip.src_country":
+            _c = _validate_col("srcIPCC;srcIpCountry")
+            return $_c
+        case "geoip.src_lat":
+            _c = _validate_col("srcIPLng_Lat;srcIpLatitude")
+            if (_c == srcIPLng_Lat) return splitc($_c, 2)
+            else return $_c
+        case "geoip.src_lon":
+            _c = _validate_col("srcIPLng_Lat;srcIpLongitude")
+            if (_c == srcIPLng_Lat) return splitc($_c, 1)
+            else return $_c
+        case "nxt":
+            return proto()
+        case "src":
+            _c = _validate_col("srcIP6")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("ipv6", q)
+    }
+}
+
+function _shark_l2tp(q,        _c) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x800)) next
+    switch (q) {
+        case "sid":
+            _c = _validate_col("l2tpSID")
+            return $_c
+        case "tunnel":
+            _c = _validate_col("l2tpTID")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("l2tp", q)
+    }
+}
+
+function _shark_lldp(q,        _c, _d) {
+    _c = _validate_col("flowStat;lldpStat")
+    if ((_c == flowStat && !bitsallset($_c, 0x20)) || (_c == lldpStat && !strtonum($_c) && !hdr())) next
+    switch (q) {
+        case "chassis.id":
+            _c = _validate_col("lldpChassis")
+            return $_c
+        #case "mgn.address":
+        #    _c = _validate_col("lldpMngmtAddr")
+        #    return $_c
+        case "port.id":
+            _c = _validate_col("lldpPort")
+            return $_c
+        case "port.desc":
+            _c = _validate_col("lldpPortDesc")
+            return $_c
+        case "tlv.enable_system_cap":
+            _c = _validate_col("lldpCaps_Enabled")
+            return splitc($_c, 2)
+        case "tlv.enable_system_cap.bridge":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 2)
+            return and(strtonum(_d), 0x0004)
+        case "tlv.enable_system_cap.docsis_cable_device":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 2)
+            return and(strtonum(_d), 0x0040)
+        case "tlv.enable_system_cap.other":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 2)
+            return and(strtonum(_d), 0x0001)
+        case "tlv.enable_system_cap.repeater":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 2)
+            return and(strtonum(_d), 0x0002)
+        case "tlv.enable_system_cap.router":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 2)
+            return and(strtonum(_d), 0x0010)
+        case "tlv.enable_system_cap.station_only":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 2)
+            return and(strtonum(_d), 0x0080)
+        case "tlv.enable_system_cap.telephone":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 2)
+            return and(strtonum(_d), 0x0020)
+        case "tlv.enable_system_cap.wlan_access_pt":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 2)
+            return and(strtonum(_d), 0x0008)
+        case "tlv.system_cap":
+            _c = _validate_col("lldpCaps_Enabled")
+            return splitc($_c, 1)
+        case "tlv.system_cap.bridge":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 1)
+            return and(strtonum(_d), 0x0004)
+        case "tlv.system_cap.docsis_cable_device":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 1)
+            return and(strtonum(_d), 0x0040)
+        case "tlv.system_cap.other":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 1)
+            return and(strtonum(_d), 0x0001)
+        case "tlv.system_cap.repeater":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 1)
+            return and(strtonum(_d), 0x0002)
+        case "tlv.system_cap.router":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 1)
+            return and(strtonum(_d), 0x0010)
+        case "tlv.system_cap.station_only":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 1)
+            return and(strtonum(_d), 0x0080)
+        case "tlv.system_cap.telephone":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 1)
+            return and(strtonum(_d), 0x0020)
+        case "tlv.system_cap.wlan_access_pt":
+            _c = _validate_col("lldpCaps_Enabled")
+            _d = splitc($_c, 1)
+            return and(strtonum(_d), 0x0008)
+        case "tlv.system.desc":
+            _c = _validate_col("lldpSysDesc")
+            return $_c
+        case "tlv.system.name":
+            _c = _validate_col("lldpSysName")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("lldp", q)
+    }
+}
+
+function _shark_mpls(q,        _c) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x600, 1)) next
+    switch (q) {
+        case "label":
+            _c = _validate_col("mplsLabels")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("mpls", q)
+    }
+}
+
+function _shark_nbns(q,        _c) {
+    _c = _validate_col("dnsStat")
+    if (!bitsallset($_c, 0x2)) next
+    switch (q) {
+        case "count.add_rr":
+            _c = _validate_col("dnsCntQu_Asw_Aux_Add")
+            return splitc($_c, 4)
+        case "count.answers":
+            _c = _validate_col("dnsCntQu_Asw_Aux_Add")
+            return splitc($_c, 2)
+        case "count.queries":
+            _c = _validate_col("dnsCntQu_Asw_Aux_Add")
+            return splitc($_c, 1)
+        case "name":
+            _c = _validate_col("dnsQname")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("nbns", q)
+    }
+}
+
+function _shark_ntp(q,        _c) {
+    _c = _validate_col("ntpStat")
+    if (!bitsallset($_c, 0x1)) next
+    switch (q) {
+        case "flags":
+            _c = _validate_col("ntpLiVM;ntpLi_V_M")
+            return $_c
+        case "flags.li":
+            _c = _validate_col("ntpLiVM;ntpLi_V_M")
+            if (hdr()) return "ntpLi"
+            else if (_c == ntpLi_V_M) return splitc($_c, 1)
+            else return rshift(strtonum($_c), 6)
+        case "flags.mode":
+            _c = _validate_col("ntpLiVM;ntpLi_V_M")
+            if (hdr()) return "ntpM"
+            else if (_c == ntpLi_V_M) return splitc($_c, 3)
+            else return and(strtonum($_c), 0x7)
+        case "flags.vn":
+            _c = _validate_col("ntpLiVM;ntpLi_V_M")
+            if (hdr()) return "ntpV"
+            else if (_c == ntpLi_V_M) return splitc($_c, 2)
+            else return rshift(and(strtonum($_c), 0x38), 3)
+        case "precision":
+            _c = _validate_col("ntpPrec")
+            return $_c
+        case "stratum":
+            _c = _validate_col("ntpStrat")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("ntp", q)
+    }
+}
+
+function _shark_quic(q,        _c, _d) {
+    _c = _validate_col("quicStat")
+    if (!bitsallset($_c, 0x1)) next
+    switch (q) {
+        case "cid":
+            _c = _validate_col("quicCID")
+            return $_c
+        case "frame_type":
+            _c = _validate_col("quicFrameTypes")
+            return $_c
+        case "packet_number":
+            _c = _validate_col("quicPktNo")
+            return $_c
+        case "puflags":
+            _c = _validate_col("quicPubFlags")
+            return $_c
+        case "puflags.cid":
+            _c = _validate_col("quicPubFlags")
+            return bitsallset($_c, 0x08)
+        #case "puflags.cid.old":
+        #    _c = _validate_col("quicPubFlags")
+        #    return and(strtonum($_c), 0x0c)
+        case "puflags.dnonce":
+            _c = _validate_col("quicPubFlags")
+            return bitsallset($_c, 0x04)
+        case "puflags.mpth":
+            _c = _validate_col("quicPubFlags")
+            return bitsallset($_c, 0x40)
+        #case "puflags.pkn":
+        #    _c = _validate_col("quicPubFlags")
+        #    return bitsallset($_c, 0x30)
+        case "puflags.reset":
+            _c = _validate_col("quicPubFlags")
+            return bitsallset($_c, 0x02)
+        case "puflags.rsv":
+            _c = _validate_col("quicPubFlags")
+            return bitsallset($_c, 0x80)
+        case "puflags.version":
+            _c = _validate_col("quicPubFlags")
+            return bitsallset($_c, 0x01)
+        case "tag.sni":
+            _c = _validate_col("quicSNI")
+            return $_c
+        case "tag.uaid":
+            _c = _validate_col("quicUAID")
+            return $_c
+        case "version":
+            _c = _validate_col("quicVersion")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("quic", q)
+    }
+}
+
+function _shark_sctp(q,        _c, _d) {
+    if (!sctp()) next
+    switch (q) {
+        case "checksum":
+            _c = _validate_col("l4HdrChkSum")
+            return $_c
+        case "checksum.status":
+            _c = _validate_col("l4HdrChkSum")
+            _d = _validate_col("l4CalChkSum")
+            return ($_c == $_d)
+        case "dstport":
+            _c = _validate_col("dstPort")
+            return $_c
+        case "srcport":
+            _c = _validate_col("srcPort")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("sctp", q)
+    }
+}
+
+function _shark_ssdp(q,        _c) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x2000000)) next
+    switch (q) {
+        case "":
+            return 1
+        default:
+            _shark_error("ssdp", q)
+    }
+}
+
+function _shark_ssh(q,        _c) {
+    _c = _validate_col("sshStat")
+    if (!bitsallset($_c, 0x1)) next
+    switch (q) {
+        case "protocol":
+            _c = _validate_col("sshVersion")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("ssh", q)
+    }
+}
+
+function _shark_tcp(q,        _c, _d) {
+    if (!tcp()) next
+    switch (q) {
+        case "ack":
+            _c = _validate_col("ack")
+            return $_c
+        case "checksum":
+            _c = _validate_col("l4HdrChkSum")
+            return $_c
+        case "checksum.status":
+            _c = _validate_col("l4HdrChkSum")
+            _d = _validate_col("l4CalChkSum")
+            return ($_c == $_d)
+        case "dstport":
+            _c = _validate_col("dstPort")
+            return $_c
+        case "flags":
+            _c = _validate_col("tcpFlags")
+            return $_c
+        case "flags.ack":
+            _c = _validate_col("tcpFlags")
+            return bitsallset($_c, 0x10)
+        case "flags.cwr":
+            _c = _validate_col("tcpFlags")
+            return bitsallset($_c, 0x80)
+        case "flags.ecn":
+            _c = _validate_col("tcpFlags")
+            return bitsallset($_c, 0x40)
+        case "flags.fin":
+            _c = _validate_col("tcpFlags")
+            return bitsallset($_c, 0x01)
+        case "flags.push":
+            _c = _validate_col("tcpFlags")
+            return bitsallset($_c, 0x08)
+        case "flags.reset":
+            _c = _validate_col("tcpFlags")
+            return bitsallset($_c, 0x04)
+        case "flags.syn":
+            _c = _validate_col("tcpFlags")
+            return bitsallset($_c, 0x02)
+        case "flags.urg":
+            _c = _validate_col("tcpFlags")
+            return bitsallset($_c, 0x20)
+        case "options":
+            _c = _validate_col("tcpOptions")
+            return $_c
+        case "options.mss":
+            _c = _validate_col("tcpMSS")
+            return $_c
+        case "seq":
+            _c = _validate_col("seq")
+            return $_c
+        case "srcport":
+            _c = _validate_col("srcPort")
+            return $_c
+        case "stream":
+            _c = _validate_col("flowInd")
+            return $_c
+        case "window_size_value":
+            _c = _validate_col("tcpWin")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("tcp", q)
+    }
+}
+
+function _shark_teredo(q,        _c) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x80000)) next
+    switch (q) {
+        case "":
+            return 1
+        default:
+            _shark_error("teredo", q)
+    }
+}
+
+function _shark_udp(q,        _c, _d) {
+    if (!udp()) next
+    switch (q) {
+        case "checksum":
+            _c = _validate_col("l4HdrChkSum")
+            return $_c
+        case "checksum.status":
+            _c = _validate_col("l4HdrChkSum")
+            _d = _validate_col("l4CalChkSum")
+            return ($_c == $_d)
+        case "dstport":
+            _c = _validate_col("dstPort")
+            return $_c
+        case "srcport":
+            _c = _validate_col("srcPort")
+            return $_c
+        case "stream":
+            _c = _validate_col("flowInd")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("udp", q)
+    }
+}
+
+function _shark_vlan(q,        _c) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x100)) next
+    switch (q) {
+        case "id":
+            _c = _validate_col("ethVlanID")
+            return $_c
+        case "":
+            return 1
+        default:
+            _shark_error("vlan", q)
+    }
+}
+
+function _shark_vxlan(q,        _c) {
+    _c = _validate_col("flowStat")
+    if (!bitsallset($_c, 0x400000)) next
+    switch (q) {
+        case "":
+            return 1
+        default:
+            _shark_error("vxlan", q)
+    }
+}

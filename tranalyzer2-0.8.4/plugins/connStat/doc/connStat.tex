@@ -1,0 +1,75 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {connStat}
+    {Connection Statistics}
+    {Tranalyzer Development Team} % author(s)
+
+\section{connStat}\label{s:connStat}
+
+\subsection{Description}
+The connStat plugin counts the connections between different IPs and ports per flow and during the pcap lifetime
+in order to produce an operational picture for anomaly detection. %This plugin is more elaborate as connectionCounter
+%because it uses the findex to determine which flow started the communication, but uses more hash space.
+
+\subsection{Dependencies}
+
+\subsubsection{Other Plugins}
+If the \tranrefpl{basicFlow} plugin is loaded, then the country of the IPs with the most connections is displayed in the final report.
+
+%connStat must {\bf never} be loaded in conjunction with connection counter because then all global statistics for the end report is wrong.
+%\traninput{file} % use this command to input files
+%\traninclude{file} % use this command to include files
+
+%\tranimg{image} % use this command to include an image (must be located in a subfolder ./img/)
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt CS\_HSDRM}   & 1 & decrement IP counters when flows die \\
+    {\tt CS\_SDIPMAX} & 1 & 0: number of src dst IP connnections \\
+                      &   & 1: IP src dst connection with the highest count\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The connStat plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt connSip}     & U32 & Number of unique source IPs\\
+    {\tt connDip}     & U32 & Number of unique destination IPs\\
+    {\tt connSipDip}  & U32 & Number of connections between source and destination IPs\\
+    {\tt connSipDprt} & U32 & Number of connections between source IP and destination port \\
+    {\tt connF}       &   F & the f number, experimental: connSipDprt/connSip \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Plugin Report Output}
+The following information is reported:
+\begin{itemize}
+    \item Number of unique source IPs
+    \item Number of unique destination IPs
+    \item Number of unique source/destination IPs connections
+    \item Max unique number of source IP / destination port connections
+    \item IP prtcon/sdcon, prtcon/scon
+    \item Source IP with the max connections
+    \item Destination IP with max connections
+\end{itemize}
+
+%\subsection{TODO}
+%\begin{itemize}
+%    \item
+%\end{itemize}
+
+\end{document}

@@ -1,0 +1,13 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/entropy
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/entropy.h
+ENT_ALPHA_D       src/entropy.h
+ENT_FLOW          src/entropy.h
+ENT_THRES	  src/entropy.h

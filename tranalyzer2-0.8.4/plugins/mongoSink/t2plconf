@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+#
+# Configuration file for mongoSink
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    MONGO_QRY_LEN    range "" "Max length for query: 1 65535"
+    MONGO_HOST       text  "" "Address of the database"
+    MONGO_PORT       text  "" "Port the database is listening to"
+    MONGO_DBNAME     text  "" "Name of the database"
+    MONGO_TABLE_NAME text  "" "Name of the database flow table"
+    MONGO_NUM_DOCS   range "" "Number of documents (flows) to write in bulk: 1 65535"
+
+    BSON_SUPPRESS_EMPTY_ARRAY check "" "Output empty fields and arrays"
+
+    BSON_DEBUG check "" "Print debug messages"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

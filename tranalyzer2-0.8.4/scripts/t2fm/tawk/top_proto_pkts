@@ -1,0 +1,9 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+bitsanyset($flowStat, 0xc000) {  # IPv4/6 only
+    aggr($l4Proto, $numPktsSnt, n)
+}

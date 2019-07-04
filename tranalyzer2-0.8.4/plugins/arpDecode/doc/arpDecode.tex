@@ -1,0 +1,192 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {arpDecode}
+    {Address Resolution Protocol (ARP)}
+    {Tranalyzer Development Team} % author(s)
+
+\section{arpDecode}\label{s:arpDecode}
+
+\subsection{Description}
+The arpDecode plugin analyzes ARP traffic.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt MAX\_IP} & 10 & Max.\ number of MAC/IP pairs to list\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The arpDecode plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt \nameref{arpStat}}   & H8  & Status\\
+    {\tt \nameref{arpHwType}} & U16 & Hardware type\\
+    {\tt \nameref{arpOpcode}} & H16 & Operational code\\
+    {\tt arpIpMacCnt}         & U16 & Number of distinct MAC / IP pairs\\
+    {\tt arpMac\_Ip\_Cnt} & MAC\_IP4\_U16 & MAC, IP pairs found and number of times the pair appeared.\\
+                          &               & (a count of zero may appear in case of ARP spoofing and \\
+                          &               & indicates the pair was discovered in a different flow)\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{arpStat}\label{arpStat}
+The {\tt arpStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf arpStat} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x0\textcolor{magenta}{1}} & ARP detected\\
+    {\tt 0x0\textcolor{magenta}{2}} & MAC/IP list truncated... increase {\tt MAX\_IP}\\
+    {\tt 0x0\textcolor{magenta}{8}} & Gratuitous ARP (sender IP same as target IP)\\
+    {\tt 0x\textcolor{magenta}{8}0} & ARP spoofing (same IP assigned to multiple MAC)\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{arpHwType}\label{arpHwType}
+The {\tt arpHwType} column is to be interpreted as follows:\\
+\begin{minipage}{.46\textwidth}
+    \small
+    \begin{longtable}{rl}
+        \toprule
+        {\bf Type} & {\bf Description}\\
+        \midrule\endhead%
+        1 & Ethernet\\
+        2 & Experimental Ethernet\\
+        3 & Amateur Radio AX.25\\
+        4 & Proteon ProNET Token Ring\\
+        5 & Chaos\\
+        6 & IEEE 802\\
+        7 & ARCNET\\
+        8 & Hyperchannel\\
+        9 & Lanstar\\
+        10 & Autonet Short Address\\
+        11 & LocalTalk\\
+        12 & LocalNet (IBM PCNet or SYTEK LocalNET)\\
+        13 & Ultra link\\
+        14 & SMDS\\
+        15 & Frame Relay\\
+        16 & ATM (Asynchronous Transmission Mode)\\
+        17 & HDLC\\
+        18 & Fibre Channel\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+\hfill
+\begin{minipage}{.46\textwidth}
+    \small
+    \begin{longtable}{rl}
+        \toprule
+        {\bf Type} & {\bf Description}\\
+        \midrule\endhead%
+        19 & ATM (Asynchronous Transmission Mode)\\
+        20 & Serial Line\\
+        21 & ATM (Asynchronous Transmission Mode)\\
+        22 & MIL-STD-188-220\\
+        23 & Metricom\\
+        24 & IEEE 1394.1995\\
+        25 & MAPOS\\
+        26 & Twinaxial\\
+        27 & EUI-64\\
+        28 & HIPARP\\
+        29 & IP and ARP over ISO 7816-3\\
+        30 & ARPSec\\
+        31 & IPsec tunnel\\
+        32 & Infiniband\\
+        33 & CAI (TIA-102 Project 25 Common Air Interface)\\
+        34 & Wiegand Interface\\
+        35 & Pure IP\\
+        \\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+
+\subsubsection{arpOpcode}\label{arpOpcode}
+The {\tt arpOpcode} column is to be interpreted as follows:\\
+\begin{minipage}{.46\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf arpOpcode} & {\bf Description}\\
+        \midrule\endhead%
+        $2^{0}$  (=0x000\textcolor{magenta}{1}) & ---\\
+        $2^{1}$  (=0x000\textcolor{magenta}{2}) & ARP Request\\
+        $2^{2}$  (=0x000\textcolor{magenta}{4}) & ARP Reply\\
+        $2^{3}$  (=0x000\textcolor{magenta}{8}) & Reverse ARP (RARP) Request\\
+        $2^{4}$  (=0x00\textcolor{magenta}{1}0) & Reverse ARP (RARP) Reply\\
+        $2^{5}$  (=0x00\textcolor{magenta}{2}0) & Dynamic RARP (DRARP) Request\\
+        $2^{6}$  (=0x00\textcolor{magenta}{4}0) & Dynamic RARP (DRARP) Reply\\
+        $2^{7}$  (=0x00\textcolor{magenta}{8}0) & Dynamic RARP (DRARP) Error\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+\hfill
+\begin{minipage}{.46\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf arpOpcode} & {\bf Description}\\
+        \midrule\endhead%
+        $2^{8}$  (=0x0\textcolor{magenta}{1}00) & Inverse ARP (InARP) Request\\
+        $2^{9}$  (=0x0\textcolor{magenta}{2}00) & Inverse ARP (InARP) Reply\\
+        $2^{10}$ (=0x0\textcolor{magenta}{4}00) & ARP NAK\\
+        $2^{11}$ (=0x0\textcolor{magenta}{8}00) & ---\\
+        $2^{12}$ (=0x\textcolor{magenta}{1}000) & ---\\
+        $2^{13}$ (=0x\textcolor{magenta}{2}000) & ---\\
+        $2^{14}$ (=0x\textcolor{magenta}{4}000) & ---\\
+        $2^{15}$ (=0x\textcolor{magenta}{8}000) & ---\\
+        %$2^{11}$ (=0x00000800) & MARS Request\\
+        %$2^{12}$ (=0x00001000) & MARS Multi\\
+        %$2^{13}$ (=0x00002000) & MARS MServ\\
+        %$2^{14}$ (=0x00004000) & MARS Join\\
+        %$2^{15}$ (=0x00008000) & MARS Leave\\
+        %$2^{16}$ (=0x00010000) & MARS NAK\\
+        %$2^{17}$ (=0x00020000) & MARS Unserv\\
+        %$2^{18}$ (=0x00040000) & MARS SJoin\\
+        %$2^{19}$ (=0x00080000) & MARS SLeave\\
+        %$2^{20}$ (=0x00100000) & MARS Grouplist Request\\
+        %$2^{21}$ (=0x00200000) & MARS Grouplist Reply\\
+        %$2^{22}$ (=0x00400000) & MARS Redirect Map\\
+        %$2^{23}$ (=0x00800000) & MAPOS UNARP\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+
+\clearpage
+
+\subsection{Plugin Report Output}
+The following information is reported:
+\begin{itemize}
+    \item Aggregated status flags ({\tt\nameref{arpStat}})
+\end{itemize}
+
+\subsection{Packet File Output}
+In packet mode ({\tt --s} option), the arpDecode plugin outputs the following columns:
+\begin{longtable}{ll}
+    \toprule
+    {\bf Column} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt \nameref{arpStat}}   & Status\\
+    {\tt \nameref{arpHwType}} & Hardware type\\
+    {\tt arpProtoType}        & Protocol type\\
+    {\tt arpHwSize}           & Hardware size\\
+    {\tt arpProtoSize}        & Protocol size\\
+    {\tt \nameref{arpOpcode}} & Operational code\\
+    {\tt arpSenderMAC}        & Sender MAC address\\
+    {\tt arpSenderIP}         & Sender IP address\\
+    {\tt arpTargetMAC}        & Target MAC address\\
+    {\tt arpTargetIP}         & Target IP address\\
+    \bottomrule
+\end{longtable}
+
+\end{document}

@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+#
+# Configuration file for sslDecode
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    SSL_EXT_LIST check ""
+        "Output the list and number of extensions"
+    SSL_MAX_EXT range "SSL_EXT_LIST == 1"
+        "Maximum number of extensions to store: 0 255"
+
+    SSL_EC check ""
+        "Output the list and number of elliptic curves"
+    SSL_MAX_EC range "SSL_EC == 1"
+        "Maximum number of elliptic curves to store: 0 255"
+
+    SSL_EC_FORMATS check ""
+        "Output the list and number of elliptic curve formats"
+    SSL_MAX_EC_FORMATS range "SSL_EC_FORMATS == 1"
+        "Maximum number of elliptic curve formats to store: 0 255"
+
+    SSL_PROTO_LIST check ""
+        "Output the list and number of protocols"
+    SSL_MAX_PROTO range "SSL_PROTO_LIST == 1"
+        "Maximum number of protocols to store: 0 255"
+    SSL_PROTO_LEN range "SSL_PROTO_LIST == 1"
+        "Maximum number of characters per protocols: 0 255"
+
+    SSL_CIPHER_LIST check ""
+        "Output the list and number of supported ciphers"
+    SSL_MAX_CIPHER range "SSL_CIPHER_LIST == 1"
+        "Maximum number of ciphers to store: 0 255"
+
+    SSL_ANALYZE_CERT check ""
+        "Analyze certificates"
+
+    SSL_CERT_SERIAL check "SSL_ANALYZE_CERT == 1"
+        "Print the certificate serial number"
+    SSL_CERT_FINGPRINT radio "SSL_ANALYZE_CERT == 1"
+        "Extraction of certificate fingerprint; \
+            0: no certificate fingerprint; \
+            1: SHA1; \
+            2: MD5"
+    SSL_CERT_VALIDITY check "SSL_ANALYZE_CERT == 1"
+        "Print the certificate validity (Valid from/to)"
+    SSL_CERT_SIG_ALG check "SSL_ANALYZE_CERT == 1"
+        "Print the certificate signature algorithm"
+    SSL_CERT_PUBKEY_ALG check "SSL_ANALYZE_CERT == 1"
+        "Print the certificate public key algorithm"
+    SSL_CERT_ALG_NAME_LONG radio "SSL_ANALYZE_CERT == 1"
+        "Algorithm names; 0: Short names; 1: long names"
+    SSL_CERT_PUBKEY_TS check "SSL_ANALYZE_CERT == 1"
+        "Print the certificate public key type and size"
+
+    SSL_CERT_SUBJECT radio "SSL_ANALYZE_CERT == 1"
+        "Certificate subject representation; \
+            0: no information about the certificate subject; \
+            1: Whole subject as one string; \
+            2: Selected fields only"
+    SSL_CERT_ISSUER radio "SSL_ANALYZE_CERT == 1"
+        "Certificate issuer representation; \
+            0: no information about the certificate subject; \
+            1: Whole subject as one string; \
+            2: Selected fields only"
+
+    SSL_CERT_COMMON_NAME check
+        "SSL_ANALYZE_CERT == 1 && (SSL_CERT_SUBJECT == 2 || SSL_CERT_ISSUER == 2)"
+        "Print the common name of the issuer/subject"
+    SSL_CERT_ORGANIZATION check
+        "SSL_ANALYZE_CERT == 1 && (SSL_CERT_SUBJECT == 2 || SSL_CERT_ISSUER == 2)"
+        "Print the organization name of the issuer/subject"
+    SSL_CERT_ORG_UNIT check
+        "SSL_ANALYZE_CERT == 1 && (SSL_CERT_SUBJECT == 2 || SSL_CERT_ISSUER == 2)"
+        "Print the organizational unit name of the issuer/subject"
+    SSL_CERT_LOCALITY check
+        "SSL_ANALYZE_CERT == 1 && (SSL_CERT_SUBJECT == 2 || SSL_CERT_ISSUER == 2)"
+        "Print the locality name of the issuer/subject"
+    SSL_CERT_STATE check
+        "SSL_ANALYZE_CERT == 1 && (SSL_CERT_SUBJECT == 2 || SSL_CERT_ISSUER == 2)"
+        "Print the state or province of the issuer/subject"
+    SSL_CERT_COUNTRY check
+        "SSL_ANALYZE_CERT == 1 && (SSL_CERT_SUBJECT == 2 || SSL_CERT_ISSUER == 2)"
+        "Print the country of the issuer/subject"
+
+    # Certificates
+    SSL_SAVE_CERT check "SSL_ANALYZE_CERT == 1" "Save certificates"
+    SSL_CERT_PATH text
+        "SSL_ANALYZE_CERT == 1 && SSL_SAVE_CERT == 1"
+        "Folder for saved certificates"  # TODO dir chooser
+    SSL_CERT_EXT text
+        "SSL_ANALYZE_CERT == 1 && SSL_SAVE_CERT == 1"
+        "Extension for saved certificates"
+
+    SSL_BLIST check
+        "SSL_ANALYZE_CERT == 1 && (SSL_SAVE_CERT == 1 || SSL_CERT_FINGPRINT == 1)"
+        "Search for blacklisted certificates"
+    SSL_JA3 check
+        "SSL_ANALYZE_CERT == 1 && (SSL_SAVE_CERT == 1 || SSL_CERT_FINGPRINT == 1)"
+        "Output JA3 fingerprints (hash and description)"
+    SSL_JA3_STR check
+        "SSL_ANALYZE_CERT == 1 && (SSL_SAVE_CERT == 1 || SSL_CERT_FINGPRINT == 1) && SSL_JA3 == 1"
+        "Also output JA3 fingerprints before hashing"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

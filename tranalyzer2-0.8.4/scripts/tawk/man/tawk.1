@@ -1,0 +1,562 @@
+.TH TAWK "1" "November 2018" "0.1" "User Commands"
+
+.SH NAME
+\fBtawk\fR \- awk for Tranalyzer flow files.
+
+.SH SYNOPSIS
+\fBtawk\fR [\fIOPTION\fR...] 'AWK_COMMANDS' <\fIFILE\fR>
+
+\fBtawk\fR [\fIOPTION\fR...] \fB-I\fR <\fIFILE\fR> 'AWK_COMMANDS'
+
+.SH DESCRIPTION
+\fBtawk\fR allows access to the different columns of \fIFILE\fR through their names.
+In addition, it provides a set of functions to facilitate working with Tranalyzer flow files.
+Input and output separator are redefined to the tab character (\\t).
+
+.SH OPTIONS
+.TP
+\fB\-I\fR \fIfile\fR
+Alternative way to specify the input file
+.TP
+\fB-s\fR \fIchar\fR
+First character for the row listing the columns name
+.TP
+\fB-F\fR \fIfs\fR
+Use \fIfs\fR for the input field separator
+.TP
+\fB\-l\fR
+list column names and numbers
+.TP
+\fB\-g\fR
+list available functions
+.TP
+\fB\-D\fR
+Display tawk PDF documentation
+.TP
+\fB\-d\fR \fIfname\fR
+Display function \fIfname\fR documentation
+.TP
+\fB\-V\fR \fIvname\fR
+Display variable \fIvname\fR documentation
+.TP
+\fB\-n\fR
+load nfdump functions
+.TP
+\fB\-e\fR
+load examples
+.TP
+\fB\-c\fR
+output command line as a comment
+.TP
+\fB\-H\fR
+do not output the header (column names)
+.TP
+\fB\-t\fR
+do not validate column names
+.TP
+\fB\-X\fR \fIxerfile\fR
+Specify the .xer file to use with \fB-k\fR and \fB-x\fR options
+.TP
+\fB\-x\fR \fIoutfile\fR
+Run the fextractor on the extracted data
+.TP
+\fB\-k\fR
+Run Wireshark on the extracted data
+.TP
+\fB\-h\fR, \fB\-?\fR, \fB\-\-help\fR
+display this help and exit
+
+.SH FUNCTIONS
+.TP
+\fBabs(\fR\fIv\fR\fB)\fR
+Returns the absolute value of \fIv\fR
+.TP
+\fBaggr(\fR\fIfields\fR[,\fIval\fR[,\fInum\fR]]\fB)\fR
+Performs aggregation of \fIfields\fR and stores the sum of \fIval\fR.
+\fIfields\fR and \fIval\fR can be tab separated lists of fields, e.g., $SrcIP4 "\\t" $DstIP4.
+Results are sorted according to the first value of \fIval\fR.
+If \fIval\fR is omitted or equal to "flows" (case insensitive),
+counts the number of flows.
+If \fInum\fR is omitted or 0, returns the full list.
+If \fInum\fR > 0, returns the top \fInum\fR results.
+If \fInum\fR < 0 returns the bottom \fInum\fR results.
+.TP
+\fBaggrrep(\fR\fIfields\fR[,\fIval\fR[,\fInum\fR[,\fIign_e\fR[,\fIsep\fR]]]]\fB)\fR
+Performs aggregation of repetitive values and stores the sum of \fIval\fR.
+If \fIval\fR is omitted or equal to "flows" (case insensitive),
+counts the number of flows.
+Results are sorted according to the first value of \fIval\fR.
+If \fInum\fR is omitted or 0, returns the full list.
+If \fInum\fR > 0, returns the top \fInum\fR results.
+If \fInum\fR < 0 returns the bottom \fInum\fR results.
+If \fIign_e\fR is omitted or 0, consider all values, otherwise ignore emtpy values.
+\fIsep\fR can be used to change the separator character (default: ";")
+.TP
+\fBah(\fR[\fIp\fR]\fB)\fR
+Returns true if the protocol is equal to 51 (AH)
+.TP
+\fBbase64d(\fR\fIs\fR\fB)\fR
+Decodes a base64 encoded string \fIs\fR
+.TP
+\fBbfeq(\fR\fIval1\fR,\fIval2\fR\fB)\fR
+Returns true if the bitfields (hexadecimal numbers) \fIval1\fR and \fIval2\fR are equal
+.TP
+\fBbitsallset(\fR\fIval\fR,\fImask\fR\fB)\fR
+Returns true if all the bits set in \fImask\fR are also set in \fIval\fR.
+.TP
+\fBbitsanyset(\fR\fIval\fR,\fImask\fR\fB)\fR
+Returns true if one of the bits set in \fImask\fR is also set in \fIval\fR
+.TP
+\fBchomp(\fR\fIs\fR\fB)\fR
+Removes leading and trailing spaces from a string
+.TP
+\fBCOL\fR
+Provides access to column names through their indexes and to column indexes
+through their names
+.TP
+\fBcontains(\fR\fIval\fR,\fItxt\fR\fB)\fR
+Returns true if \fIval\fR contains the substring \fItxt\fR
+.TP
+\fBcvalcontains(\fR\fIval\fR,\fIitem\fR\fB)\fR
+Alias for \fBvalcontains(\fR\fIval\fR, "\_", \fIitem\fR)\fR
+.TP
+\fBdether(\fR[\fImac\fR]\fB)\fR
+Returns true if one of the destination MAC addresses is equal to \fImac\fR.
+If \fImac\fR is omitted, returns the destination MAC address(es)
+.TP
+\fBdhcp()\fR
+Returns true if the flow contains DHCP traffic
+.TP
+\fBdhost(\fR[\fIip\fR|\fInet\fR]\fB)\fR
+Returns true if the destination IP is equal to \fIip\fR or belongs to \fInet\fR.
+If \fIip\fR is omitted, returns the destination IP
+.TP
+\fBdiff(\fR\fIfile\fR[,\fImode\fR]\fB)\fR
+Compares \fIfile\fR and the input and prints the name of the columns which differ.
+\fImode\fR controls the format of the output.
+.TP
+\fBdmac(\fR[\fImac\fR]\fB)\fR
+Returns true if one of the destination MAC addresses is equal to \fImac\fR.
+If \fImac\fR is omitted, returns the destination MAC address(es)
+.TP
+\fBdnet(\fR[\fIip\fR|\fInet\fR]\fB)\fR
+Alias for \fBdhost(\fR[\fIip\fR|\fInet\fR]\fB)\fR
+.TP
+\fBdns()\fR
+Returns true if the flow contains DNS traffic
+.TP
+\fBdport(\fR[\fIp\fR]\fB)\fR
+Returns true if the destination port is equal to \fIp\fR.
+If \fIp\fR is omitted, returns the destination port
+.TP
+\fBesp(\fR[\fIp\fR]\fB)\fR
+Returns true if the protocol is equal to 50 (ESP)
+.TP
+\fBether(\fR[\fImac\fR]\fB)\fR
+Returns true if one of the source or destination MAC addresses is equal to
+\fImac\fR. If \fImac\fR is omitted, returns the source and destination MAC
+address(es)
+.TP
+\fBflow(\fR\fIf\fR\fB)\fR
+Returns all flows whose index appears in \fIf\fR
+.TP
+\fBffsplit(\fR[\fIs\fR]\fB)\fR
+Split the input file into smaller more manageable files.
+The files to create can be specified as argument \fIs\fR to the function (one
+comma separated string). If no argument is specified, creates one file per
+column whose name ends with 'Stat', e.g., dnsStat, and one for
+pwxType (pw) and covertChannels (cc).
+If \fIk\fR > 0, then only print relevant fields and those controlled by \fIh\fR,
+a comma separated list of fields to keep in each file, e.g., "srcIP,dstIP"
+.TP
+\fBgre(\fR[\fIp\fR]\fB)\fR
+Returns true if the protocol is equal to 47 (GRE)
+.TP
+\fBhasprefix(\fR\fIval\fR,\fIpre\fR\fB)\fR
+Returns true if \fIval\fR begins with the prefix \fIpre\fR
+.TP
+\fBhassuffix(\fR\fIval\fR,\fIsuf\fR\fB)\fR
+Returns true if \fIval\fR finished with the suffix \fIsuf\fR
+.TP
+\fBhdr()\fR
+Use this function in your tests to keep the header (column names)
+.TP
+\fBhost(\fR[\fIip\fR|\fInet\fR]\fB)\fR
+Returns true if the source or destination IP is equal to \fIip\fR or belongs to \fInet\fR.
+If \fIip\fR is omitted, returns the source and destination IP
+.TP
+\fBhrnum(\fR\fInum\fR[,\fImode\fR[,\fIsuffix\fR]]\fB)\fR
+Converts a number to its human readable form, e.g., 2000 -> 2K
+.TP
+\fBhttp()\fR
+Returns true if the flow contains HTTP traffic
+.TP
+\fBicmp(\fR[\fIp\fR]\fB)\fR
+Returns true if the protocol is equal to 1 (ICMP)
+.TP
+\fBicmp6(\fR[\fIp\fR]\fB)\fR
+Returns true if the protocol is equal to 58 (ICMPv6)
+.TP
+\fBigmp(\fR[\fIp\fR]\fB)\fR
+Returns true if the protocol is equal to 2 (IGMP)
+.TP
+\fBip()\fR
+Returns true if the flow contains IPv4 or IPv6 traffic
+.TP
+\fBip2hex(\fR\fIip\fR\fB)\fR
+Converts an IPv4 address to hex
+.TP
+\fBip2mask(\fR\fIip\fR\fB)\fR
+Converts an IP address \fIip\fR to a network mask
+.TP
+\fBip2num(\fR\fIip\fR\fB)\fR
+Converts an IP address to a number
+.TP
+\fBip2str(\fR\fIip\fR\fB)\fR
+Converts an IPv4 address to string
+.TP
+\fBip62str(\fR\fIip\fR\fB)\fR
+Converts an IPv6 address to string
+.TP
+\fBip6compress(\fR\fIip\fR\fB)\fR
+Compresses an IPv6 address
+.TP
+\fBip6expand(\fR\fIip\fR[,\fItrim\fR]\fB)\fR
+Expands an IPv6 address.
+If \fItrim\fR is different from 0, removes leading zeros.
+.TP
+\fBipinnet(\fR\fIip\fR,\fInet\fR[,\fImask\fR]\fB)\fR
+Tests whether an IP address belongs to a given network
+.TP
+\fBipinrange(\fR\fIip\fR,\fIlow\fR,\fIhigh\fR\fB)\fR
+Tests whether an IP address lies between two addresses
+.TP
+\fBipv4()\fR
+Returns true if the flow contains IPv4 traffic
+.TP
+\fBipv6()\fR
+Returns true if the flow contains IPv6 traffic
+.TP
+\fBisip(\fR\fIv\fR\fB)\fR
+Returns true if \fIv\fR is an IPv4 address in hexadecimal, numerical or dotted decimal notation
+.TP
+\fBisip6(\fR\fIv\fR\fB)\fR
+Returns true if \fIv\fR is an IPv6 address
+.TP
+\fBisiphex(\fR\fIv\fR\fB)\fR
+Returns true if \fIv\fR is an IPv4 address in hexadecimal notation
+.TP
+\fBisipnum(\fR\fIv\fR\fB)\fR
+Returns true if \fIv\fR is an IPv4 address in numerical (int) notation
+.TP
+\fBisipstr(\fR\fIv\fR\fB)\fR
+Returns true if \fIv\fR is an IPv4 address in dotted decimal notation
+.TP
+\fBisnum(\fR\fIv\fR\fB)\fR
+Returns true if \fIv\fR is a number
+.TP
+\fBjoin(\fR\fIarr\fR,\fIsep\fR\fB)\fR
+Converts an array to string, separating each value with \fIsep\fR
+.TP
+\fBjson(\fR\fIs\fR\fB)\fR
+Converts the string \fIs\fR to JSON.
+The first record is used as column names.
+.TP
+\fBlocaltime(\fR\fIt\fR\fB)\fR
+Converts UNIX timestamp to string (localtime)
+.TP
+\fBloopback(\fR\fIip\fR\fB)\fR
+Returns true if \fIip\fR is a loopback address
+.TP
+\fBlstrip(\fR\fIs\fR\fB)\fR
+Removes leading spaces from a string
+.TP
+\fBmac(\fR[\fImac\fR]\fB)\fR
+Returns true if one of the source or destination MAC addresses is equal to
+\fImac\fR. If \fImac\fR is omitted, returns the source and destination MAC
+address(es)
+.TP
+\fBmask2ip(\fR\fIm\fR\fB)\fR
+Converts a network mask \fIm\fR (int) to an IPv4 address (int)
+.TP
+\fBmask2ipstr(\fR\fIm\fR\fB)\fR
+Converts a network mask \fIm\fR (int) to an IPv4 address (string)
+.TP
+\fBmask2ip6(\fR\fIm\fR\fB)\fR
+Converts a network mask \fIm\fR (int) to an IPv6 address (int)
+.TP
+\fBmask2ip6str(\fR\fIm\fR\fB)\fR
+Converts a network mask \fIm\fR (int) to an IPv6 address (string)
+.TP
+\fBmax(\fR\fIc\fR\fB)\fR
+Keep track of the max value of a column \fIc\fR. The result can be accessed with \fBget_max(\fR\fIc\fR\fB)\fR or printed with \fBprint_max(\fR[\fIc\fR]\fB)\fR.
+.TP
+\fBmax2(\fR\fIa\fR,\fIb\fR\fB)\fR
+Returns the maximum value between \fIa\fR and \fIb\fR
+.TP
+\fBmax3(\fR\fIa\fR,\fIb\fR,\fIc\fR\fB)\fR
+Returns the maximum value between \fIa\fR, \fIb\fR and \fIc\fR
+.TP
+\fBmcast(\fR\fIip\fR\fB)\fR
+Returns true if \fIip\fR is a multicast address
+.TP
+\fBmean(\fR\fIc\fR\fB)\fR
+Computes the mean value of a column \fIc\fR. The result can be accessed with \fBget_mean(\fR\fIc\fR\fB)\fR or printed with \fBprint_mean(\fR[\fIc\fR]\fB)\fR.
+.TP
+\fBmin(\fR\fIc\fR\fB)\fR
+Keep track of the min value of a column \fIc\fR. The result can be accessed with \fBget_min(\fR\fIc\fR\fB)\fR or printed with \fBprint_min(\fR[\fIc\fR]\fB)\fR.
+.TP
+\fBmin2(\fR\fIa\fR,\fIb\fR\fB)\fR
+Returns the minimum value between \fIa\fR and \fIb\fR
+.TP
+\fBmin3(\fR\fIa\fR,\fIb\fR,\fIc\fR\fB)\fR
+Returns the minimum value between \fIa\fR, \fIb\fR and \fIc\fR
+.TP
+\fBnet(\fR[\fIip\fR|\fInet\fR]\fB)\fR
+Alias for \fBhost(\fR[\fIip\fR|\fInet\fR]\fB)\fR
+.TP
+\fBnot(\fR\fIq\fR\fB)\fR
+Returns the logical negation of a query \fIq\fR.
+This function must be used to keep the header when negating a query.
+.TP
+\fBpacket(\fR\fIp\fR\fB)\fR
+Returns all packets whose number appears in \fIp\fR
+.TP
+\fBport(\fR[\fIp\fR]\fB)\fR
+Returns true if the source or destination port is equal to \fIp\fR (multiple ports or port ranges can also be specified).
+If \fIp\fR is omitted, returns the source and destination port
+.TP
+\fBprinterr(\fR\fIs\fR\fB)\fR
+Prints the string \fIs\fR in red with an added newline
+.TP
+\fBprivip(\fR\fIip\fR\fB)\fR
+Returns true if \fIip\fR is a private IP
+.TP
+\fBproto(\fR[\fIp\fR]\fB)\fR
+Returns true if the protocol is equal to \fIp\fR.
+If \fIp\fR is omitted, returns the string representation of the protocol.
+.TP
+\fBproto2str(\fR\fIp\fR\fB)\fR
+Returns the string representation of the protocol number \fIp\fR.
+.TP
+\fBrstrip(\fR\fIs\fR\fB)\fR
+Removes trailing spaces from a string
+.TP
+\fBrsvp(\fR[\fIp\fR]\fB)\fR
+Returns true if the protocol is equal to 46 (RSVP)
+.TP
+\fBrvalcontains(\fR\fIval\fR,\fIitem\fR\fB)\fR
+Alias for \fBvalcontains(\fR\fIval\fR, ";", \fIitem\fR)\fR
+.TP
+\fBsctp(\fR[\fIp\fR]\fB)\fR
+Returns true if the protocol is equal to 132 (SCTP)
+.TP
+\fBsether(\fR[\fImac\fR]\fB)\fR
+Returns true if one of the source MAC addresses is equal to \fImac\fR.
+If \fImac\fR is omitted, returns the source MAC address(es)
+.TP
+\fBshark(\fR\fIq\fR\fB)\fR
+Query flows files according to Wireshark's syntax
+.TP
+\fBshost(\fR[\fIip\fR|\fInet\fR]\fB)\fR
+Returns true if the source IP is equal to \fIip\fR or belongs to \fInet\fR.
+If \fIip\fR is omitted, returns the source IP
+.TP
+\fBsmac(\fR[\fImac\fR]\fB)\fR
+Returns true if one of the source MAC addresses is equal to \fImac\fR.
+If \fImac\fR is omitted, returns the source MAC address(es)
+.TP
+\fBsnet(\fR[\fIip\fR|\fInet\fR]\fB)\fR
+Alias for \fBshost(\fR[\fIip\fR|\fInet\fR]\fB)\fR
+.TP
+\fBsplitc(\fR\fIval\fR[,\fInum\fR[,\fIosep\fR]]\fB)\fR
+Splits compound values. Alias for \fBt2split(\fR\fIval\fR, "\_", \fInum\fR, \fIosep\fR\fB)\fR
+.TP
+\fBsplitr(\fR\fIval\fR[,\fInum\fR[,\fIosep\fR]]\fB)\fR
+Splits repetitive values. Alias for \fBt2split(\fR\fIval\fR, ";", \fInum\fR, \fIosep\fR\fB)\fR
+.TP
+\fBsport(\fR[\fIp\fR]\fB)\fR
+Returns true if the source port is equal to \fIp\fR.
+If \fIp\fR is omitted, returns the source port
+.TP
+\fBstreq(\fR\fIval1\fR,\fIval2\fR\fB)\fR
+Returns true if \fIval1\fR is equal to \fIval2\fR
+.TP
+\fBstrip(\fR\fIs\fR\fB)\fR
+Removes leading and trailing spaces from a string
+.TP
+\fBstrisempty(\fR\fIval\fR\fB)\fR
+Returns true if \fIval\fR is an empty string
+.TP
+\fBstrneq(\fR\fIval1\fR,\fIval2\fR\fB)\fR
+Returns true if \fIval1\fR and \fIval2\fR are not equal
+.TP
+\fBt2sort(\fR\fIcol\fR[,\fInum\fR[,\fItype\fR]]\fB)\fR
+Sorts the file according to \fIcol\fR.
+If \fInum\fR is omitted or 0, returns the full list.
+If \fInum\fR > 0, returns the top \fInum\fR results.
+If \fInum\fR < 0 returns the bottom \fInum\fR results.
+\fItype\fR can be used to specify the type of data to sort: "ip", "num" or "str" (default is based on the first matching record)
+.TP
+\fBt2split(\fR\fIval\fR,\fIsep\fR[,\fInum\fR[,\fIosep\fR]]\fB)\fR
+Splits values according to \fIsep\fR.
+If \fInum\fR is omitted or 0, \fIval\fR is split into \fIosep\fR separated columns.
+If \fInum\fR > 0, returns the \fInum\fR repetition.
+If \fInum\fR < 0, returns the \fInum\fR repetition from the end.
+Multiple \fInum\fR can be specified, e.g., \fI"1;-1;2"\fR.
+Output separator \fIosep\fR defaults to OFS.
+.TP
+\fBtcp(\fR[\fIp\fR]\fB)\fR
+Returns true if the protocol is equal to 6 (TCP)
+.TP
+\fBtcpflags(\fR[\fIval\fR]\fB)\fR
+If \fIval\fR is specified, returns true if the specified flags are set.
+If \fIval\fR is omitted, returns a string representation of the TCP flags.
+.TP
+\fBtexscape(\fR\fIs\fR\fB)\fR
+Escape the string \fIs\fR to make it LaTeX compatible
+.TP
+\fBtimestamp(\fR\fIt\fR\fB)\fR
+Converts date \fIt\fR to UNIX timestamp
+.TP
+\fBtuple2()\fR
+Returns the 2 tuple (source IP and destination IP)
+.TP
+\fBtuple3()\fR
+Returns the 3 tuple (source IP, destination IP and port)
+.TP
+\fBtuple4()\fR
+Returns the 4 tuple (source IP and port, destination IP and port)
+.TP
+\fBtuple5()\fR
+Returns the 5 tuple (source IP and port, destination IP and port, protocol)
+.TP
+\fBtuple6()\fR
+Returns the 6 tuple (source IP and port, destination IP and port, protocol, VLAN ID)
+.TP
+\fBudp(\fR[\fIp\fR]\fB)\fR
+Returns true if the protocol is equal to 17 (UDP)
+.TP
+\fBunquote(\fR\fIs\fR\fB)\fR
+Removes leading and trailing quotes from a string \fIs\fR
+.TP
+\fBurldecode(\fR\fIurl\fR\fB)\fR
+Decodes an encoded URL \fIurl\fR
+.TP
+\fButc(\fR\fIt\fR\fB)\fR
+Converts UNIX timestamp to string (UTC)
+.TP
+\fBvalcontains(\fR\fIval\fR,\fIsep\fR,\fIitem\fR\fB)\fR
+Returns true if one item of \fIval\fR split by \fIsep\fR is equal to \fIitem\fR.
+.TP
+\fB_validate_col(\fR\fInames\fR[,\fIextname\fR]\fB)\fR
+Test whether a column exists (its number is different from 0).
+Multiple names can be provided in a semi-colon separated string.
+Returns the index of the first column with a non-zero index.
+If none of the column was found, exits and prints the column names.
+\fIextname\fR, a column number can be provided and will be returned if none of the column names listed was found.
+.TP
+\fBwildcard(\fR\fIexpr\fR\fB)\fR
+Print all columns whose name matches the regular expression \fIexpr\fR. If \fIexpr\fR is preceded by an exclamation mark, returns all columns whose name does NOT match \fIexpr\fR.
+
+.SH EXAMPLES
+.TP
+\fBcovertChans(\fR[\fIval\fR[,\fInum\fR]]\fB)\fR
+Returns information about hosts involved in covert channels and aggregate \fIval\fR.
+If \fIval\fR is omitted or equal to "flows", counts the number of flows.
+If \fInum\fR is omitted or 0, returns the full list.
+If \fInum\fR > 0, returns the top \fInum\fR results.
+If \fInum\fR < 0 returns the bottom \fInum\fR results.
+.TP
+\fBdnsZT()\fR
+Returns all flows where a DNS zone transfer was performed.
+.TP
+\fBexeDL(\fR[\fIn\fR]\fB)\fR
+Returns the top \fIn\fR EXE downloads.
+.TP
+\fBhttpHostsURL(\fR[\fIf\fR]\fB)\fR
+Returns all HTTP hosts and a list of the files hosted (sorted alphabetically).
+If \fIf\fR > 0, prints the number of times a URL was requested.
+.TP
+\fBnonstdports()\fR
+Returns all flows running protocols over non-standard ports.
+.TP
+\fBpasswords(\fR[\fIval\fR[,\fInum\fR]]\fB)\fR
+Returns information about hosts sending authentication in clear text and aggregate \fIval\fR.
+If \fIval\fR is omitted or equal to "flows", counts the number of flows.
+If \fInum\fR is omitted or 0, returns the full list.
+If \fInum\fR > 0, returns the top \fInum\fR results.
+If \fInum\fR < 0 returns the bottom \fInum\fR results.
+.TP
+\fBpostQryStr(\fR[\fIn\fR]\fB)\fR
+Returns the top N POST requests with query strings.
+.TP
+\fBssh()\fR
+Returns the SSH connections.
+.TP
+\fBtopDnsA(\fR[\fIn\fR]\fB)\fR
+Returns the top \fIn\fR DNS answers.
+.TP
+\fBtopDnsIp4(\fR[\fIn\fR]\fB)\fR
+Returns the top \fIn\fR DNS answers IPv4 addresses.
+.TP
+\fBtopDnsIp6(\fR[\fIn\fR]\fB)\fR
+Returns the top \fIn\fR DNS answers IPv6 addresses.
+.TP
+\fBtopDnsQ(\fR[\fIn\fR]\fB)\fR
+Returns the top \fIn\fR DNS queries.
+.TP
+\fBtopHttpMimesST(\fR[\fIn\fR]\fB)\fR
+Returns the top \fIn\fR HTTP content-type (type/subtype).
+.TP
+\fBtopHttpMimesT(\fR[\fIn\fR]\fB)\fR
+Returns the top \fIn\fR HTTP content-type (type only).
+.TP
+\fBtopSLD(\fR[\fIn\fR]\fB)\fR
+Returns the top \fIn\fR second-level domains queried (google.com, yahoo.com, ...).
+.TP
+\fBtopTLD(\fR[\fIn\fR]\fB)\fR
+Returns the top \fIn\fR top-level domains (TLD) queried (.com, .net, ...).
+
+.SH EXIT STATUS
+\fBtawk\fR returns 0 on success. Any different value is an indication of error.
+
+.SH FILES
+\fIfuncs/funcs.load\fR
+.RS
+Set of predefined functions for \fBtawk\fR
+
+.SH ""
+\fIt2nfdump/t2nfdump.load\fR
+.RS
+Set of predefined functions for \fBtawk\fR (loaded with \fB-n\fR option)
+
+.SH ""
+\fIexamples/examples.load\fR
+.RS
+Set of predefined functions for \fBtawk\fR (loaded with \fB-e\fR option)
+
+.SH ""
+\fIt2custom.awk\fR
+.RS
+Set of user defined functions for \fBtawk\fR
+
+.SH AUTHORS
+\fBtawk\fR was written by the Tranalyzer Development Team
+
+.SH BUGS
+Please send problems, bugs, questions and suggestions to:
+
+.ti +8
+\fItranalyzer@rdit.ch\fR
+
+.SH DISTRIBUTION
+The latest version of \fBtawk\fR can be found at \fIhttps://tranalyzer.com\fR
+
+.SH "SEE ALSO"
+\fIt2nfdump\fR(1), \fItranalyzer\fR(1), \fIgawk\fR(1), \fIt2fm\fR(1)
+
+The full documentation for \fBtawk\fR is available at
+
+.ti +8
+\fIhttps://tranalyzer.com/downloads/doc/documentation.pdf\fR

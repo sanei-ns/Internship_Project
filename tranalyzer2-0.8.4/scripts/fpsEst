@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#
+# This script calculates the jumps in IAT to allow the user
+# to choose an appropriate MINIAT(S/U)
+
+source "$(dirname "$0")/t2utils.sh"
+
+if [ ! -f "$1" ]; then
+   echo "Usage: $SNAME file"
+   exit 1
+fi
+
+cut -f 1 $1 | sort -u | $AWK '{
+   b = $1 - a;
+   if (b > d) {
+      d = b;
+      r = int(($1+d)/2);
+      z = ($1+d)/2 - r;
+      #printf "NFRST_MINIATS: %d, NFRST_MINIATU: %d\n", r, int(1000000*z);
+      printf "NFRST_MINIATS: %d, NFRST_MINIATU: %d, diff: %f \n", int($1), int(1000000*($1-int($1))), b;
+   }
+   a = $1;
+}'

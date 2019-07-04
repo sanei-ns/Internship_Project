@@ -1,0 +1,70 @@
+# Bash/ZSH completion for t2build
+
+_t2build() {
+    #compdef t2build
+    local cur prev
+    if type compdef &> /dev/null; then
+        cur="${words[CURRENT]}"
+        [ $CURRENT -gt 2 ] && prev=${words[CURRENT-1]}
+    else
+        local words cword
+        _init_completion || return
+    fi
+    local args=(
+        -a --all -b --build -i --install -R --rebuild -I --ignore -f --force
+        -r --configure -d --debug -c --clean -u --unload -o -p --plugin-dir
+        -l --list -P --profile -D --doc -e --empty -y --yes -1 -k --package
+        -kJ --package-xz -kj --package-bz2 -kt --package-tar -kz --package-gz
+        -K --package-all -KJ --package-all-xz -Kj --package-all-bz2
+        -Kt --package-all-tar --Kz --package-all-gz -\? -h --help
+    )
+    case $prev in
+        -p|--plugin-dir)
+            if type compdef &> /dev/null; then
+                _files -/
+            else
+                _filedir -d
+            fi
+            return
+            ;;
+        -I|--ignore)
+            if type compdef &> /dev/null; then
+                _files
+            else
+                _filedir
+            fi
+            return
+            ;;
+    esac
+    if [[ "$cur" == -* ]]; then
+        if type compdef &> /dev/null; then
+            _arguments --
+        else
+            COMPREPLY=($(compgen -W "${args[*]}" -- "$cur"))
+        fi
+        return
+    fi
+    local plugins=(tranalyzer2)
+    for i in "$T2PLHOME/"*; do
+        local b=$(basename "$i")
+        if [ -d "$i" ] && [ "$b" != "t2PSkel" ]; then
+            plugins+=($b)
+        fi
+    done
+    if type compdef &> /dev/null; then
+        compadd "${plugins[@]}"
+    elif [ "$prev" = "-b" ]; then
+        if type compopt &> /dev/null; then
+            compopt -o nospace
+        fi
+        COMPREPLY=($(compgen -f -W "${plugins[*]}" -- "$cur"))
+    else
+        COMPREPLY=($(compgen -W "${plugins[*]}" -- "$cur"))
+    fi
+}
+
+if type compdef &> /dev/null; then
+    compdef _t2build t2build
+else
+    complete -F _t2build t2build
+fi

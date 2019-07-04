@@ -1,0 +1,18 @@
+#!/usr/bin/env awk
+#
+# Output Bytes
+#
+# Dependencies:
+#   - basicStats
+#
+# Example:
+#   - tawk '{ print obyt() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function obyt(        _c) {
+    _c = _validate_col("numBytesSnt", _my_numBytesSnt)
+    if (hdr()) return "Out Byte"
+    return $_c
+}

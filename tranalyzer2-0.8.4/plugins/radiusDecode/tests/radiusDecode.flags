@@ -1,0 +1,15 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/radiusDecode
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/radiusDecode.h
+RADIUS_DEBUG    src/radiusDecode.h
+RADIUS_NAS      src/radiusDecode.h
+RADIUS_FRAMED   src/radiusDecode.h
+RADIUS_TUNNEL   src/radiusDecode.h
+RADIUS_ACCT     src/radiusDecode.h

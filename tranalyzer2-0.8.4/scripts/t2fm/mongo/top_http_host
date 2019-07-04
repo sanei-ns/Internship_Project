@@ -1,0 +1,37 @@
+cursor = db.flow.aggregate([
+    {
+        $match : {
+            timeFirst : { $gte : time_from },
+            timeLast  : { $lte : time_to },
+        }
+    },
+    {
+        $unwind : "$httpHosts"
+    },
+    {
+        $group : {
+            _id : "$httpHosts",
+            count : { $sum : 1 }
+        }
+    },
+    {
+        $match : {
+            _id : { $ne : "" }
+        }
+    },
+    {
+        $sort : { count : -1 }
+    },
+    {
+        $limit : n
+    }
+])
+
+cursor.forEach(
+    function(e) {
+        print(
+              e._id + "\t"
+            + e.count
+        )
+    }
+)

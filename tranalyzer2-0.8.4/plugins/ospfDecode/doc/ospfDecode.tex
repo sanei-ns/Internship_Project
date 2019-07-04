@@ -1,0 +1,161 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {ospfDecode}
+    {Open Shortest Path First (OSPF)}
+    {Tranalyzer Development Team}
+
+\section{ospfDecode}\label{s:ospfDecode}
+
+\subsection{Description}
+This plugin analyzes OSPF traffic and provides absolute and relative statistics to the {\tt PREFIX\_ospfStats.txt} file. In addition, the {\tt rospf} script extracts the areas, networks and netmasks, along with the routers and their interfaces (\refs{s:ospf-pp}).
+
+\subsection{Configuration Flags}\label{s:ospf-of}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt OSPF\_OUTPUT\_DBD}  & 0 & Output routing tables\\
+    {\tt OSPF\_OUTPUT\_MSG}  & 0 & Output all messages\\
+    {\tt OSPF\_MASK\_AS\_IP} & 0 & How to display netmasks: 0: hex, 1: IP\\
+    {\tt OSPF\_AREA\_AS\_IP} & 0 & How to display areas: 0: int, 1: IP, 2: hex\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The ospfDecode plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt \nameref{ospfStat}}   & H8      & Status\\
+    {\tt \nameref{ospfType}}   & H8      & Message type\\
+    {\tt \nameref{ospfAuType}} & H16     & Authentication type\\
+    {\tt ospfAuPass} & RS      & Authentication password (if {\tt ospfAuType == 0x4})\\
+    {\tt ospfArea}   & U32/H32 & Area ID (see {\tt OSPF\_AREA\_AS\_IP} in \refs{s:ospf-of})\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{ospfStat}\label{ospfStat}
+The hex based status variable ({\tt ospfStat}) is defined as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf ospfStat} & {\bf Description} \\
+    \midrule\endhead%
+    $2^0$ (={\tt 0x01}) & OSPF message had invalid TTL ($\neq1$)\\
+    $2^1$ (={\tt 0x02}) & OSPF message had invalid destination\\
+    $2^2$ (={\tt 0x04}) & OSPF message had invalid type\\
+    $2^3$ (={\tt 0x08}) & OSPF message had invalid checksum\\
+    $2^4$ (={\tt 0x10}) & OSPF message was malformed\\
+    \bottomrule
+\end{longtable}
+
+The invalid checksum status {\tt 0x08} is currently not implemented.\\
+The malformed status {\tt 0x10} is currently used to report cases such as possible covert channels, e.g., {\tt authfield} used when {\tt auType} was {\tt NULL}.\\
+
+\subsubsection{ospfType}\label{ospfType}
+The hex based message type variable {\tt ospfType} is defined as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf ospfType} & {\bf Description} \\
+    \midrule\endhead%
+    $2^1$ (={\tt 0x02}) & Hello\\
+    $2^2$ (={\tt 0x04}) & Database Description\\
+    $2^3$ (={\tt 0x08}) & Link State Request\\
+    $2^4$ (={\tt 0x10}) & Link State Update\\
+    $2^5$ (={\tt 0x20}) & Link State Acknowledgement\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{ospfAuType}\label{ospfAuType}
+The hex based authentication type variable {\tt ospfAuType} is defined as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf ospfAuType} & {\bf Description} \\
+    \midrule\endhead%
+    $2^1$ (={\tt 0x0002}) & Null authentication\\
+    $2^2$ (={\tt 0x0004}) & Simple password\\
+    $2^3$ (={\tt 0x0008}) & Cryptographic authentication\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Additional Output}
+\begin{itemize}
+    \item {\tt PREFIX\_ospfStats.txt:} global statistics about OSPF traffic
+    \item {\tt PREFIX\_ospfHello.txt} Hello messages (see \refs{s:ospf-pp})
+    \item {\tt PREFIX\_ospfDBD.txt:} Routing tables (see \refs{s:ospf-of})
+    \item {\tt PREFIX\_ospfMsg.txt:} All other messages (see \refs{s:ospf-of})
+\end{itemize}
+
+\subsection{Post-Processing}\label{s:ospf-pp}
+
+\subsubsection{rospf}
+Hello messages can be used to discover the network topology and are stored in the {\tt PREFIX\_ospfHello.txt} file. The script {\tt rospf} extracts the areas, networks, netmasks, routers and their interfaces:
+\begin{center}
+    {\tt ./scripts/rospf PREFIX\_ospfHello.txt}
+\end{center}
+
+\begin{figure}[!ht]
+\centering
+%\begin{tabular}{c}
+\begin{lstlisting}
+Name    Area    Network          Netmask
+N1      0       192.168.21.0     0xffffff00
+N2      1       192.168.16.0     0xffffff00
+N3      1       192.168.22.0     0xfffffffc
+...
+
+Router    Interface_n      Network_n
+R1        192.168.22.29    N11    192.168.21.4    N5    192.168.22.25    N10
+R2        192.168.22.5     N12    192.168.16.1    N0    192.168.22.1     N6
+R3        192.168.22.10    N13    192.168.21.2    N5    192.168.22.6     N12
+...
+
+Router    Connected Routers
+R0        R2    R4    R6    R7    R8
+R1        R2    R4
+R2        R0    R1    R4    R8
+...
+\end{lstlisting}
+%\end{tabular}
+\end{figure}
+
+\subsubsection{dbd}
+If {\tt OSPF\_OUTPUT\_DBD} is activated (\refs{s:ospf-of}), database description messages are stored in a file {\tt PREFIX\_ospfDBD.txt}. The {\tt dbd} script formats this file to produce an output similar to that of standard routers:
+\begin{center}
+    {\tt ./scripts/dbd PREFIX\_ospfDBD.txt}
+\end{center}
+
+\begin{lstlisting}
+OSPF Router with ID (192.168.22.10)
+
+Router Link States (Area 1)
+
+Link ID          ADV Router       Age    Seq#          Checksum
+192.168.22.5     192.168.22.5     4      0x80000002    0x38ce
+192.168.22.10    192.168.22.10    837    0x80000002    0x6b0f
+192.168.22.9     192.168.22.9     837    0x80000002    0x156c
+
+Net Link States (Area 1)
+
+Link ID         ADV Router       Age    Seq#          Checksum
+192.168.22.6    192.168.22.10    4      0x80000001    0x150b
+192.168.22.9    192.168.22.9     838    0x80000001    0x39e0
+
+Summary Net Link States (Area 1)
+
+Link ID         ADV Router       Age    Seq#           Checksum
+192.168.17.0    192.168.22.9     735    0x80000001     0x5dd9
+192.168.17.0    192.168.22.10    736    0x80000001     0x57de
+192.168.18.0    192.168.22.9     715    0x80000001     0x52e3
+...
+\end{lstlisting}
+
+\end{document}

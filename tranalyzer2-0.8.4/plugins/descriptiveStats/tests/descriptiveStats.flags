@@ -1,0 +1,11 @@
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/descriptiveStats
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/descriptiveStats.h
+ENABLE_PS_CALC      src/descriptiveStats.h
+ENABLE_IAT_CALC     src/descriptiveStats.h

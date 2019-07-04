@@ -1,0 +1,21 @@
+-- Top HTTP hosts by number of flows
+
+SELECT
+    host,
+    COUNT(*) AS cnt
+
+FROM (
+    SELECT
+        UNNEST("httpHosts") AS host
+    FROM
+        flow
+    WHERE
+        ARRAY_LENGTH("httpHosts", 1) > 0
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+GROUP BY host
+ORDER BY cnt DESC
+
+LIMIT :n

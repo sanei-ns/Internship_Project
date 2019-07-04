@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+#
+# Configuration file for mysqlSink
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    MYSQL_OVERWRITE_DB radio "" "What to do if DB already exists; \
+            0: abort if DB already exists; \
+            1: overwrite DB if it already exists; \
+            2: reuse DB if it already exists"
+
+    MYSQL_OVERWRITE_TABLE radio "" "What to do if table already exists; \
+            0: abort if table already exists; \
+            1: overwrite table if it already exists; \
+            2: append to table if it already exists"
+
+    MYSQL_TRANSACTION_NFLOWS range "" "Number of flows per transaction (0 for all): 0 65535"
+
+    MYSQL_HOST text "" "Address of the database"
+    MYSQL_DBPORT range "" "Port the DB is listening to: 1 65535"
+
+    MYSQL_USER text "" "Username to connect to DB"
+    MYSQL_PASS text "" "Password to connect to DB"
+
+    MYSQL_DBNAME     text "" "Name of the database"
+    MYSQL_TABLE_NAME text "" "Name of the database flow table"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

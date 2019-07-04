@@ -1,0 +1,15 @@
+#!/usr/bin/env awk
+#
+# MPLS label 8
+#
+# Dependencies:
+#   - basicStats
+#
+# Example:
+#   - tawk '{ print mpls8() }' file
+
+@include "_mplsi"
+
+function mpls8() {
+    return _mplsi(8)
+}

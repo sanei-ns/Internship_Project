@@ -1,0 +1,15 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/psqlSink
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+#
+# Flag name     File
+
+# src/psqlSink.h
+PSQL_OVERWRITE_DB           src/psqlSink.h
+PSQL_OVERWRITE_TABLE        src/psqlSink.h
+PSQL_TRANSACTION_NFLOWS     src/psqlSink.h

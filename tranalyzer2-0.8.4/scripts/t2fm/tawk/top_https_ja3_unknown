@@ -1,0 +1,9 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+$sslJA3Hash && strisempty($sslJA3Desc) {
+    aggrrep($sslJA3Hash, "flows", n, 1)
+}

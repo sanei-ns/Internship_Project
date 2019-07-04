@@ -1,0 +1,49 @@
+#!/usr/bin/env awk
+#
+# Keep track of the min value of a column c.
+# The result can be accessed with get_min(c) or printed with print_min([c])
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{
+#         min(numPktsSnt)
+#     } END {
+#         print_min(numPktsSnt)
+#     }' file.txt
+#   - tawk '{
+#         min(numPktsSnt)
+#     } END {
+#         print get_min(numPktsSnt)
+#     }' file.txt
+#   - tawk '{
+#         min(numPktsSnt)
+#         min(numPktsRcvd)
+#     } END {
+#         print_min()
+#     }' file.txt
+
+@include "COL"
+@include "hdr"
+
+function min(c) {
+    if (hdr()) next
+    if (!(COL[c] in __MIN__) || $c < __MIN__[COL[c]]) {
+        __MIN__[COL[c]] = $c
+    }
+}
+
+function get_min(c) {
+    return __MIN__[COL[c]]
+}
+
+function print_min(c,        _i) {
+    if (!c) {
+        for (_i in __MIN__) {
+            print _i ": " __MIN__[_i]
+        }
+    } else {
+        print get_min(c)
+    }
+}

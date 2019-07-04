@@ -1,0 +1,15 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/icmpDecode
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/icmpDecode.h
+IPV6_ACTIVATE   ../../tranalyzer2/src/networkHeaders.h
+ICMP_STATFILE   src/icmpDecode.h
+ICMP_TC_MD      src/icmpDecode.h
+ICMP_FDCORR     src/icmpDecode.h
+ICMP_PARENT     src/icmpDecode.h

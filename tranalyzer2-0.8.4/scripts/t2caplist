@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+#
+# Generates a list of files with absolute path.
+# Input can be composed of files and folders.
+#
+# Usage: t2caplist [OPTION...] files > pcap_list.txt
+
+source "$(dirname "$0")/t2utils.sh"
+
+usage() {
+    echo "Usage:"
+    echo "    $SNAME [OPTION...] <FILE|DIR>"
+    echo
+    echo "Optional arguments:"
+    echo "    -d depth          List pcaps up to the given depth"
+    echo "    -L                Follow symbolic links"
+    echo "    -r                List pcaps recursively"
+    echo "    -s                Do not sort the list"
+    echo "    -v                Report invalid files to stderr"
+    echo "    -h, -?, --help    Show this help, then exit"
+}
+
+# Default values
+DEPTH_LEVEL=1
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -d|--depth)
+            validate_next_num "$1" "$2"
+            DEPTH_LEVEL="$2"
+            shift
+            ;;
+        -s|--no-sort) NOSORT=1;;
+        -r|--recursive) RECURSIVE=1;;
+        -v|--verbose) VERBOSE=1;;
+        -L|--symlinks) SYMLINKS="$1";;
+        -h|-\?|--help) usage; exit 0;;
+        *)
+            if [ -d "$1" ]; then
+                DIRS+=("$1")
+            elif [ -f "$1" ]; then
+                FILES+=("$1")
+            else
+                abort_option_unknown "$1"
+            fi
+            ;;
+    esac
+    shift
+done
+
+# No files or directory specified
+if [ -z "$FILES" ] && [ -z "$DIRS" ]; then
+    DIRS="."
+fi
+
+if [ -z "$RECURSIVE" ]; then
+   DEPTH="-maxdepth $DEPTH_LEVEL"
+fi
+
+PCAPS=("$(for i in ${DIRS[@]}; do
+    find $SYMLINKS "$($READLINK -f "$i")" $DEPTH -type f -exec file {} \; | grep -i ' capture file ' | $AWK -F': ' '{print $1}'
+done)")
+
+PCAPS+=("$(for i in ${FILES[@]}; do
+    if [ -f "$i" ] && [ ! -z "$(file "$i" | grep -i ' capture file ')" ]; then
+        $READLINK -f "$i"
+    elif [ -n "$VERBOSE" ]; then
+        printwrn "'$i' is not a valid pcap file" >&2
+    fi
+done)")
+
+if [ -z "$PCAPS" ]; then
+    printerr "No valid PCAP files found"
+    exit 1
+fi
+
+if [ $NOSORT ]; then
+    echo "${PCAPS[*]}" | $SED 's/\s\+$//g'
+elif [ "$(uname)" = "Darwin" ]; then
+    sort -f <<< "${PCAPS[*]}" | $SED 's/\s\+$//g'
+else
+    sort -f -V <<< "${PCAPS[*]}" | $SED 's/\s\+$//g'
+fi

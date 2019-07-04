@@ -1,0 +1,23 @@
+-- Top HTTP content by number of flows
+
+SELECT
+    LOWER(mime) AS lmime,
+    COUNT(*) AS cnt
+
+FROM (
+    SELECT
+        SPLIT_PART(UNNEST("httpMimes"), '/', 1) AS mime
+    FROM
+        flow
+    WHERE
+        ARRAY_LENGTH("httpMimes", 1) > 0
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+WHERE mime != ''
+
+GROUP BY lmime
+ORDER BY cnt DESC
+
+LIMIT :n

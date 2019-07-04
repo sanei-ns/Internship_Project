@@ -1,0 +1,30 @@
+#!/usr/bin/env awk
+#
+# Returns the top N DNS answers IPv6 addresses
+#
+# Dependencies:
+#   - dnsDecode
+#
+# Examples:
+#   - tawk 'topDnsIp6()' file.txt
+#   - tawk 'topDnsIp6(5)' file.txt
+
+@include "aggr"
+@include "hdr"
+@include "port"
+@include "strisempty"
+@include "_validate_col"
+
+function topDnsIp6(n,        _i, _l, _d) {
+    _validate_col("dns6Aaddress")
+    if (hdr()) {
+        if (__PRIHDR__) print $dns6Aaddress, "Flows"
+    } else if (!strisempty($dns6Aaddress) && !port(137)) { # ignore NBNS
+        _l = split($dns6Aaddress, _d, ";");
+        for (_i = 1; _i <= _l; _i++) {
+            if (!strisempty(_d[_i]) && _d[_i] != "::") {
+                aggr(_d[_i], "flows", n)
+            }
+        }
+    }
+}

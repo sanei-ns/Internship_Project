@@ -1,0 +1,10 @@
+#H bit | tcpFlags | Description
+#H =============================================================================
+     0 | 0x01     | FIN: No more data, finish connection
+     1 | 0x02     | SYN: Synchronize sequence numbers
+     2 | 0x04     | RST: Reset connection
+     3 | 0x08     | PSH: Push data
+     4 | 0x10     | ACK: Acknowledgement field value valid
+     5 | 0x20     | URG: Urgent pointer valid
+     6 | 0x40     | ECE: ECN-Echo
+     7 | 0x80     | CWR: Congestion Window Reduced flag is set

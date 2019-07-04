@@ -1,0 +1,12 @@
+#H bit | lldpStat | Description
+#H =============================================================================
+     0 | 0x0001   | Flow is LLDP
+     1 | 0x0002   | Mandatory TLV missing
+     2 | 0x0004   | Optional TLV present
+     3 | 0x0008   | Reserved TLV type used
+     4 | 0x0010   | Organization specific TLV used
+     5 | 0x0020   | Unhandled TLV used
+#W   6 | 0x0040   | Invalid TLV length
+#W  13 | 0x2000   | String truncated... increase LLDP_STRLEN
+#W  14 | 0x4000   | Too many TTL... increase LLDP_NUM_TTL
+#W  15 | 0x8000   | Snapped payload

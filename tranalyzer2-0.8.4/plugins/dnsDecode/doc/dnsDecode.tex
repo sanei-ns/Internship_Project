@@ -1,0 +1,388 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {dnsDecode}
+    {Domain Name System (DNS)}
+    {Tranalyzer Development Team}
+
+\section{dnsDecode}\label{s:dnsDecode}
+
+\subsection{Description}
+This plugin produces DNS header and content information encountered during the lifetime of a flow.
+The idea is to identify DNS header and payload features using flow parameters in order to extract
+information about applications or users. The DNS plugin requires no dependencies and produces
+only output to the flow file. User defined compiler switches in {\em dnsDecode.h, malsite.h} produce
+optimized code for the specific application.
+
+\subsection{Configuration Flags}\label{dnsDecode:config}
+The flow based output and the extracted information can be controlled by
+switches and constants listed in the table below. The most important one is {\tt DNS\_MODE}
+which controls the amount of information in the flow file. {\tt DNS\_AGGR} controls the aggregation
+of duplicate names and values. The last three limit the amount of memory allocated for flow based DNS record storage.
+The default values revealed reasonable performance in practise.
+
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt DNS\_MODE}    &  4 & 0: Only aggregated header count info \\
+                       &    & 1: +REQ records \\
+                       &    & 2: +ANS records \\
+                       &    & 3: +AUX records \\
+                       &    & 4: +ADD records\\
+    {\tt DNS\_HEXON}   &  1 & 0: Hex Output flags off, 1: Hex output flags on\\
+    {\tt DNS\_REQA}    &  0 & 0: full vectors, 1: Aggregate request records\\
+    {\tt DNS\_ANSA}    &  0 & 0: full vectors, 1: Aggregate answer records\\
+    {\tt DNS\_QRECMAX} & 15 & Max \# of query records / flow \\
+    {\tt DNS\_ARECMAX} & 20 & Max \# of answer records / flow \\
+    {\tt MAL\_TEST}    & 0 & 1: activate blacklist malware test mode (IPv4 only) \\
+    {\tt MAL\_TYPE}    & 0 & 1: Type string; 0: Code \\\\
+
+    \multicolumn{3}{l}{The following additional flag is available in {\tt malsite.h}:}\\\\
+
+    {\tt MAL\_DOMAIN} & 1 & 0: malsite ip address labeling mode \\
+                      &   & 1: malsite domain labeling mode\\
+    \bottomrule
+\end{longtable}
+
+%\subsection{Required Files}
+%none
+
+\subsection{Flow File Output}
+The default settings will result in 11 tab separated columns in the flow file where the items
+in column 6-11 are sequences of strings containing DNS record name, address entries and specific
+DNS entry information such as Type or TTL separated by semicolons. The idea is that the array elements of strings of the
+different columns correspond to each other so that easy script based post processing is possible.
+The different output modes controlled by {\tt DNS\_MODE} provide an incremental method from a high speed
+compressed representation to a full human readable representation.
+
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt\nameref{dnsStat}}        & H16 & Status, warnings and errors \\
+    {\tt\nameref{dnsHdriOPField}} & H16 & Header field of last packet in flow \\
+    {\tt\hyperref[dnsHStatOpCRetC]{DnsStat\_}}  & H8\_        & Aggregated header status,\\
+    {\tt\quad\hyperref[dnsHStatOpCRetC]{OpC\_}} & \quad H16\_ & \quad opcode and\\
+    {\tt\quad\hyperref[dnsHStatOpCRetC]{RetC}}  & \quad H16   & \quad return code \\
+    {\tt dnsCntQu\_}  & R:U16\_     & \# of question records \\
+    {\tt \quad Asw\_} & \quad U16\_ & \quad\# answer records\\
+    {\tt \quad Aux\_} & \quad U16\_ & \quad\# of auxiliary records\\
+    {\tt \quad Add}   & \quad U16   & \quad\# additional records \\
+    {\tt dnsAAAqF}    & F           & DDOS DNS AAA / Query factor \\
+    {\tt\hyperref[dnsTypeBF]{dnsTypeBF3\_BF2\_BF1\_BF0}} & H8\_H16\_H16\_H64 & Type bitfields  & {\tt DNS\_MODE > 0}\\
+    {\tt dnsQname}    & RS   & Query Name records  & {\tt DNS\_MODE > 1}\\\\
+    {\tt dnsMalType}  & RS   & Domain Malware Type String & {\tt MAL\_TEST=1 \&\&}\\
+                      &      &                     & {\tt MAL\_TYPE=1 \&\&}\\
+                      &      &                     & {\tt MAL\_DOMAIN=1}\\
+    {\tt dnsMalCode}  & RH32 & Domain Malware code & {\tt MAL\_TEST=1 \&\&}\\
+                      &      &                     & {\tt MAL\_TYPE=0 \&\&}\\
+                      &      &                     & {\tt MAL\_DOMAIN=1}\\
+    {\tt dnsAname}  & RS & Answer Name records  \\
+    {\tt dnsAPname} & RS & Name CNAME entries  \\
+    {\tt dns4Aaddress} & RIP4 & Address entries IPv4 \\
+    {\tt dns6Aaddress} & RIP6 & Address entries IPv6 \\
+    {\tt dnsIPMalCode} & RH32 & IP Malware code & {\tt MAL\_TEST=1 \&\&}\\
+                       &      &                 & {\tt MAL\_DOMAIN=0}\\
+    {\tt dnsAType}   & RU16 & Answer record Type entries \\
+    {\tt dnsAClass}  & RU16 & Answer record Class entries \\
+    {\tt dnsATTL}    & RU32 & Answer record TTL entries \\
+    {\tt dnsMXpref}  & RU16 & MX record preference entries  \\
+    {\tt dnsSRVprio} & RU16 & SRV record priority entries \\
+    {\tt dnsSRVwgt}  & RU16 & SRV record weight entries\\
+    {\tt dnsOptStat}  & RU32 & option status\\
+    {\tt dnsOptCodeOwn}  & RU16 & option code owner\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{dnsStat}\label{dnsStat}
+The DNS status bit field listed below provides an efficient method to post process
+flow data files in order to detect incidents during flow processing.
+
+\begin{longtable}{rll}
+    \toprule
+    {\bf dnsStat} & {\bf Type} & {\bf Description}\\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0001}) & {\tt DNS\_PRTDT}   & DNS ports detected \\
+    $2^{1}$  (={\tt 0x0002}) & {\tt DNS\_NBIOS}   & NetBios DNS\\
+    $2^{2}$  (={\tt 0x0004}) & {\tt DNS\_FRAGA}   & DNS TCP aggregated fragmented content \\
+    $2^{3}$  (={\tt 0x0008}) & {\tt DNS\_FRAGS}   & DNS TCP fragmented content state\\
+    $2^{4}$  (={\tt 0x0010}) & {\tt DNS\_FTRUNC}  & Warning: Name truncated \\
+    $2^{5}$  (={\tt 0x0020}) & {\tt DNS\_ANY}     & Warning: ANY: Zone all from a domain or cached server\\
+    $2^{6}$  (={\tt 0x0040}) & {\tt DNS\_IZTRANS} & Warning: Incremental DNS zone transfer detected \\
+    $2^{7}$  (={\tt 0x0080}) & {\tt DNS\_ZTRANS}  & Warning: DNS zone transfer detected \\
+    $2^{8}$  (={\tt 0x0100}) & {\tt DNS\_WRNULN}  & Warning: DNS UDP Length exceeded \\
+    $2^{9}$  (={\tt 0x0200}) & {\tt DNS\_WRNIGN}  & Warning: following Records ignored \\
+    $2^{10}$ (={\tt 0x0400}) & {\tt DNS\_WRNDEX}  & Warning: Max DNS name records exceeded \\
+    $2^{11}$ (={\tt 0x0800}) & {\tt DNS\_WRNAEX}  & Warning: Max address records exceeded \\
+    $2^{12}$ (={\tt 0x1000}) & {\tt DNS\_ERRLEN}  & Error: DNS record length error\\
+    $2^{13}$ (={\tt 0x2000}) & {\tt DNS\_ERRPTR}  & Error: Wrong DNS PTR detected\\
+    $2^{14}$ (={\tt 0x4000}) & {\tt DNS\_WRNMLN}  & Warning: DNS length undercut\\
+    $2^{15}$ (={\tt 0x8000}) & {\tt DNS\_ERRCRPT} & Error: UDP/TCP DNS Header corrupt or TCP packets missing\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{dnsHdriOPField}\label{dnsHdriOPField}
+From the 16 Bit DNS header the QR Bit and Bit five to nine are extracted and mapped in their correct sequence
+into a byte as indicated below. It provides for a normal single packet exchange flow an accurate status of the
+DNS transfer. For a multiple packet exchange only the last packet is mapped into the variable.
+In that case the aggregated header state flags should be considered.
+
+\begin{longtable}{cccccccccc}
+    \toprule
+    {\bf QR} & {\bf Opcode} & {\bf AA} & {\bf TC} & {\bf RD} & {\bf RA} & {\bf Z} & {\bf AD} & {\bf CD} & {\bf Rcode} \\
+    \midrule\endhead%
+    1 & 0000 & 1 & 0 & 1 & 1 & 1 & 0 & 0 & 0000 \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{dnsHStat\_OpC\_RetC}\label{dnsHStatOpCRetC}
+For multi-packet DNS flows e.g. via TCP the aggregated header state bit field describes
+the status of all packets in a flow. Thus, flows with certain client and server states can
+be easily identified and extracted during post-processing.
+
+\begin{longtable}{rcl}
+    \toprule
+    {\bf dnsHStat} & {\bf Short} & {\bf Description}\\
+    \midrule\endhead%
+    $2^7$ (={\tt 0x01}) & {\tt CD} & Checking Disabled \\
+    $2^6$ (={\tt 0x02}) & {\tt AD} & Authenticated Data \\
+    $2^5$ (={\tt 0x04}) & {\tt Z}  & Zero \\
+    $2^4$ (={\tt 0x08}) & {\tt RA} & Recursion Available \\
+    $2^3$ (={\tt 0x10}) & {\tt RD} & Recursion Desired \\
+    $2^2$ (={\tt 0x20}) & {\tt TC} & Truncated \\
+    $2^1$ (={\tt 0x40}) & {\tt AA} & Authoritative Answer \\
+    $2^0$ (={\tt 0x80}) & {\tt QR} & Query / Response \\
+    \bottomrule
+\end{longtable}
+
+The four bit OpCode field of the DNS header is mapped via [$2^{\text{Opcode}}$] and an OR
+into a 16 Bit field. Thus, the client can be monitored or anomalies easily identified.
+E.g. appearance of reserved bits might be an indication for a covert channel or
+malware operation.
+
+\begin{longtable}{rl}
+    \toprule
+    {\bf dnsOpC} & {\bf Description}\\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0001}) & {\tt QUERY}, Standard query \\
+    $2^{1}$  (={\tt 0x0002}) & {\tt IQUERY}, Inverse query \\
+    $2^{2}$  (={\tt 0x0004}) & {\tt STATUS}, Server status request \\
+    $2^{3}$  (={\tt 0x0008}) & --- \\
+    $2^{4}$  (={\tt 0x0010}) & Notify \\
+    $2^{4}$  (={\tt 0x0020}) & Update \\
+    $2^{5}$  (={\tt 0x0040}) & reserved \\
+    $2^{6}$  (={\tt 0x0080}) & reserved \\
+    $2^{8}$  (={\tt 0x0100}) & reserved \\
+    $2^{9}$  (={\tt 0x0200}) & reserved \\
+    $2^{10}$ (={\tt 0x0400}) & reserved \\
+    $2^{11}$ (={\tt 0x0800}) & reserved \\
+    $2^{12}$ (={\tt 0x1000}) & reserved \\
+    $2^{13}$ (={\tt 0x2000}) & reserved \\
+    $2^{14}$ (={\tt 0x4000}) & reserved \\
+    $2^{15}$ (={\tt 0x8000}) & reserved \\
+    \bottomrule
+\end{longtable}
+
+The four bit RCode field of the DNS header is mapped via [$2^{\text{Rcode}}$] and an OR
+into a 16 Bit field. It provides valuable information about success of DNS queries
+and therefore facilitates the detection of failures, misconfigurations and malicious
+operations.
+
+\begin{longtable}{rcl}
+    \toprule
+    {\bf dnsRetC} & {\bf Short} & {\bf Description}\\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0001}) & No error & Request completed successfully \\
+    $2^{1}$  (={\tt 0x0002}) & Format error & Name server unable to interpret query \\
+    $2^{2}$  (={\tt 0x0004}) & Server failure & Name server unable to process query due to problem with name server \\
+    $2^{3}$  (={\tt 0x0008}) & Name Error & Authoritative name server only: Domain name in query does not exist \\
+    $2^{4}$  (={\tt 0x0010}) & Not Implemented & Name server does not support requested kind of query.\\
+    $2^{4}$  (={\tt 0x0020}) & Refused & Name server refuses to perform the specified operation for policy reasons. \\
+    $2^{5}$  (={\tt 0x0040}) & YXDomain & Name Exists when it should not \\
+    $2^{6}$  (={\tt 0x0080}) & YXRRSet & RR Set Exists when it should not \\
+    $2^{8}$  (={\tt 0x0100}) & NXRRSet & RR Set that should exist does not \\
+    $2^{9}$  (={\tt 0x0200}) & NotAuth & Server Not Authoritative for zone \\
+    $2^{10}$ (={\tt 0x0400}) & NotZone & Name not contained in zone \\
+    $2^{11}$ (={\tt 0x0800}) & --- & --- \\
+    $2^{12}$ (={\tt 0x1000}) & --- & --- \\
+    $2^{13}$ (={\tt 0x2000}) & --- & --- \\
+    $2^{14}$ (={\tt 0x4000}) & --- & --- \\
+    $2^{15}$ (={\tt 0x8000}) & --- & --- \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{dnsTypeBF3\_BF2\_BF1\_BF0}\label{dnsTypeBF}
+The 16 bit Type Code field is extracted from each DNS record and mapped via [$2^{\text{Typecode}}$] into a
+64 Bit fields. Gaps are avoided by additional higher bitfields defining higher codes.
+
+\begin{longtable}{rcl}
+    \toprule
+    {\bf dnsTypeBF3} & {\bf Short} & {\bf Description}\\
+    \midrule\endhead%
+    $2^0$ (={\tt 0x01}) & TA & DNSSEC Trust Authorities \\
+    $2^1$ (={\tt 0x02}) & DLV & DNSSEC Lookaside Validation \\
+    $2^2$ (={\tt 0x04}) & --- & --- \\
+    $2^3$ (={\tt 0x08}) & --- & --- \\
+    $2^4$ (={\tt 0x10}) & --- & --- \\
+    $2^5$ (={\tt 0x20}) & --- & --- \\
+    $2^6$ (={\tt 0x40}) & --- & --- \\
+    $2^7$ (={\tt 0x80}) & --- & --- \\
+    \bottomrule
+\end{longtable}
+
+\begin{longtable}{rcl}
+    \toprule
+    {\bf dnsTypeBF2} & {\bf Short} & {\bf Description} \\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0001}) & TKEY & Transaction Key \\
+    $2^{1}$  (={\tt 0x0002}) & TSIG & Transaction Signature \\
+    $2^{2}$  (={\tt 0x0004}) & IXFR & Incremental transfer \\
+    $2^{3}$  (={\tt 0x0008}) & AXFR & Transfer of an entire zone \\
+    $2^{4}$  (={\tt 0x0010}) & MAILB & Mailbox-related RRs (MB, MG or MR) \\
+    $2^{5}$  (={\tt 0x0020}) & MAILA & Mail agent RRs (OBSOLETE - see MX) \\
+    $2^{6}$  (={\tt 0x0040}) & ZONEALL & Request for all records the server/cache has available  \\
+    $2^{7}$  (={\tt 0x0080}) & URI & URI \\
+    $2^{8}$  (={\tt 0x0100}) & CAA & Certification Authority Restriction \\
+    $2^{9}$  (={\tt 0x0200}) & --- & --- \\
+    $2^{10}$ (={\tt 0x0400}) & --- & --- \\
+    $2^{11}$ (={\tt 0x0800}) & --- & --- \\
+    $2^{12}$ (={\tt 0x1000}) & --- & --- \\
+    $2^{13}$ (={\tt 0x2000}) & --- & --- \\
+    $2^{14}$ (={\tt 0x4000}) & --- & --- \\
+    $2^{15}$ (={\tt 0x8000}) & --- & --- \\
+    \bottomrule
+\end{longtable}
+
+\begin{longtable}{rcl}
+    \toprule
+    {\bf dnsTypeBF1} & {\bf Short} & {\bf Description} \\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0001}) & SPF &  \\
+    $2^{1}$  (={\tt 0x0002}) & UINFO &  \\
+    $2^{2}$  (={\tt 0x0004}) & UID &  \\
+    $2^{3}$  (={\tt 0x0008}) & GID & \\
+    $2^{4}$  (={\tt 0x0010}) & UNSPEC &  \\
+    $2^{4}$  (={\tt 0x0020}) & NID &  \\
+    $2^{5}$  (={\tt 0x0040}) & L32 &  \\
+    $2^{6}$  (={\tt 0x0080}) & L64 &  \\
+    $2^{8}$  (={\tt 0x0100}) & LP &  \\
+    $2^{9}$  (={\tt 0x0200}) & EUI48  & EUI-48 address \\
+    $2^{10}$ (={\tt 0x0400}) & EUI64 & EUI-48 address \\
+    $2^{11}$ (={\tt 0x0800}) & --- & --- \\
+    $2^{12}$ (={\tt 0x1000}) & --- & --- \\
+    $2^{13}$ (={\tt 0x2000}) & --- & --- \\
+    $2^{14}$ (={\tt 0x4000}) & --- & --- \\
+    $2^{15}$ (={\tt 0x8000}) & --- & --- \\
+    \bottomrule
+\end{longtable}
+
+\begin{longtable}{rcl}
+    \toprule
+    {\bf dnsTypeBF0} & {\bf Short} & {\bf Description}\\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0000.0000.0000.0001}) & --- & --- \\
+    $2^{1}$  (={\tt 0x0000.0000.0000.0002}) & A & IPv4 address \\
+    $2^{2}$  (={\tt 0x0000.0000.0000.0004}) & NS & Authoritative name server \\
+    $2^{3}$  (={\tt 0x0000.0000.0000.0008}) & MD & Mail destination. Obsolete use MX instead \\
+    $2^{4}$  (={\tt 0x0000.0000.0000.0010}) & MF & Mail forwarder. Obsolete use MX instead \\
+    $2^{5}$  (={\tt 0x0000.0000.0000.0020}) & CNAME & Canonical name for an alias \\
+    $2^{6}$  (={\tt 0x0000.0000.0000.0040}) & SOA & Marks the start of a zone of authority \\
+    $2^{7}$  (={\tt 0x0000.0000.0000.0080}) & MB & Mailbox domain name \\
+    $2^{8}$  (={\tt 0x0000.0000.0000.0100}) & MG & Mail group member \\
+    $2^{9}$  (={\tt 0x0000.0000.0000.0200}) & MR & Mail rename domain name \\
+    $2^{10}$ (={\tt 0x0000.0000.0000.0400}) & NULL & Null resource record \\
+    $2^{11}$ (={\tt 0x0000.0000.0000.0800}) & WKS & Well known service description \\
+    $2^{12}$ (={\tt 0x0000.0000.0000.1000}) & PTR & Domain name pointer \\
+    $2^{13}$ (={\tt 0x0000.0000.0000.2000}) & HINFO & Host information \\
+    $2^{14}$ (={\tt 0x0000.0000.0000.4000}) & MINFO & Mailbox or mail list information \\
+    $2^{15}$ (={\tt 0x0000.0000.0000.8000}) & MX & Mail exchange \\
+    $2^{16}$ (={\tt 0x0000.0000.0001.0000}) & TXT & Text strings \\
+    $2^{17}$ (={\tt 0x0000.0000.0002.0000}) & --- & Responsible Person \\
+    $2^{18}$ (={\tt 0x0000.0000.0004.0000}) & AFSDB & AFS Data Base location \\
+    $2^{19}$ (={\tt 0x0000.0000.0008.0000}) & X25 & X.25 PSDN address \\
+    $2^{20}$ (={\tt 0x0000.0000.0010.0000}) & ISDN & ISDN address \\
+    $2^{21}$ (={\tt 0x0000.0000.0020.0000}) & RT & Route Through \\
+    $2^{22}$ (={\tt 0x0000.0000.0040.0000}) & NSAP & NSAP address. NSAP style A record \\
+    $2^{23}$ (={\tt 0x0000.0000.0080.0000}) & NSAP-PTR & --- \\
+    $2^{24}$ (={\tt 0x0000.0000.0100.0000}) & SIG & Security signature \\
+    $2^{25}$ (={\tt 0x0000.0000.0200.0000}) & KEY & Security key \\
+    $2^{26}$ (={\tt 0x0000.0000.0400.0000}) & PX & X.400 mail mapping information \\
+    $2^{27}$ (={\tt 0x0000.0000.0800.0000}) & GPOS & Geographical Position \\
+    $2^{28}$ (={\tt 0x0000.0000.1000.0000}) & AAAA & IPv6 Address \\
+    $2^{29}$ (={\tt 0x0000.0000.2000.0000}) & LOC & Location Information \\
+    $2^{30}$ (={\tt 0x0000.0000.4000.0000}) & NXT & Next Domain (obsolete) \\
+    $2^{31}$ (={\tt 0x0000.0000.8000.0000}) & EID & Endpoint Identifier \\
+    $2^{32}$ (={\tt 0x0000.0001.0000.0000}) & NIMLOC/NB & Nimrod Locator / NetBIOS general Name Service \\
+    $2^{33}$ (={\tt 0x0000.0002.0000.0000}) & SRV/NBSTAT & Server Selection / NetBIOS NODE STATUS \\
+    $2^{34}$ (={\tt 0x0000.0004.0000.0000}) & ATMA & ATM Address \\
+    $2^{35}$ (={\tt 0x0000.0008.0000.0000}) & NAPTR & Naming Authority Pointer \\
+    $2^{36}$ (={\tt 0x0000.0010.0000.0000}) & KX & Key Exchanger \\
+    $2^{37}$ (={\tt 0x0000.0020.0000.0000}) & CERT & --- \\
+    $2^{38}$ (={\tt 0x0000.0040.0000.0000}) & A6 & A6 (OBSOLETE - use AAAA) \\
+    $2^{39}$ (={\tt 0x0000.0080.0000.0000}) & DNAME & --- \\
+    $2^{40}$ (={\tt 0x0000.0100.0000.0000}) & SINK & --- \\
+    $2^{41}$ (={\tt 0x0000.0200.0000.0000}) & OPT & --- \\
+    $2^{42}$ (={\tt 0x0000.0400.0000.0000}) & APL & --- \\
+    $2^{43}$ (={\tt 0x0000.0800.0000.0000}) & DS & Delegation Signer \\
+    $2^{44}$ (={\tt 0x0000.1000.0000.0000}) & SSHFP & SSH Key Fingerprint \\
+    $2^{45}$ (={\tt 0x0000.2000.0000.0000}) & IPSECKEY & --- \\
+    $2^{46}$ (={\tt 0x0000.4000.0000.0000}) & RRSIG & --- \\
+    $2^{47}$ (={\tt 0x0000.8000.0000.0000}) & NSEC & NextSECure \\
+    $2^{48}$ (={\tt 0x0001.0000.0000.0000}) & DNSKEY & --- \\
+    $2^{49}$ (={\tt 0x0002.0000.0000.0000}) & DHCID & DHCP identifier \\
+    $2^{50}$ (={\tt 0x0004.0000.0000.0000}) & NSEC3 & --- \\
+    $2^{51}$ (={\tt 0x0008.0000.0000.0000}) & NSEC3PARAM & --- \\
+    $2^{52}$ (={\tt 0x0010.0000.0000.0000}) & TLSA & --- \\
+    $2^{53}$ (={\tt 0x0020.0000.0000.0000}) & SMIMEA & S/MIME cert association \\
+    $2^{54}$ (={\tt 0x0040.0000.0000.0000}) & --- & \\
+    $2^{55}$ (={\tt 0x0080.0000.0000.0000}) & HIP & Host Identity Protocol \\
+    $2^{56}$ (={\tt 0x0100.0000.0000.0000}) & NINFO & --- \\
+    $2^{57}$ (={\tt 0x0200.0000.0000.0000}) & RKEY & --- \\
+    $2^{58}$ (={\tt 0x0400.0000.0000.0000}) & TALINK & Trust Anchor LINK \\
+    $2^{59}$ (={\tt 0x0800.0000.0000.0000}) & CDS & Child DS \\
+    $2^{60}$ (={\tt 0x1000.0000.0000.0000}) & CDNSKEY & DNSKEY(s) the Child wants reflected in DS \\
+    $2^{61}$ (={\tt 0x2000.0000.0000.0000}) & OPENPGPKEY & OpenPGP Key \\
+    $2^{62}$ (={\tt 0x4000.0000.0000.0000}) & CSYNC & Child-To-Parent Synchronization \\
+    $2^{63}$ (={\tt 0x8000.0000.0000.0000}) & --- & \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Plugin Report Output}
+The following information is reported:
+\begin{itemize}
+    \item Number of DNS IPv4/6 packets
+    \item Number of DNS IPv4/6 Q,R packets
+    \item Aggregated status flags ({\tt\nameref{dnsStat}})
+    \item Number of alarms ({\tt\hyperref[dnsDecode:config]{MAL\_TEST}})
+\end{itemize}
+
+\subsection{Example Output}
+The idea is that the string and integer array elements of question, answer, TTL and Type record entries
+match by column index so that easy script based mapping and post processing is possible. A sample output
+is shown below. Especially when large records are present the same name is printed several times which
+might degrade the readability. Therefore, a next version will have a multiple Aname suppressor switch,
+which should be off for script based post-processing.
+
+\begin{small}
+    \begin{longtable}{ccccc}
+        \toprule
+        {\bf Query name} & {\bf Answer name} & {\bf Answer address} & {\bf TTL} & {\bf Type} \\
+        \midrule\endhead%
+        www.macromedia.com; & www.macromedia.com;www-mm.wip4.adobe.com & 0.0.0.0;8.118.124.64 & 2787;4 & 5;1 \\
+        \bottomrule
+    \end{longtable}
+\end{small}
+
+\subsection{TODO}
+\begin{itemize}
+    \item Compressed mode for DNS records
+\end{itemize}
+
+\end{document}

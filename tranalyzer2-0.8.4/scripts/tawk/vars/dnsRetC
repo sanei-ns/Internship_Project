@@ -1,0 +1,18 @@
+#H bit | dnsRetC | Short | Description
+#H =============================================================================
+#I   0 | 0x0001  | No error        | Request completed successfully
+#E   1 | 0x0002  | Format error    | Name server unable to interpret query
+#E   2 | 0x0004  | Server failure  | Name server unable to process query due to problem with name server 
+#E   3 | 0x0008  | Name Error      | Authoritative name server only: Domain name in query does not exist
+#E   4 | 0x0010  | Not Implemented | Name server does not support requested kind of query
+#E   5 | 0x0020  | Refused         | Name server refuses to perform the specified operation for policy reasons
+#E   6 | 0x0040  | YXDomain        | Name Exists when it should not
+#E   7 | 0x0080  | YXRRSet         | Resource Record Set exists when it should not
+#E   8 | 0x0100  | NXRRSet         | Resource Record Set that should exist does not
+#E   9 | 0x0200  | NotAuth         | Server Not Authoritative for zone
+#E  10 | 0x0400  | NotZone         | Name not contained in zone
+    11 | 0x0800  | -               | -
+    12 | 0x1000  | -               | -
+    13 | 0x2000  | -               | -
+    14 | 0x4000  | -               | -
+    15 | 0x8000  | -               | -

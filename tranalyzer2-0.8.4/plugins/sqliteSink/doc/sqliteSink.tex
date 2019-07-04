@@ -1,0 +1,47 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {sqliteSink} % Plugin name
+    {SQLite} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{sqliteSink}\label{s:sqliteSink}
+
+\subsection{Description}
+The sqliteSink plugin outputs flow files to SQLite database.
+
+\subsection{Dependencies}
+
+\subsubsection{External Libraries}
+This plugin depends on the {\bf sqlite} library.
+\paragraph{Ubuntu:} {\tt sudo apt-get install libsqlite3-dev}
+\paragraph{Arch:} {\tt sudo pacman -S sqlite}
+\paragraph{Mac OS X:} {\tt brew install sqlite}
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt SQLITE\_OVERWRITE}           & 2     & 0: abort if table already exists\\
+                                      &       & 1: overwrite table if it already exists\\
+                                      &       & 2: append to table if it already exists\\
+    {\tt SQLITE\_HEX\_AS\_INT}        & 0     & 0: store hex numbers (bitfields) as text\\
+                                      &       & 1: store hex numbers (bitfields) as int\\
+    {\tt SQLITE\_TRANSACTION\_NFLOWS} & 40000 & 0: one transaction\\
+                                      &       & > 0: one transaction every $n$ flows\\
+    {\tt SQLITE\_QRY\_LEN}            & 32768 & Max length for query\\
+
+    {\tt SQLITE\_DBNAME}              & {\tt "/tmp/tranalyzer.db"} & Name of the database\\
+    {\tt SQLITE\_TABLE\_NAME}         & {\tt "flow"}               & Name of the table\\
+    \bottomrule
+\end{longtable}
+
+\end{document}

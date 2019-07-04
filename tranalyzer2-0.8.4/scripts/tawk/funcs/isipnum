@@ -1,0 +1,20 @@
+#!/usr/bin/env awk
+#
+# Returns true if 'v' is an IPv4 address in numerical (int) notation
+#
+# Parameters:
+#   - v : the value to test
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk 'isipnum($dstIP4)' file.txt
+#   - tawk 'isipnum($srcIP4) { print }' file.txt
+#   - tawk '{ print isipnum("1.2.3.4") }' file.txt
+
+@include "hdr"
+
+function isipnum(v) {
+    return (v ~ /^[0-9]{1,10}$/ || (__PRIHDR__ && hdr()))
+}

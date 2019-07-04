@@ -1,0 +1,9 @@
+#H radiusFramedProto | Description
+#H =============================================================================
+                   1 | PPP
+                   2 | SLIP
+                   3 | AppleTalk Remote Access Protocol (ARAP)
+                   4 | Gandalf proprietary SingleLink/MultiLink protocol
+                   5 | Xylogics proprietary IPX/SLIP
+                   6 | X.75 Synchronous
+                   7 | GPRS PDP Context

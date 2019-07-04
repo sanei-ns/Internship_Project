@@ -1,0 +1,16 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/jsonSink
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/jsonSink.h
+GZ_COMPRESS             src/jsonSink.h # Keep this one first (need to rebuild Makefiles)
+#SOCKET_ON               src/jsonSink.h
+JSON_SPLIT              src/jsonSink.h
+JSON_ROOT_NODE          src/jsonSink.h
+SUPPRESS_EMPTY_ARRAY    src/jsonSink.h
+JSON_NO_SPACES          src/jsonSink.h

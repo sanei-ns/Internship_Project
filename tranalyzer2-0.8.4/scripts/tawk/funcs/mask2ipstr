@@ -1,0 +1,16 @@
+#!/usr/bin/env awk
+#
+# Converts a network mask (int) to an IPv4 address (string)
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{ print mask2ipstr(24) }' file.txt
+
+@include "ip2str"
+@include "mask2ip"
+
+function mask2ipstr(m) {
+    return ip2str(mask2ip(m))
+}

@@ -1,0 +1,93 @@
+# Bash/ZSH completion for tawk
+
+_tawk() {
+    #compdef tawk
+    local cur prev file
+    if type compdef &> /dev/null; then
+        [ $CURRENT -gt 2 ] && prev="${words[CURRENT-1]}"
+    else
+        local words cword
+        _init_completion || return
+        CURRENT=$COMP_CWORD
+    fi
+    case "$prev" in
+        -I|--input|-x|--fextractor|-X|--xer-file|-f|--file|-i|--include)
+            if type compdef &> /dev/null; then
+                _files
+            else
+                _filedir
+            fi
+            return
+            ;;
+        -d)
+            local opts=(all examples funcs t2nfdump)
+            opts+=($(ls $T2HOME/scripts/tawk/{examples,funcs,t2nfdump}/* | $AWK -F'/' '{print $NF}' | grep -v \.load$))
+            if type compdef &> /dev/null; then
+                compadd "${opts[@]}"
+            else
+                COMPREPLY=($(compgen -W "${opts[*]}" -- "$cur"))
+            fi
+            return
+            ;;
+        -V)
+            local opts=($(ls $T2HOME/scripts/tawk/vars/* | $AWK -F'/' '{print $NF}'))
+            if type compdef &> /dev/null; then
+                compadd "${opts[@]}"
+            else
+                COMPREPLY=($(compgen -W "${opts[*]}" -- "$cur"))
+            fi
+            return
+            ;;
+    esac
+    # complete options
+    if type compdef &> /dev/null; then
+        if [[ "${words[CURRENT]}" == -* ]]; then
+            _arguments --
+            return
+        fi
+    else
+        if [[ "$cur" == -* ]]; then
+            local args=(-I --input -l --list -g --func -d --doc -n --nfdump
+                        -e --examples -c --comment -H --no-header -t -V --var
+                        -X --xer-file -x --fextractor -k --wireshark -D
+                        -F --field-separator -s --special-header
+                        -? -h --help)
+            COMPREPLY=($(compgen -W "${args[*]}" -- "$cur"))
+            return
+        fi
+    fi
+    # search for -I option
+    if [ $CURRENT -gt 2 ]; then
+        for i in $(seq 1 $CURRENT); do
+            if [ "${words[$i]}" = "-I" ]; then
+                file="${words[$((i+1))]}"
+                break
+            fi
+        done
+    fi
+    # file could be the last argument
+    if [ -z "$file" ]; then
+        file="$(echo "${COMP_LINE:-$BUFFER}" | $AWK '{ print $NF }')"
+    fi
+    if [ -f "$file" ]; then
+        # functions from tawk and variable names from 'file'
+        local opts=($(ls $T2HOME/scripts/tawk/{examples,funcs,t2nfdump}/* | $AWK -F'/' '{print $NF}' | grep -v \.load$))
+        # TODO check if -s and/or -F options have been used
+        opts+=($($AWK -F'\t' '$1 ~ /^%[[:space:]]*[[:alpha:]][[:alnum:]_]*$/ { sub(/^%[[:space:]]*/, ""); for (i = 1; i <= NF; i++) { printf " %s", $i; } exit }' "$file"))
+        if type compdef &> /dev/null; then
+            compadd "${opts[@]}"
+        else
+            COMPREPLY=($(compgen -W "${opts[*]}" -- "$cur"))
+        fi
+    elif type compdef &> /dev/null; then
+        _files
+    else
+        _filedir
+    fi
+}
+
+if type compdef &> /dev/null; then
+    compdef _tawk tawk
+else
+    complete -F _tawk tawk
+fi

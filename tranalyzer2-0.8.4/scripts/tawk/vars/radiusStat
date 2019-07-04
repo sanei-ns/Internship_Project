@@ -1,0 +1,10 @@
+#H bit | radiusStat | Description
+#H =============================================================================
+     0 | 0x01       | Flow is radius
+     1 | 0x02       | Authentication and configuration traffic
+     2 | 0x04       | Accounting traffic
+     3 | 0x08       | -
+     4 | 0x10       | Connection successful
+     5 | 0x20       | Connection failed
+     6 | 0x40       | -
+     7 | 0x80       | Malformed packet

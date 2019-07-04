@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+#
+# Configuration file for pktSIATHisto
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    HISTO_NODEPOOL_FACTOR range ""
+        "Multiplication factor for redblack tree node pool: 0 255"
+
+    PRINT_HISTO check "" "Print histo to flow file"
+
+    HISTO_PRINT_BIN radio ""
+        ";
+            0: Minimum of assigned inter arrival time; \
+            1: Bin number"
+
+    HISTO_EARLY_CLEANUP check "" "Clean tree information on flow terminate"
+
+    HISTO_DEBUG check "" "Enable debug output"
+
+    PSI_XCLD check "" "Include (BS_XMIN,UINT16_MAX]"
+
+    PSI_XMIN range "PSI_XCLD == 1" "Minimal packet length: 0 255"
+
+    PSI_MOD range "" "> 1: modulo factor of packet length: 0 255"
+
+    #IATSECMAX range "" "Max # of section in statistics, last section comprises all elements > IATBINBuN: 1 6"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

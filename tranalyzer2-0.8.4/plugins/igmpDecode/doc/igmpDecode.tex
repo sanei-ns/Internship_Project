@@ -1,0 +1,61 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {igmpDecode}
+    {Internet Group Management Protocol (IGMP)}
+    {Tranalyzer Development Team}
+
+\section{igmpDecode}\label{s:igmpDecode}
+This plugin analyzes IGMP traffic and provides absolute and relative statistics to the {\tt PREFIX\_igmpStats.txt} file.
+
+\subsection{Required Files}
+None
+
+%\subsection{Configuration Flags}
+%The following flags can be used to control the output of the plugin:
+%\begin{longtable}{lcl}
+%    \toprule
+%    {\bf Name} & {\bf Default} & {\bf Description} \\
+%    \midrule\endhead%
+%    {\tt IGMP\_TC\_MD} & 0 & Type code\\
+%    %{\tt IGMP\_NUM} & 10 & Type code\\
+%    \bottomrule
+%\end{longtable}
+
+\subsection{Flow File Output}
+The igmpDecode plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt\nameref{igmpStat}} & H8  & Status\\
+    {\tt igmpVersion}       & RI8 & Version\\
+    {\tt igmpAType}         & H32 & Aggregated type \\%& {\tt IGMP\_TC\_MD=0}\\
+    {\tt igmpMCastAddr}     & IP4 & Multicast address\\
+    {\tt igmpNRec}          & U16 & \# of records\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{igmpStat}\label{igmpStat}
+The {\tt igmpStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf igmpStat} & {\bf Description} \\
+    \midrule\endhead%
+    $2^0$ (={\tt 0x01}) & IGMP message had invalid length\\
+    $2^1$ (={\tt 0x02}) & IGMP message had invalid checksum\\
+    $2^2$ (={\tt 0x04}) & IGMP message had invalid TTL ($\neq1$)\\
+    $2^3$ (={\tt 0x08}) & IGMP message was invalid for other reasons\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Additional Output}
+The plugin exports global statistics about IGMP traffic in the {\tt PREFIX\_igmpStats.txt} file.
+
+\end{document}

@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+source "$(dirname "$0")/../../../scripts/t2utils.sh"
+
+usage() {
+    printf "Usage:\n"
+    printf "    $SNAME [OPTION...] <malfile.txt>\n"
+    printf "\nOptional arguments:\n"
+    printf "    -6          file contains IPv6 instead of IPv4\n"
+    printf "    -s          sort output file\n"
+    printf "    -h          display this help, then exit\n"
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -6|--ipv6) IPV6=1;;
+        -s|--sort) SORT=1;;
+        -h|-\?|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            if [ ! -f "$1" ]; then
+                abort_option_unknown "$1"
+            fi
+            INFILE="$1"
+            ;;
+    esac
+    shift
+done
+
+if [ ! -f "$INFILE" ]; then
+    abort_required_file
+fi
+
+OUTFILE="$(basename "$INFILE")"
+
+$AWK -F'\t' -v ipv6="$IPV6" '!/^#/ {
+    if (split($1, A, ".") > 1) {
+        I = lshift(lshift(lshift(A[1], 8) + A[2], 8) + A[3], 8) + A[4]
+        if (ipv6) {
+            printf "0x%08X\t0x00000000\t0x00000000\t0x00000000\t%s\t%s\n", I, $2, $3
+        } else {
+            printf "0x%08X\t%s\t%s\n", I, $2, $3
+        }
+    } else if (ipv6 && split($1, A, ":") > 1) {
+        printf "0x%s%s\t0x%s%s\t0x%s%s\t0x%s%s\t%s\t%s\n", A[1], A[2], A[3], A[4], A[5], A[6], A[7], A[8], $2, $3
+    } else {
+        next
+    }
+}' "$INFILE" > "t_$OUTFILE"
+
+if [ $SORT ]; then
+    sort -n "t_$OUTFILE" > "ts_$OUTFILE"
+fi

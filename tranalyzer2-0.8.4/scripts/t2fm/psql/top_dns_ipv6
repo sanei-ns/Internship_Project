@@ -1,0 +1,24 @@
+-- Top DNS IPv6 address by number of flows
+
+SELECT
+    ip,
+    COUNT(*) AS cnt
+
+FROM (
+    SELECT
+        UNNEST("dns6Aaddress") AS ip
+    FROM
+        flow
+    WHERE
+        ARRAY_LENGTH("dns6Aaddress", 1) > 0
+        AND ("dnsStat" & x'2'::INT) = 0::INT  -- Ignore NBNS
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+WHERE ip != '::'
+
+GROUP BY ip
+ORDER BY cnt DESC
+
+LIMIT :n

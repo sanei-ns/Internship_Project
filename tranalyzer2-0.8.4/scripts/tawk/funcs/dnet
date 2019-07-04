@@ -1,0 +1,22 @@
+#!/usr/bin/env awk
+#
+# Returns true if the destination IP is equal to 'ip' or belongs to 'ip', e.g., 1.2.3.4/24
+# If 'ip' is omitted, returns the destination IP
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - dhost: alias for dnet
+#
+# Examples:
+#   - tawk 'dnet("1.2.3.4")' file.txt
+#   - tawk 'dnet("1.2.3.4/24"' file.txt
+#   - tawk 'dnet(0x01020304) { print $srcIP4 }' file.txt
+#   - tawk '{ print dnet() }' file.txt
+
+@include "dhost"
+
+function dnet(ip) {
+    return dhost(ip)
+}

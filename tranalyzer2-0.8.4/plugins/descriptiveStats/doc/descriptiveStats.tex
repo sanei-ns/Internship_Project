@@ -1,0 +1,105 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {descriptiveStats}
+    {Descriptive Statistics}
+    {Tranalyzer Development Team} % author(s)
+
+\section{descriptiveStats}\label{s:descriptiveStats}
+
+\subsection{Description}
+The descriptiveStats plugin calculates various statistics about a flow.
+Because the inter-arrival time of the first packet is per definition always zero, it is removed from the statistics.
+Therefore the inter-arrival time statistics values for flows with only one packet is set to zero.
+
+\subsection{Dependencies}
+
+%\traninput{file} % use this command to input files
+%\traninclude{file} % use this command to include files
+
+%\tranimg{image} % use this command to include an image (must be located in a subfolder ./img/)
+
+%\subsubsection{External Libraries}
+%This plugin depends on ...
+
+\subsubsection{Other Plugins}
+This plugin requires the \tranrefpl{pktSIATHisto} plugin.
+
+%\subsubsection{Required Files}
+%The file ... is required.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt ENABLE\_PS\_CALC}  & 1 & 1: Enables / 0: Disables calculation of statistics for packet sizes\\
+    {\tt ENABLE\_IAT\_CALC} & 1 & 1: Enables / 0: Disables calculation of statistics for inter-arrival times\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The descriptiveStats plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    %\\
+    %\multicolumn{3}{l}{If {\tt ENABLE\_PS\_CALC=1}, the following columns are displayed:}\\\\
+    {\tt MinPl}          & F & Minimum packet length                       & {\tt ENABLE\_PS\_CALC=1}\\
+    {\tt MaxPl}          & F & Maximum packet length                       & {\tt ENABLE\_PS\_CALC=1}\\
+    {\tt MeanPl}         & F & Mean packet length                          & {\tt ENABLE\_PS\_CALC=1}\\
+    {\tt LowQuartilePl}  & F & Lower quartile of packet lengths            & {\tt ENABLE\_PS\_CALC=1}\\
+    {\tt MedianPl}       & F & Median of packet lengths                    & {\tt ENABLE\_PS\_CALC=1}\\
+    {\tt UppQuartilePl}  & F & Upper quartile of packet lengths            & {\tt ENABLE\_PS\_CALC=1}\\
+    {\tt IqdPl}          & F & Inter quartile distance of packet lengths   & {\tt ENABLE\_PS\_CALC=1}\\
+    {\tt ModePl}         & F & Mode of packet lengths                      & {\tt ENABLE\_PS\_CALC=1}\\
+    {\tt RangePl}        & F & Range of packet lengths                     & {\tt ENABLE\_PS\_CALC=1}\\
+    {\tt StdPl}          & F & Standard deviation of packet lengths        & {\tt ENABLE\_PS\_CALC=1}\\
+    {\tt RobStdPl}       & F & Robust standard deviation of packet lengths & {\tt ENABLE\_PS\_CALC=1}\\
+    {\tt SkewPl}         & F & Skewness of packet lengths                  & {\tt ENABLE\_PS\_CALC=1}\\
+    {\tt ExcPl}          & F & Excess of packet lengths                    & {\tt ENABLE\_PS\_CALC=1}\\
+    \\
+    %\multicolumn{3}{l}{If {\tt ENABLE\_IAT\_CALC=1}, the following columns are displayed:}\\\\
+    {\tt MinIat}         & F & Minimum inter-arrival time                       & {\tt ENABLE\_IAT\_CALC=1}\\
+    {\tt MaxIat}         & F & Maximum inter-arrival time                       & {\tt ENABLE\_IAT\_CALC=1}\\
+    {\tt MeanIat}        & F & Mean inter-arrival time                          & {\tt ENABLE\_IAT\_CALC=1}\\
+    {\tt LowQuartileIat} & F & Lower quartile of inter-arrival times            & {\tt ENABLE\_IAT\_CALC=1}\\
+    {\tt MedianIat}      & F & Median of inter-arrival times                    & {\tt ENABLE\_IAT\_CALC=1}\\
+    {\tt UppQuartileIat} & F & Upper quartile of inter-arrival times            & {\tt ENABLE\_IAT\_CALC=1}\\
+    {\tt IqdIat}         & F & Inter quartile distance of inter-arrival times   & {\tt ENABLE\_IAT\_CALC=1}\\
+    {\tt ModeIat}        & F & Mode of inter-arrival times                      & {\tt ENABLE\_IAT\_CALC=1}\\
+    {\tt RangeIat}       & F & Range of inter-arrival times                     & {\tt ENABLE\_IAT\_CALC=1}\\
+    {\tt StdIat}         & F & Standard deviation of inter-arrival times        & {\tt ENABLE\_IAT\_CALC=1}\\
+    {\tt RobStdIat}      & F & Robust standard deviation of inter-arrival times & {\tt ENABLE\_IAT\_CALC=1}\\
+    {\tt SkewIat}        & F & Skewness of inter-arrival times                  & {\tt ENABLE\_IAT\_CALC=1}\\
+    {\tt ExcIat}         & F & Excess of inter-arrival times                    & {\tt ENABLE\_IAT\_CALC=1}\\
+    \bottomrule
+\end{longtable}
+
+%\subsection{Custom File Output}
+%Non-standard output
+
+%\subsection{Plugin Report Output}
+
+%\subsection{Post-Processing}
+
+%\subsection{Example Output}
+
+\subsection{Known Bugs and Limitations}
+Because the packet length and inter-arrival time plugin stores the inter-arrival times in statistical bins the original time information is lost. Therefore the calculation of the inter-arrival times statistics is due to its logarithmic binning only a rough approximation of the original timing information. Nevertheless, this representation has shown to be useful in practical cases of anomaly and application classification.
+
+%\subsection{TODO}
+%\begin{itemize}
+%    \item TODO1
+%    \item TODO2
+%\end{itemize}
+
+\end{document}

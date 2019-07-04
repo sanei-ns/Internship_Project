@@ -1,0 +1,125 @@
+\section{Introduction}
+Tranalyzer2 is a lightweight flow generator and packet analyzer designed for simplicity, performance and scalability. The program is written in C and built upon the {\em libpcap} library. It provides functionality to pre- and post-process IPv4/IPv6 data into flows and enables a trained user to see anomalies and network defects even in very large datasets. It supports analysis with special bit coded fields and generates statistics from key parameters of IPv4/IPv6 Tcpdump traces either being live-captured from an Ethernet interface or one or several pcap files. The quantity of binary and text based output of Tranalyzer2 depends on enabled modules, herein denoted as {\bf plugins}. Hence, users have the possibility to tailor the output according to their needs and developers can develop additional plugins independent of the functionality of other plugins.
+
+\subsection{Getting Tranalyzer}
+Tranalyzer can be downloaded from: \url{https://tranalyzer.com/downloads.html}
+
+\subsection{Dependencies}
+Tranalyzer2 requires {\bf automake}, {\bf libpcap} and {\bf libtool}:
+
+\paragraph{Kali/Ubuntu:} {\tt sudo apt-get install automake libpcap-dev libtool make zlib1g-dev}
+\paragraph{Arch:} {\tt sudo pacman --S automake libpcap libtool zlib}
+\paragraph{Fedora/Red Hat/CentOS:} {\tt sudo yum install automake libpcap libpcap-devel libtool zlib-devel bzip2}
+\paragraph{Gentoo:} {\tt sudo emerge autoconf automake libpcap libtool zlib}
+\paragraph{OpenSUSE:} {\tt sudo zypper install automake gcc libpcap-devel libtool zlib-devel}
+\paragraph{Mac OS X:} {\tt brew install autoconf automake libpcap libtool zlib}\footnote{Brew is a packet manager for Mac OS X that can be found here: \url{https://brew.sh}}
+
+\subsection{Compilation}\label{compile}
+To build Tranalyzer2 and the plugins, run one of the following commands:
+
+\begin{itemize}
+    \item Tranalyzer2 only:\\
+        {\tt cd "\$T2HOME"; ./autogen.sh tranalyzer2}\\
+        (alternative: {\tt cd "\$T2HOME/tranalyzer2"; ./autogen.sh})
+    \item A specific plugin only, e.g., {\tt myPlugin}:\\
+        \begin{tabular}{l}
+            {\tt cd "\$T2HOME"; ./autogen.sh myPlugin}\\
+            (alternative 1: {\tt cd "\$T2PLHOME/myPlugin"; ./autogen.sh})\\
+            (alternative 2: {\tt cd "\$T2HOME/plugins/myPlugin"; ./autogen.sh})
+        \end{tabular}
+    \item Tranalyzer2 and a default set of plugins:\\
+        {\tt cd "\$T2HOME"; ./autogen.sh}
+    \item Tranalyzer2 and all the plugins in {\tt T2HOME}:\\
+        {\tt cd "\$T2HOME"; ./autogen.sh --a}
+    \item Tranalyzer2 and a custom set of plugins (listed in plugins.build) (\refs{autogenb}):\\
+        {\tt cd "\$T2HOME"; ./autogen.sh --b}
+\end{itemize}
+
+where {\tt T2HOME} points to the root folder of Tranalyzer, i.e., where the file {\tt README.md} is located.\\
+
+For finer control of which plugins to load, refer to \refs{ss:plugins}.\\
+
+Note that if \hyperref[s:aliases]{\tt t2\_aliases} is installed, the {\tt t2build} command can be used instead of {\tt autogen.sh}.
+The command can be run from anywhere, so just replace the above commands with
+{\tt t2build tranalyzer2},
+{\tt t2build myPlugin},
+{\tt t2build --a} and {\tt t2build --b}.
+Run {\tt t2build --{}--help} for the full list of options accepted by the script.
+
+\subsubsection{Custom Build}\label{autogenb}
+The {\tt --b} option of the {\tt autogen.sh} script takes an optional file name as argument.
+If none is provided, then the default {\tt plugins.build} is used.
+The format of the file is as follows:
+\begin{itemize}
+    \item Empty lines and lines starting with a {\tt `\#'} are ignored (can be used to prevent a plugin from being built)
+    \item One plugin name per row
+    \item Example:
+\begin{verbatim}
+# Do not build the tcpStates plugin
+#tcpStates
+
+# Build the txtSink plugin
+txtSink
+\end{verbatim}
+\end{itemize}
+
+A {\tt plugins.ignore} file can also be used to prevent specific plugins from being built. A different filename can be used with the {\tt --I} option.
+
+\subsection{Installation}\label{t2install}
+The {\tt --i} option of the {\tt autogen.sh} script installs Tranalyzer in {\tt /usr/local/bin} (as {\tt tranalyzer}) and the man page in {\tt /usr/local/man/man1}. Note that root rights are required for the installation.\\
+
+Alternatively, use the file \hyperref[s:aliases]{\tt t2\_aliases} or add the following alias to your {\tt \textasciitilde{}/.bash\_aliases}:
+
+\begin{center}
+{\tt alias tranalyzer="\$T2HOME/tranalyzer2/src/tranalyzer"}\\
+\end{center}
+
+where {\tt T2HOME} points to the root folder of Tranalyzer, i.e., where the file {\tt README.md} is located.\\
+
+The man page can also be installed manually, by calling (as root):
+
+\begin{center}
+    {\tt mkdir --p /usr/local/man/man1 \&\& gzip --c man/tranalyzer.1 > /usr/local/man/man1/tranalyzer.1.gz}\\
+\end{center}
+
+\subsubsection{Aliases}\label{s:aliases}
+The file {\tt t2\_aliases} documented in \href{../../scripts/doc/scripts.pdf}{\tt \$T2HOME/scripts/doc/scripts.pdf} contains a set of aliases and functions to facilitate working with Tranalyzer.
+To install it, append the following code to {\tt\textasciitilde{}/.bashrc} or {\tt\textasciitilde{}/.bash\_aliases} (make sure to replace {\tt\$T2HOME} with the actual path, e.g., {\tt\$HOME/tranalyzer2-0.8.4}):
+\begin{lstlisting}
+if [ -f "$T2HOME/scripts/t2_aliases" ]; then
+    . "$T2HOME/scripts/t2_aliases"             # Note the leading `.'
+fi
+\end{lstlisting}
+
+\subsection{Getting Started}
+
+Run Tranalyzer as follows:
+\begin{center}
+    {\tt tranalyzer --r file.pcap --w outfolder/outprefix}
+\end{center}
+For a full list of options, use Tranalyzer {\tt --h} or {\tt --{}--help} option: {\tt tranalyzer --h} or {\tt tranalyzer --{}--help} or refer to the complete documentation.
+
+\subsection{Getting Help}
+
+\subsubsection{Documentation}
+Tranalyzer and every plugin come with their own documentation, which can be found in the {\tt doc} subfolder. The complete documentation of Tranalyzer2 and all the locally available plugins can be generated by running {\tt make} in {\tt \$T2HOME/doc}. The file \hyperref[s:aliases]{\tt t2\_aliases} provides the function {\tt t2doc} to allow easy access to the different parts of the documentation from anywhere.
+
+\subsubsection{Man Page}
+If the man page was installed (\refs{t2install}), then accessing the man page is as simple as calling
+\begin{center}
+    {\tt man tranalyzer}
+\end{center}
+If it was not installed, then the man page can be invoked by calling
+\begin{center}
+    {\tt man \$T2HOME/tranalyzer2/man/tranalyzer.1}
+\end{center}
+
+\subsubsection{Help}
+For a full list of options, use Tranalyzer {\tt --h} option: {\tt tranalyzer --h}
+
+\subsubsection{FAQ}
+Refer to the complete documentation in {\tt \$T2HOME/doc} for a list of frequently asked questions.
+
+\subsubsection{Contact}
+Any feedback, feature requests and questions are welcome and can be sent to the development team via email at:
+\begin{center}\href{mailto:tranalyzer@rdit.ch}{tranalyzer@rdit.ch}\end{center}

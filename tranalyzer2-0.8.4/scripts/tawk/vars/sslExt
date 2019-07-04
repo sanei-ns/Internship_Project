@@ -1,0 +1,34 @@
+#H sslExt | Description
+#H =============================================================================
+   0x0000 | Server name
+   0x0001 | Max fragment length
+   0x0002 | Client certificate URL
+   0x0003 | Trusted CA keys
+   0x0004 | Truncated HMAC
+   0x0005 | Status request
+   0x0006 | User mapping
+   0x0007 | Client authz
+   0x0008 | Server authz
+   0x0009 | Cert type
+   0x000a | Supported groups (elliptic curves)
+   0x000b | EC point formats
+   0x000c | SRP
+   0x000d | Signature algorithms
+   0x000e | Use SRTP
+   0x000f | Heartbeat
+   0x0010 | ALPN
+   0x0011 | Status request v2
+   0x0012 | Signed certificate timestamp
+   0x0013 | Client certificate type
+   0x0014 | Server certificate type
+   0x0015 | Padding
+   0x0016 | Encrypt then MAC
+   0x0017 | Extended master secret type
+   0x0023 | Session ticket
+   0x0028 | Extended random
+   0x3374 | NPN
+   0x3377 | Origin bound cert
+   0x337c | Encrypted client cert
+   0x754f | Channel ID old
+   0x7550 | Channel ID
+   0xff01 | renegotiation_info

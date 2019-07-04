@@ -1,0 +1,48 @@
+ADMIN	Get information about the administrator of a server.	RFC 2812
+AWAY	Set an automatic reply string for any PRIVMSG commands.	RFC 2812
+CONNECT	Request a new connection to another server immediately.	RFC 2812
+DIE	Shutdown the server.	RFC 2812
+ERROR	Report a serious or fatal error to a peer.	RFC 2812
+INFO	Get information describing a server.	RFC 2812
+INVITE	Invite a user to a channel.	RFC 2812
+ISON	Determine if a nickname is currently on IRC.	RFC 2812
+JOIN	Join a channel.	RFC 2812, RFC 2813
+KICK	Request the forced removal of a user from a channel.	RFC 2812
+KILL	Close a client-server connection by the server which has the actual connection.	RFC 2812
+LINKS	List all servernames which are known by the server answering the query.	RFC 2812
+LIST	List channels and their topics.	RFC 2812
+LUSERS	Get statistics about the size of the IRC network.	RFC 2812
+MODE	User mode.	RFC 2812
+MOTD	Get the Message of the Day.	RFC 2812
+NAMES	List all visible nicknames.	RFC 2812
+NICK	Define a nickname.	RFC 2812, RFC 2813
+NJOIN	Exchange the list of channel members for each channel between servers.	RFC 2813
+NOTICE	 	RFC 2812
+OPER	Obtain operator privileges.	RFC 2812
+PART	Leave a channel.	RFC 2812
+PASS	Set a connection password.	RFC 2812, RFC 2813
+PING	Test for the presence of an active client or server.	RFC 2812
+PONG	Reply to a PING message.	RFC 2812
+PRIVMSG	Send private messages between users, as well as to send messages to channels.	RFC 2812
+QUIT	Terminate the client session.	RFC 2812, RFC 2813
+REHASH	Force the server to re-read and process its configuration file.	RFC 2812
+RESTART	Force the server to restart itself.	RFC 2812
+SERVER	Register a new server.	RFC 2813
+SERVICE	Register a new service.	RFC 2812, RFC 2813
+SERVLIST	List services currently connected to the network.	RFC 2812
+SQUERY	 	RFC 2812
+SQUIRT	Disconnect a server link.	RFC 2812
+SQUIT	Break a local or remote server link.	RFC 2813
+STATS	Get server statistics.	RFC 2812
+SUMMON	Ask a user to join IRC.	RFC 2812
+TIME	Get the local time from the specified server.	RFC 2812
+TOPIC	Change or view the topic of a channel.	RFC 2812
+TRACE	Find the route to a server and information about it's peers.	RFC 2812
+USER	Specify the username, hostname and realname of a new user.	RFC 2812
+USERHOST	Get a list of information about upto 5 nicknames.	RFC 2812
+USERS	Get a list of users logged into the server.	RFC 2812
+VERSION	Get the version of the server program.	RFC 2812
+WALLOPS	Send a message to all currently connected users who have set the 'w' user mode.	RFC 2812
+WHO	List a set of users.	RFC 2812
+WHOIS	Get information about a specific user.	RFC 2812
+WHOWAS	Get information about a nickname which no longer exists.

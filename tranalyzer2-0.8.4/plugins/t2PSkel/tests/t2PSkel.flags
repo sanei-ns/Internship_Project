@@ -1,0 +1,14 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/t2PSkel
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+#
+# Flag name     File
+
+# src/t2PSkel.h
+T2PSKEL_IP      src/t2PSkel.h # Optional comment
+T2PSKEL_VAR1    src/t2PSkel.h

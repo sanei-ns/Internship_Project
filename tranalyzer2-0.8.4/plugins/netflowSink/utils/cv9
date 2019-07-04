@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+source "$(dirname "$0")/../../../scripts/t2utils.sh"
+
+INFILE="net9.txt"
+OUTFILE="net9_p.txt"
+
+if [ ! -f "$INFILE" ]; then
+    printerr "'$INFILE' could not be found."
+    exit 1
+fi
+
+$AWK -F"\n" '
+    BEGIN {
+        i = 0
+    }
+
+    {
+        a[i++] = $1
+        if (i > 3) {
+            printf "#define %s\t0x%04x\t// %d\n#define %s_LEN %s\n", a[0], lshift(strtonum(a[1]), 8), a[1], a[0], a[2]
+            i = 0
+        }
+    }' "$INFILE" > "$OUTFILE"

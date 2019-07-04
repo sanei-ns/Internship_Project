@@ -1,0 +1,20 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/modbus
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+#
+# Flag name     File
+
+# src/modbus.h
+MB_DEBUG        src/modbus.h
+MB_FE_FRMT      src/modbus.h
+MB_NUM_EX       src/modbus.h
+MB_UNIQ_EX      src/modbus.h
+MB_NUM_FEX      src/modbus.h
+MB_UNIQ_FEX     src/modbus.h
+MB_NUM_EX       src/modbus.h
+MB_UNIQ_EX      src/modbus.h

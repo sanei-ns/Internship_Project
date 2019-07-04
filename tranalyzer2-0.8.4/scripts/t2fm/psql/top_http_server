@@ -1,0 +1,21 @@
+-- Top HTTP server by number of flows
+
+SELECT
+    server,
+    COUNT(*) AS cnt
+
+FROM (
+    SELECT
+        UNNEST("httpServ") AS server
+    FROM
+        flow
+    WHERE
+        ARRAY_LENGTH("httpServ", 1) > 0
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+GROUP BY server
+ORDER BY cnt DESC
+
+LIMIT :n

@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+#
+# Configuration file for geoip
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    GEOIP_LEGACY check ""
+        "Use Geolite legacy database"
+
+    GEOIP_SRC check ""
+        "Extract geo info for source IP"
+
+    GEOIP_DST check ""
+        "Extract geo info for destination IP"
+
+    GEOIP_CONTINENT radio
+        "GEOIP_SRC == 1 || GEOIP_DST == 1"
+        "Extract the continent of the IP; \
+                0: no continent; \
+                1: continent name (Geolite 2); \
+                2: two letters code"
+
+    GEOIP_COUNTRY radio
+        "GEOIP_SRC == 1 || GEOIP_DST == 1"
+        "Extract the country of the IP; \
+                0: no country; \
+                1: country name; \
+                2: two letters code; \
+                3: three letters code (Legacy)"
+
+    GEOIP_REGION radio
+        "GEOIP_LEGACY == 1 && (GEOIP_SRC == 1 || GEOIP_DST == 1)"
+        "Region of the IP; \
+                0: no region; \
+                1: region name; \
+                2: two letters code; \
+                3: three letters code"
+
+    GEOIP_CITY check
+        "GEOIP_SRC == 1 || GEOIP_DST == 1"
+        "Extract the city of the IP"
+
+    GEOIP_POSTCODE check
+        "GEOIP_SRC == 1 || GEOIP_DST == 1"
+        "Extract the postal code of the IP"
+
+    GEOIP_ACCURACY radio
+        "GEOIP_LEGACY == 0 && (GEOIP_SRC == 1 || GEOIP_DST == 1)"
+        "Extract the accuracy of the geolocation"
+
+    GEOIP_POSITION check
+        "GEOIP_SRC == 1 || GEOIP_DST == 1"
+        "Extract the position (latitude, longitude) of the IP"
+
+    GEOIP_METRO_CODE check
+        "GEOIP_SRC == 1 || GEOIP_DST == 1"
+        "Extract the metro (dma) code of the IP (US only)"
+
+    GEOIP_AREA_CODE check
+        "GEOIP_LEGACY == 1 && (GEOIP_SRC == 1 || GEOIP_DST == 1)"
+        "Extract the telephone area code of the IP"
+
+    GEOIP_NETMASK radio
+        "GEOIP_LEGACY == 1 && (GEOIP_SRC == 1 || GEOIP_DST == 1)"
+        "Extraction of the netmask; \
+                0: no netmask; \
+                1: netmask as int (cidr); \
+                2: netmask as hex; \
+                3: netmask as IP"
+
+    GEOIP_TIMEZONE check
+        "GEOIP_LEGACY == 0 && (GEOIP_SRC == 1 || GEOIP_DST == 1)"
+        "Extract the time zone of the IP"
+
+    GEOIP_LANG radio
+        "GEOIP_LEGACY == 0 && (GEOIP_SRC == 1 || GEOIP_DST == 1)"
+        "Language of the output; \
+                en: English; \
+                de: German; \
+                fr: French; \
+                es: Spanish; \
+                ja: Japanese; \
+                pt-BR: Brazilian Portuguese; \
+                ru: Russian; \
+                zh-CN: Simplified Chinese"
+
+    GEOIP_BUFSIZE range
+        "GEOIP_LEGACY == 0 && (GEOIP_SRC == 1 || GEOIP_DST == 1)"
+        "Buffer size: 0 255"
+
+    GEOIP_DB_CACHE radio
+        "GEOIP_LEGACY == 1 && (GEOIP_SRC == 1 || GEOIP_DST == 1)"
+        "; \
+                0: read DB from file system (slower, least memory); \
+                1: index cache (cache frequently used index only); \
+                2: memory cache (faster, more memory)"
+
+    GEOIP_UNKNOWN text
+        "GEOIP_SRC == 1 || GEOIP_DST == 1"
+        "Representation of unknown locations"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

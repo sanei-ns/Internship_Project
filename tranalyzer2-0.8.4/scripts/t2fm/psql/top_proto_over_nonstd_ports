@@ -1,0 +1,53 @@
+-- Top protocols over non-standard ports by bytes
+
+SELECT
+    detected,
+    expected_n,
+    expected,
+    --CASE expected
+    --    WHEN 'https' THEN 'ssl'
+    --    WHEN 'ftp-data' THEN 'ftp_data'
+    --    ELSE expected
+    --END AS expected2,
+    SUM(bytes) AS cnt1,
+    SUM(pkts) AS cnt2,
+    COUNT(*) AS cnt3
+
+FROM (
+    -- A flows
+    SELECT
+        LOWER(SPLIT_PART("nDPIclass", '.', 1)) AS detected,
+        LOWER("dstPortClass") AS expected,
+        "dstPortClassN" AS expected_n,
+        "numBytesSnt" AS bytes,
+        "numPktsSnt" AS pkts
+    FROM
+        flow
+    WHERE
+        ("flowStat"::BIGINT & 1) = 0::BIGINT
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+
+    UNION ALL
+
+    -- B flows
+    SELECT
+        LOWER(SPLIT_PART("nDPIclass", '.', 1)) AS detected,
+        LOWER("dstPortClass") AS expected,
+        "dstPortClassN" AS expected_n,
+        "numBytesRcvd" AS bytes,
+        "numPktsRcvd" AS pkts
+    FROM
+        flow
+    WHERE
+        ("flowStat"::BIGINT & 1) = 1::BIGINT
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+WHERE detected != expected AND detected != 'unknown' AND expected != 'unknown'
+
+GROUP BY detected, expected, expected_n
+ORDER BY cnt1 DESC
+
+LIMIT :n

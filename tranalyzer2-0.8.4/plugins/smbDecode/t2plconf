@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+#
+# Configuration file for smbDecode
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    SMB1_DECODE check "" "Decode SMB1 (experimental)"
+    SMB_SECBLOB check "" "Decode security blob (experimental)"
+
+    SMB2_NUM_DIALECT range "" "Number of SMB2 dialects to store: 0 255"
+    SMB2_NUM_STAT    range "" "Number of unique SMB2 header status to store: 0 255"
+
+    SMB1_NUM_DIALECT range "SMB1_DECODE == 1" "Number of SMB1 dialects to store: 0 255"
+    SMB1_DIAL_MAXLEN range "SMB1_DECODE == 1" "Maximum length for SMB1 dialects: 0 255"
+
+    SMB_NUM_FNAME range "" "Number of unique filenames to store in the flow file: 0 255"
+
+    SMB_NATIVE_NAME_LEN range "" "Max length for Native OS and LAN Manager: 0 255"
+
+    SMB2_SAVE_DATA check "" "Save files"
+    SMB1_SAVE_DATA check "SMB1_DECODE == 1" "Save files (SMB1, experimental)"
+
+    SMB_SAVE_AUTH check "" "Save NTLM authentications"
+    SMB_AUTH_FILE text  "" "Suffix for NTLM authentications file"
+
+    SMB_SAVE_DIR text "SMB1_SAVE_DATA == 1 || SMB2_SAVE_DATA == 1" "Folder for saved data"
+    SMB_MAP_FILE text "SMB1_SAVE_DATA == 1 || SMB2_SAVE_DATA == 1" "Stores the mapping between file ID and filename"
+
+    SMB_RM_DATADIR check "SMB1_SAVE_DATA == 1 || SMB2_SAVE_DATA == 1" "Remove SMB_SAVE_DIR before starting"
+
+    SMB_FNAME_LEN range "" "Maximum length for filenames: 0 4096"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

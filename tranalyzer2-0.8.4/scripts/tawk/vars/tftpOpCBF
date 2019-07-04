@@ -1,0 +1,10 @@
+#H bit | tftpOpCBF | Description
+#H =============================================================================
+     0 | 0x01      | Read request
+     1 | 0x02      | Write request
+     2 | 0x04      | Read or write the next block of data
+     3 | 0x08      | Acknowledgment
+     4 | 0x10      | Error message
+     5 | 0x20      | Option acknowledgment
+     6 | 0x40      | -
+     7 | 0x80      | -

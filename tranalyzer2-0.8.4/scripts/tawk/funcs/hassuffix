@@ -1,0 +1,31 @@
+#!/usr/bin/env awk
+#
+# Returns true if val finishes with the suffix 'suf'
+# If ign is 1, performs a case insensitive comparison
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - hasprefix
+#   - hasprefixi
+#   - hassuffixi
+#
+# Examples:
+#   - tawk 'hassuffix($srcIP4, "255")' file.txt
+#   - tawk 'hassuffix("facebook", "book") { print }' file.txt
+
+@include "hdr"
+@include "unquote"
+
+function hassuffix(val, suf, ign,        _slen, _vlen) {
+    if (hdr()) return __PRIHDR__
+    val = unquote(val)
+    if (ign) {
+        val = tolower(val)
+        suf = tolower(suf)
+    }
+    _vlen = length(val)
+    _slen = length(suf)
+    return _slen <= _vlen && substr(val, _vlen - _slen + 1) == suf
+}

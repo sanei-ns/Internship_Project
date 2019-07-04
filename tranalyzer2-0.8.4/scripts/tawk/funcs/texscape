@@ -1,0 +1,21 @@
+#!/usr/bin/env awk
+#
+# Escape the string 's' to make it LaTeX compatible
+#
+# Examples:
+#   - tawk '{ print texscape($0) }' file.txt
+
+function texscape(s) {
+    gsub(/\\"/, "\"", s)
+    gsub(/\\/, "\\textbackslash{}", s)
+    gsub(/_/, "\\_", s)
+    gsub(/&/, "\\\\&", s)
+    gsub(/%/, "\\%", s)
+    gsub(/#/, "\\#", s)
+    gsub(/\$/, "\\$", s)
+    gsub(/\^/, "\\textasciicircum{}", s)
+    gsub(/~/, "\\textasciitilde{}", s)
+    gsub(/*/, "\\textasteriskcentered{}", s)
+    gsub(/--/, "--{}--", s)
+    return gensub(/([0-9]+)-([0-9]+)/, "\\1--\\2", "g", s)
+}

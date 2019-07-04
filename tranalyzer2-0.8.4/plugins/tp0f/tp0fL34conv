@@ -1,0 +1,315 @@
+#!/usr/bin/env bash
+
+source "$(dirname "$0")/../../scripts/t2utils.sh"
+
+usage() {
+    echo "Usage:"
+    echo "    $SNAME [OPTION...] <FILE>"
+    echo
+    echo "Optional arguments:"
+    echo "    -h, --help        Show this help, then exit"
+}
+
+while [ $# -ne 0 ]; do
+    case "$1" in
+        -h|-\?|--help) usage; exit 0;;
+        *)
+            if [ ! -f "$1" ]; then
+                abort_option_unknown "$1"
+            fi
+            FILE="$1"
+            ;;
+    esac
+    shift
+done
+
+if [ ! -f "$FILE" ]; then
+    abort_required_file
+fi
+
+$AWK -v OFS="\t" '
+    BEGIN {
+        st = 0
+        tcpFlags = 0
+        num = 1
+        lb[4] = ""
+        sys = ""
+        vsys = ""
+        com = ""
+
+        OSCl["!"]     = 0
+        OSCl["win"]   = 1
+        OSCl["unix"]  = 2
+        OSCl["other"] = 3
+
+        PROGCl["Windows"]     = 1
+        PROGCl["Linux"]       = 2
+        PROGCl["OpenBSD"]     = 3
+        PROGCl["FreeBSD"]     = 4
+        PROGCl["Solaris"]     = 5
+        PROGCl["MacOSX"]      = 6
+        PROGCl["HP-UX"]       = 7
+        PROGCl["OpenVMS"]     = 8
+        PROGCl["iOS"]         = 9
+        PROGCl["BaiduSpider"] = 10
+        PROGCl["Blackberry"]  = 11
+        PROGCl["NeXTSTEP"]    = 12
+        PROGCl["Nintendo"]    = 13
+        PROGCl["NMap"]        = 14
+        PROGCl["p0f"]         = 15
+        PROGCl["Tru64"]       = 16
+
+        VER[""]                                         = 0
+        VER["NT"]                                       = 1
+        VER["XP"]                                       = 2
+        VER["7"]                                        = 3
+        VER["8"]                                        = 4
+        VER["10"]                                       = 5
+        VER["10.9 or newer (sometimes iPhone or iPad)"] = 6
+        VER["10.x"]                                     = 7
+        VER["11.x"]                                     = 8
+        VER["2.0"]                                      = 9
+        VER["2.2.x"]                                    = 10
+        VER["2.2.x-3.x"]                                = 11
+        VER["2.2.x-3.x (barebone)"]                     = 12
+        VER["2.2.x-3.x (no timestamps)"]                = 13
+        VER["2.2.x (loopback)"]                         = 14
+        VER["2.4-2.6"]                                  = 15
+        VER["2.4.x"]                                    = 16
+        VER["2.4.x-2.6.x"]                              = 17
+        VER["2.4.x (loopback)"]                         = 18
+        VER["2.6.x"]                                    = 19
+        VER["2.6.x (Google crawler)"]                   = 20
+        VER["2.6.x (loopback)"]                         = 21
+        VER["3.11 and newer"]                           = 22
+        VER["3.1-3.10"]                                 = 23
+        VER["3DS"]                                      = 24
+        VER["3.x"]                                      = 25
+        VER["3.x (loopback)"]                           = 26
+        VER["4.x"]                                      = 27
+        VER["4.x-5.x"]                                  = 28
+        VER["5.x"]                                      = 29
+        VER["6"]                                        = 30
+        VER["7 or 8"]                                   = 31
+        VER["7 (Websense crawler)"]                     = 32
+        VER["7.x"]                                      = 33
+        VER["8"]                                        = 34
+        VER["8.x"]                                      = 35
+        VER["8.x-9.x"]                                  = 36
+        VER["9.x"]                                      = 37
+        VER["9.x or newer"]                             = 38
+        VER["(Android)"]                                = 39
+        VER["iPhone or iPad"]                           = 40
+        VER["NT kernel"]                                = 41
+        VER["NT kernel 5.x"]                            = 42
+        VER["NT kernel 6.x"]                            = 43
+        VER["OS detection"]                             = 44
+        VER["sendsyn utility"]                          = 45
+        VER["SYN scan"]                                 = 46
+        VER["Wii"]                                      = 47;
+
+        print "#num", "clst", "ipv", "ip", "tcp", "qopt",
+              "ittl", "olen", "mss", "wsize_ws", "num_tcpopt", "tcpopt",
+              "pldl", "Nclass", "Nprog", "Nver", "class", "prog",
+              "ver", "vOS", "comment"
+    }
+
+    $0 == "" { next }
+
+    {
+        if (st == 0) {
+            if (index($0, "; TCP SYN signatures") != 0) {
+                tcpFlags = 0x02
+                st = 1
+            }
+            next
+        } else if (index($0, "; HTTP client signatures")) {
+            exit
+        }
+    }
+
+    /;/ {
+        if (index($0, "-")) next
+
+        if (index($0, "TCP SYN+ACK signatures")) {
+            tcpFlags = 0x12
+            next
+        }
+
+        split($0, A, ";")
+        com = A[2]
+        split(A[2], B, " on")
+        if (B[2]) {
+            vsys = B[2]
+            sub(" ", "", vsys)
+        } else {
+            vsys = ""
+        }
+        next
+    }
+
+    /label/ {
+        split($0, A, "=")
+        split(A[2], lb, ":")
+        gsub(" ", "", lb[3])
+        next
+    }
+
+    /sys/ {
+        split($0, A, "=")
+        sys = A[2]
+        gsub("@", "", sys)
+        next
+    }
+
+    /sig/ {
+        clstat = 0
+        pclss = 0
+        split($0, A, "=")
+        split(A[2], B, ":")
+        k = split(B[7], D, ",")
+        #m = split(lb, C, ":")
+        #if (C[4] == "or" ) C[4] = "_"
+        #if (C[4] == "" ) a = ""
+        #else a = "_"
+
+        tcpF = tcpFlags
+        ipF = 0
+        q = 0
+        for (i = 1; i <= k; i++) {
+            switch (D[i]) {
+                case "df":
+                    ipF = or(ipF, 0x40)
+                    break
+                case "id+":
+                    q = or(q, 0x0040)
+                    break
+                case "id-":
+                    q = or(q, 0x0020)
+                    break
+                case "ecn":
+                    ipF = or(ipF, 0x02)
+                    break
+                case "0+":
+                    ipF = or(ipF, 0x80)
+                    break
+                case "flow":
+                    q = or(q, 0x0001)
+                    break
+                case "seq-":
+                    q = or(q, 0x0002)
+                    break
+                case "ack+":
+                    tcpF = or(tcpF, 0x10)
+                    break
+                case "ack-":
+                    tcpF = or(tcpF, 0x10)
+                    q = or(q, 0x0010)
+                    break
+                case "uptr+":
+                    tcpF = or(tcpF, 0x20)
+                    break
+                case "urgf+":
+                    tcpF = or(tcpF, 0x20)
+                    q = or(q, 0x0020)
+                    break
+                case "pus":
+                    tcpF = or(tcpF, 0x08)
+                    break
+                case "ts1-":
+                    q = or(q, 0x0004)
+                    break
+                case "ts2+":
+                    q = or(q, 0x0008)
+                    break
+                case "opt+":
+                    q = or(q, 0x0100)
+                    break
+                case "exw":
+                    q = or(q, 0x0400)
+                    break
+                case "bad":
+                    q = or(q, 0x0800)
+                    break
+                default:
+                    q = or(q, 0x8000)
+                    break
+            }
+        }
+
+        if (B[8] == "*") clstat = or(clstat, 0x20)
+        else if (B[8] == "+") pclss = 1
+
+        k = split(B[6], C, ",")
+        for (i = 1; i <= k; i++) {
+            switch (substr(C[i], 1, 3)) {
+                case "eol":
+                    o = index(C[i], "+")
+                    if (o) opt[i] = sprintf("0x%02x00", substr(C[i], o+1))
+                    else opt[i] = "0x00"
+                    break
+                case "nop":
+                    opt[i] = "0x01"
+                    break
+                case "mss":
+                    opt[i] = "0x02"
+                    break
+                case "ws":
+                    opt[i] = "0x03"
+                    break
+                case "sok":
+                    opt[i] = "0x04"
+                    break
+                case "sac":
+                    opt[i] = "0x05"
+                    break
+                case "ts":
+                    opt[i] = "0x08"
+                    break
+                default:
+                    if (substr(opt[i], 1, 1) == "?") opt[i] = sprintf("0x%02x", substr(opt[i], 2))
+                    break
+            }
+        }
+
+        if (B[1] == "*") {
+            B[1] = 0
+            clstat = or(clstat, 0x01)
+        }
+
+        #B[1] = lshift(B[1], 4)
+
+        if (B[4] == "*") {
+            B[4] = 0
+            clstat = or(clstat, 0x08)
+        }
+
+        i = index(B[5], "mss")
+        j = index(B[5], "mtu")
+        split(B[5], D, ",")
+        if (D[2] == "*") {
+            clstat = or(clstat, 0x10)
+            D[2] = 0
+        }
+
+        if (i) {
+            clstat = or(clstat, 0x02)
+            split(D[1], E, "*")
+            if (and(clstat, 0x08)) B[5] = sprintf("%d,%d", E[2], D[2])
+            else B[5] = sprintf("%d,%d", lshift(E[2] * B[4], D[2]), D[2])
+        } else if (j) {
+            clstat = or(clstat, 0x04)
+            split(D[1], E, "*")
+            if (and(clstat, 0x08)) B[5] = sprintf("%d,%d", E[2], D[2])
+            else B[5] = sprintf("%d,%d", lshift(E[2] * (B[4]+40), D[2]) , D[2])
+        } else {
+            B[5] = sprintf("%d,%d", lshift(D[1], D[2]), D[2])
+        }
+
+        printf "%d\t0x%02x\t0x%02x\t0x%02x\t0x%02x\t0x%04x\t%d\t%d\t%s\t%s\t", num++, clstat, B[1], ipF, tcpF, q, B[2], B[3], B[4], B[5]
+        printf "%d\t", k
+        for (i = 1; i < k; i++) printf "%s,", opt[i]
+        printf "%s\t", opt[i]
+        #i = split(B[7], C , ",")
+        printf "%d\t%d\t%d\t%d\t%s\t%s\t%s\t%s\t%s\n", pclss, OSCl[lb[2]], PROGCl[lb[3]], VER[lb[4]], lb[2], lb[3], lb[4], sys, com
+    }' "$FILE"

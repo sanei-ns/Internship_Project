@@ -1,0 +1,38 @@
+cursor = db.flow.aggregate([
+    {
+        $match : {
+            dnsStat : { $bitsAllClear : NumberInt(0x12) },
+            timeFirst : { $gte : time_from },
+            timeLast  : { $lte : time_to },
+        }
+    },
+    {
+        $unwind : "$dnsQname"
+    },
+    {
+        $group : {
+            _id : "$dnsQname",
+            count : { $sum : 1 }
+        }
+    },
+    {
+        $match : {
+            _id : { $ne : "" }
+        }
+    },
+    {
+        $sort : { count : -1 }
+    },
+    {
+        $limit : n
+    }
+])
+
+cursor.forEach(
+    function(e) {
+        print(
+              e._id + "\t"
+            + e.count
+        )
+    }
+)

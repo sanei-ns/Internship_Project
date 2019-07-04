@@ -1,0 +1,20 @@
+#!/usr/bin/env awk
+#
+# Returns true if the flow contains HTTP traffic
+#
+# Dependencies:
+#   - httpSniffer
+#
+# Examples:
+#   - tawk 'http()' file.txt
+#   - tawk 'http() { print $srcIP4 }' file.txt
+#   - tawk 'http() { print wildcard("^http") }' file.txt
+
+@include "hdr"
+@include "_validate_col"
+
+function http(        _c) {
+    _c = _validate_col("httpStat")
+    if (hdr()) return __PRIHDR__
+    return strtonum($_c)
+}

@@ -1,0 +1,192 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {telnetDecode}
+    {TELNET}
+    {Tranalyzer Development Team} % author(s)
+
+\section{telnetDecode}\label{s:telnetDecode}
+
+\subsection{Description}
+The telnetDecode plugin analyses TELNET traffic and is capable to extract L7 content.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt TEL\_SAVE}      & 0  & Save content to {\tt TEL\_F\_PATH/TELFNAME}\\
+    {\tt TEL\_CMDC}      & 0  & output command codes\\
+    {\tt TEL\_CMDS}      & 1  & output command human readable\\
+    {\tt TEL\_OPTS}      & 1  & output options human readable\\
+    {\tt TEL\_CMD\_AGGR} & 1  & Aggregate commands\\
+    {\tt TEL\_OPT\_AGGR} & 1  & Aggregate options\\
+    {\tt TELCMDN}        & 25 & maximal command / flow\\
+    {\tt TELOPTN}        & 25 & maximal options / flow\\
+    {\tt TEL\_F\_PATH} & {\tt\small "/tmp/TELFILES/"} & Path for extracted content\\
+    {\tt TELFNAME}     & {\tt\small "telwurst"}       & file name \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The telnetDecode plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{telStat}}          & H8  & Status \\
+    {\tt \nameref{telCmdBF}}         & H16 & Commands \\
+    {\tt \nameref{telOptBF}}         & H32 & Options \\
+    {\tt telTCCnt}                   & U16 & Total command count \\
+    {\tt telTOCnt}                   & U16 & Total option count \\
+    {\tt telCCnt}                    & U16 & Stored command count & {\tt TEL\_CMDS=1||TEL\_CMDC=1}\\
+    {\tt \hyperref[telCmd]{telCmdC}} & RU8 & Command codes        & {\tt TEL\_CMDC=1}\\
+    {\tt \hyperref[telCmd]{telCmdS}} & RS  & Command strings      & {\tt TEL\_CMDS=1}\\
+    {\tt telOCnt}                    & U16 & Stored options count & {\tt TEL\_OPTS=1}\\
+    {\tt telOptS}                    & RS  & Option strings       & {\tt TEL\_OPTS=1}\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{telStat}\label{telStat}
+The {\tt telStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf telStat} & {\bf Description}\\
+    \midrule\endhead%
+    $2^0$ (={\tt 0x01}) & TELNET port found\\
+    $2^1$ (={\tt 0x02}) & ---\\
+    $2^2$ (={\tt 0x04}) & ---\\
+    $2^3$ (={\tt 0x08}) & ---\\
+    $2^4$ (={\tt 0x10}) & ---\\
+    $2^5$ (={\tt 0x20}) & File open error: {\tt TEL\_SAVE=1}\\
+    $2^6$ (={\tt 0x40}) & ---\\
+    $2^7$ (={\tt 0x80}) & ---\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{telCmdBF}\label{telCmdBF}
+The {\tt telCmdBF} column is to be interpreted as follows:\\
+\begin{minipage}{0.49\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf telCmdBF} & {\bf Description} \\
+        \midrule\endhead%
+        $2^{0}$  (={\tt 0x0001}) & SE - End subNeg\\
+        $2^{1}$  (={\tt 0x0002}) & NOP - No Op\\
+        $2^{2}$  (={\tt 0x0004}) & Data Mark\\
+        $2^{3}$  (={\tt 0x0008}) & Break\\
+        $2^{4}$  (={\tt 0x0010}) & Int process\\
+        $2^{5}$  (={\tt 0x0020}) & Abort output\\
+        $2^{6}$  (={\tt 0x0040}) & Are You there?\\
+        $2^{7}$  (={\tt 0x0080}) & Erase char\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+\hfill
+\begin{minipage}{0.49\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf telCmdBF} & {\bf Description} \\
+        \midrule\endhead%
+        $2^{8}$  (={\tt 0x0100}) & Erase line\\
+        $2^{9}$  (={\tt 0x0200}) & Go ahead!\\
+        $2^{10}$ (={\tt 0x0400}) & SB - SubNeg\\
+        $2^{11}$ (={\tt 0x0800}) & WILL use\\
+        $2^{12}$ (={\tt 0x1000}) & WON'T use\\
+        $2^{13}$ (={\tt 0x2000}) & DO use\\
+        $2^{14}$ (={\tt 0x4000}) & DON'T use\\
+        $2^{15}$ (={\tt 0x8000}) & IAC\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+
+\subsubsection{telOptBF}\label{telOptBF}
+The {\tt telOptBF} column is to be interpreted as follows:\\
+\begin{minipage}{0.49\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf telOptBF} & {\bf Description} \\
+        \midrule\endhead%
+        $2^{0}$  (={\tt 0x00000001}) & Bin Xmit\\
+        $2^{1}$  (={\tt 0x00000002}) & Echo Data\\
+        $2^{2}$  (={\tt 0x00000004}) & Reconn\\
+        $2^{3}$  (={\tt 0x00000008}) & Suppr GA\\
+        $2^{4}$  (={\tt 0x00000010}) & Msg Sz\\
+        $2^{5}$  (={\tt 0x00000020}) & Opt Stat\\
+        $2^{6}$  (={\tt 0x00000040}) & Timing Mark\\
+        $2^{7}$  (={\tt 0x00000080}) & R/C XmtEcho\\
+        $2^{8}$  (={\tt 0x00000100}) & Line Width\\
+        $2^{9}$  (={\tt 0x00000200}) & Page Length\\
+        $2^{10}$ (={\tt 0x00000400}) & CR Use\\
+        $2^{11}$ (={\tt 0x00000800}) & Horiz Tabs\\
+        $2^{12}$ (={\tt 0x00001000}) & Hor Tab Use\\
+        $2^{13}$ (={\tt 0x00002000}) & FF Use\\
+        $2^{14}$ (={\tt 0x00004000}) & Vert Tabs\\
+        $2^{15}$ (={\tt 0x00008000}) & Ver Tab Use\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+\hfill
+\begin{minipage}{0.49\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf telOptBF} & {\bf Description} \\
+        \midrule\endhead%
+        $2^{16}$ (={\tt 0x00010000}) & Lf Use\\
+        $2^{17}$ (={\tt 0x00020000}) & Ext ASCII\\
+        $2^{18}$ (={\tt 0x00040000}) & Logout\\
+        $2^{19}$ (={\tt 0x00080000}) & Byte Macro\\
+        $2^{20}$ (={\tt 0x00100000}) & Data Term\\
+        $2^{21}$ (={\tt 0x00200000}) & SUPDUP\\
+        $2^{22}$ (={\tt 0x00400000}) & SUPDUP Outp\\
+        $2^{23}$ (={\tt 0x00800000}) & Send Locate\\
+        $2^{24}$ (={\tt 0x01000000}) & Term Type\\
+        $2^{25}$ (={\tt 0x02000000}) & End Record\\
+        $2^{26}$ (={\tt 0x04000000}) & TACACS ID\\
+        $2^{27}$ (={\tt 0x08000000}) & Output Mark\\
+        $2^{28}$ (={\tt 0x10000000}) & Term Loc\\
+        $2^{29}$ (={\tt 0x20000000}) & 3270 Regime\\
+        $2^{30}$ (={\tt 0x40000000}) & X.3 PAD\\
+        $2^{31}$ (={\tt 0x80000000}) & Window Size\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+
+\subsubsection{telCmdC and telCmdS}\label{telCmd}
+The {\tt telCmdC} and {\tt telCmdS} columns are to be interpreted as follows:\\
+\begin{longtable}{rll}
+    \toprule
+    {\bf telCmdC} & {\bf telCmdS} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt 0xf0} & {\tt SE}   & Subnegotiation End\\
+    {\tt 0xf1} & {\tt NOP}  & No Operation\\
+    {\tt 0xf2} & {\tt DM}   & Data Mark\\
+    {\tt 0xf3} & {\tt BRK}  & Break\\
+    {\tt 0xf4} & {\tt IP}   & Interrupt Process\\
+    {\tt 0xf5} & {\tt AO}   & Abort Output\\
+    {\tt 0xf6} & {\tt AYT}  & Are You There\\
+    {\tt 0xf7} & {\tt EC}   & Erase Character\\
+    {\tt 0xf8} & {\tt EL}   & Erase Line\\
+    {\tt 0xf9} & {\tt GA}   & Go Ahead\\
+    {\tt 0xfa} & {\tt SB}   & Subnegotiation\\
+    {\tt 0xfb} & {\tt WILL} & Will Perform\\
+    {\tt 0xfc} & {\tt WONT} & Won't Perform\\
+    {\tt 0xfd} & {\tt DO}   & Do Perform\\
+    {\tt 0xfe} & {\tt DONT} & Don't Perform\\
+    {\tt 0xff} & {\tt IAC}  & Interpret As Command\\
+    \bottomrule
+\end{longtable}
+
+\subsection{TODO}
+\begin{itemize}
+    \item fragmentation
+\end{itemize}
+
+\end{document}

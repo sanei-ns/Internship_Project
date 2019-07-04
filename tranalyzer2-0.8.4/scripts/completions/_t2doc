@@ -1,0 +1,24 @@
+# Bash/ZSH completion for t2doc
+
+_t2doc() {
+    #compdef t2doc
+    local plugins=(faq scripts t2fm tawk tranalyzer2)
+    for i in "$T2PLHOME/"*; do
+        local b=$(basename "$i")
+        if [ -d "$i" ] && [ "$b" != "t2PSkel" ]; then
+            plugins+=($b)
+        fi
+    done
+    if type compdef &> /dev/null; then
+        compadd "${plugins[@]}"
+    else
+        local cur="${COMP_WORDS[COMP_CWORD]}"
+        COMPREPLY=($(compgen -W "${plugins[*]} -f --force -y --yes -v --verbose -h -? --help" -- "$cur"))
+    fi
+}
+
+if type compdef &> /dev/null; then
+    compdef _t2doc t2doc
+else
+    complete -F _t2doc t2doc
+fi

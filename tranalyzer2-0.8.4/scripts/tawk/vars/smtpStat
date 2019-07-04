@@ -1,0 +1,10 @@
+#H bit | smtpStat | Description
+#H =============================================================================
+     0 | 0x01     | SMTP ports found
+     1 | 0x02     | Authentication pending
+     2 | 0x04     | Data Download pending
+     3 | 0x08     | User password pending
+     4 | 0x10     | Flow write finished
+     5 | 0x20     | -
+#E   6 | 0x40     | File error
+#W   7 | 0x80     | Array overflow

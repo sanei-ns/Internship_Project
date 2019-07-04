@@ -1,0 +1,36 @@
+#!/usr/bin/env awk
+
+BEGIN {
+    tFirst = -1
+}
+
+hdr() {
+    next
+}
+
+tFirst < 0 {
+    tFirst = $timeFirst
+}
+
+tFirst > $timeFirst {
+    tFirst = $timeFirst
+}
+
+tLast < $timeLast {
+    tLast = $timeLast
+}
+
+{
+    nPkts += $numPktsSnt
+    nBytes += $numBytesSnt
+}
+
+END {
+    _ts = timestamp(tFirst)
+    _te = timestamp(tLast)
+    # Use printf to prevent conversion to scientific notation (on OSX)
+    printf "%f%s", _ts, OFS
+    printf "%f%s", _te, OFS
+    print nPkts, nBytes
+}
+

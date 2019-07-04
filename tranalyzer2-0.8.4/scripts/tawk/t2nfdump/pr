@@ -1,0 +1,17 @@
+#!/usr/bin/env awk
+#
+# Protocol
+#
+# Dependencies:
+#   - basicFlow
+#
+# Example:
+#   - tawk '{ print pr() }' file
+
+@include "hdr"
+@include "proto"
+
+function pr() {
+    if (hdr()) return "Proto"
+    return proto()
+}

@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+#
+# Configuration file for pwX
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    PWX_USERNAME   check "" "Output the username"
+    PWX_PASSWORD   check "" "Output the password"
+
+    PWX_FTP        check "" "Extract FTP authentication"
+    PWX_POP3       check "" "Extract POP3 authentication"
+    PWX_IMAP       check "" "Extract IMAP authentication"
+    PWX_SMTP       check "" "Extract SMTP authentication"
+    PWX_HTTP_BASIC check "" "Extract HTTP Basic Authorization"
+    PWX_HTTP_PROXY check "" "Extract HTTP Proxy Authorization"
+    PWX_HTTP_GET   check "" "Extract HTTP GET authentication"
+    PWX_HTTP_POST  check "" "Extract HTTP POST authentication"
+    PWX_IRC        check "" "Extract IRC authentication"
+    PWX_TELNET     check "" "Extract Telnet authentication"
+    PWX_LDAP       check "" "Extract LDAP bind request authentication"
+    PWX_PAP        check "" "Extract PAP authentication"
+
+    PWX_STATUS     check "" "Extract authentication status (success, error, ...)"
+
+    PWX_DEBUG      check "" "Activate debug output"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

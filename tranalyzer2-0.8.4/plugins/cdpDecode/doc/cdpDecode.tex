@@ -1,0 +1,205 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {cdpDecode} % Plugin name
+    {Cisco Discovery Protocol (CDP)} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{cdpDecode}\label{s:cdpDecode}
+
+\subsection{Description}
+The cdpDecode plugin analyzes CDP traffic.
+
+%\subsection{Dependencies}
+
+%\traninput{file} % use this command to input files
+%\traninclude{file} % use this command to include files
+
+%\tranimg{image} % use this command to include an image (must be located in a subfolder ./img/)
+
+%\subsubsection{External Libraries}
+%This plugin depends on the {\bf XXX} library.
+%\paragraph{Ubuntu:} {\tt sudo apt-get install XXX}
+%\paragraph{Arch:} {\tt sudo pacman -S XXX}
+%
+%\subsubsection{Other Plugins}
+%This plugin requires the {\bf XXX} plugin.
+%
+%\subsubsection{Required Files}
+%The file {\tt file.txt} is required.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt CDP\_STRLEN}    & 512 & Maximum length of strings to store\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The cdpDecode plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt \nameref{cdpStat}} & H8 & Status \\
+    {\tt cdpVersion} & U8 & Version\\
+    {\tt cdpTTL} & U8 & Time To Live (sec)\\
+    {\tt \nameref{cdpTLVTypes}} & H32 & Aggregated TLV types\\
+    {\tt cdpDevice} & SC & Device ID\\
+    {\tt cdpPlatform} & S & Platform\\
+    {\tt cdpPort} & SC & Port ID\\
+    {\tt \nameref{cdpCaps}} & H32 & Capabilities \\
+    {\tt \nameref{cdpDuplex}} & H8 & Duplex\\
+    {\tt cdpNVLAN} & U16 & Native VLAN\\
+    {\tt cdpVTPMngmtDomain} & SC & VTP management domain\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{cdpStat}\label{cdpStat}
+The {\tt cdpStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf cdpStat} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x01} & Flow is CDP\\
+    %{\tt 0x0002} & Mandatory TLV missing\\
+    %{\tt 0x0004} & Optional TLVs present\\
+    %{\tt 0x0008} & Reserved TLV type used\\
+    %{\tt 0x0010} & Organization specific TLV used\\
+    %{\tt 0x0020} & Unhandled TLV used\\
+    %{\tt 0x2000} & String truncated\ldots increase {\tt CDP\_STRLEN}\\
+    %{\tt 0x4000} & Too many TTL\ldots increase {\tt CDP\_NUM\_TTL}\\
+    {\tt 0x80} & Snapped payload\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{cdpTLVTypes}\label{cdpTLVTypes}
+The {\tt cdpTLVTypes} column is to be interpreted as follows:\\
+\begin{minipage}{.45\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf cdpTLVTypes} & {\bf Description}\\
+        \midrule\endhead%
+        $2^{0}$  (={\tt 0x0000 0001}) & ---\\
+        $2^{1}$  (={\tt 0x0000 0002}) & Device ID\\
+        $2^{2}$  (={\tt 0x0000 0004}) & Addresses\\
+        $2^{3}$  (={\tt 0x0000 0008}) & Port ID\\
+        $2^{4}$  (={\tt 0x0000 0010}) & Capabilities\\
+        $2^{5}$  (={\tt 0x0000 0020}) & Software Version\\
+        $2^{6}$  (={\tt 0x0000 0040}) & Platform\\
+        $2^{7}$  (={\tt 0x0000 0080}) & IP Prefixes\\
+        $2^{8}$  (={\tt 0x0000 0100}) & Protocol Hello\\
+        $2^{9}$  (={\tt 0x0000 0200}) & VTP Management Domain\\
+        $2^{10}$ (={\tt 0x0000 0400}) & Native VLAN\\
+        $2^{11}$ (={\tt 0x0000 0800}) & Duplex\\
+        $2^{12}$ (={\tt 0x0000 1000}) & ---\\
+        $2^{13}$ (={\tt 0x0000 2000}) & ---\\
+        $2^{14}$ (={\tt 0x0000 4000}) & ---\\
+        $2^{15}$ (={\tt 0x0000 8000}) & VoIP VLAN Query\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+\begin{minipage}{.45\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf cdpTLVTypes} & {\bf Description}\\
+        \midrule\endhead%
+        $2^{16}$ (={\tt 0x0001 0000}) & Power Consumption\\
+        $2^{13}$ (={\tt 0x0002 0000}) & ---\\
+        $2^{18}$ (={\tt 0x0004 0000}) & Trust Bitmap\\
+        $2^{19}$ (={\tt 0x0008 0000}) & Untrusted Port CoS\\
+        $2^{20}$ (={\tt 0x0010 0000}) & ---\\
+        $2^{21}$ (={\tt 0x0020 0000}) & ---\\
+        $2^{22}$ (={\tt 0x0040 0000}) & Management Address\\
+        $2^{23}$ (={\tt 0x0080 0000}) & ---\\
+        $2^{24}$ (={\tt 0x0100 0000}) & ---\\
+        $2^{25}$ (={\tt 0x0200 0000}) & Power Requested\\
+        $2^{26}$ (={\tt 0x0400 0000}) & Power Available\\
+        $2^{27}$ (={\tt 0x0800 0000}) & ---\\
+        $2^{28}$ (={\tt 0x1000 0000}) & ---\\
+        $2^{29}$ (={\tt 0x2000 0000}) & ---\\
+        $2^{30}$ (={\tt 0x4000 0000}) & ---\\
+        $2^{31}$ (={\tt 0x8000 0000}) & Any type $\geq$ 31\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+
+\subsubsection{cdpCaps}\label{cdpCaps}
+The {\tt cdpCaps} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf cdpCaps} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x0000 0001} & Router\\
+    {\tt 0x0000 0002} & Transparent Bridge\\
+    {\tt 0x0000 0004} & Source Route Bridge\\
+    {\tt 0x0000 0008} & Switch\\
+    {\tt 0x0000 0010} & Host\\
+    {\tt 0x0000 0020} & IGMP capable\\
+    {\tt 0x0000 0040} & Repeater\\
+    {\tt 0x00000100--0x80000000} & Reserved\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{cdpDuplex}\label{cdpDuplex}
+The {\tt cdpDuplex} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf cdpDuplex} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x0001} & Half\\
+    {\tt 0x0002} & Full\\
+    \bottomrule
+\end{longtable}
+
+%\subsection{Packet File Output}
+%In packet mode ({\tt --s} option), the cdpDecode plugin outputs the following columns:
+%\begin{longtable}{llll}
+%    \toprule
+%    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+%    \midrule\endhead%
+%    {\tt cdpDecodeCol1} & I8 & describe col1 & \\
+%    \bottomrule
+%\end{longtable}
+
+\subsection{Plugin Report Output}
+The following information is reported:
+\begin{itemize}
+    \item Number of CDP packets
+    %\item Aggregated status flags ({\tt\nameref{cdpStat}})
+\end{itemize}
+
+%\subsection{Additional Output}
+%Non-standard output:
+%\begin{itemize}
+%    \item {\tt PREFIX\_suffix.txt}: description
+%\end{itemize}
+
+%\subsection{Post-Processing}
+%
+%\subsection{Example Output}
+%
+%\subsection{Known Bugs and Limitations}
+
+%\subsection{TODO}
+%\begin{itemize}
+%    \item TODO1
+%    \item TODO2
+%\end{itemize}
+
+%\subsection{References}
+%\begin{itemize}
+%    \item \href{https://tools.ietf.org/html/rfcXXXX}{RFCXXXX}: Title
+%    \item \url{https://www.iana.org/assignments/}
+%\end{itemize}
+
+\end{document}

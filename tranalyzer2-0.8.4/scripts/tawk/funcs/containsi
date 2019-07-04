@@ -1,0 +1,25 @@
+#!/usr/bin/env awk
+#
+# Returns true if 'val' contains 'txt' (case insensitive)
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - contains
+#   - cvalcontains
+#   - cvalcontainsi
+#   - rvalcontains
+#   - rvalcontainsi
+#   - valcontains
+#   - valcontainsi
+#
+# Examples:
+#   - tawk 'containsi($httpURL, "php")' file.txt
+#   - tawk 'containsi($httpURL, "admin) { print $httpURL }' file.txt
+
+@include "contains"
+
+function containsi(val, txt) {
+    return contains(val, txt, 1)
+}

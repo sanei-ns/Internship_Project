@@ -1,0 +1,15 @@
+#H pwxType | Description
+#H =============================================================================
+         0 | No password or username extracted
+         1 | FTP authentication
+         2 | POP3 authentication
+         3 | IMAP authentication
+         4 | SMTP authentication
+         5 | HTTP Basic Authorization
+         6 | HTTP Proxy Authorization
+         7 | HTTP GET authentication
+         8 | HTTP POST authentication
+         9 | IRC authentication
+        10 | Telnet authentication
+        11 | LDAP authentication
+        12 | PAP authentication

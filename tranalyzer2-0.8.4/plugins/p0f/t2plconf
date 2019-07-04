@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+#
+# Configuration file for p0f
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    P0F_SSL_VER     check "" "Consider the version for fingerprint match"
+    P0F_SSL_NCIPHER check "" "Consider the number of ciphers for fingerprint match"
+    P0F_SSL_NUMEXT  check "" "Consider the number of extensions for fingerprint match"
+    P0F_SSL_FLAGS   check "" "Consider flags for fingerprint match"
+    P0F_SSL_CIPHER  check "" "Consider ciphers for fingerprint match"
+    P0F_SSL_EXT     check "" "Consider extensions for fingerprint match"
+
+    P0F_SSL_ELEN range "" "Maximum length of cipher or extension: 0 255"
+    P0F_SSL_NSIG range "" "Maximum number of signatures to read: 0 255"
+    P0F_SSL_SLEN range "" "Maximum length of a string (os, browser, comment): 0 255"
+    P0F_SSL_LLEN range "" "Maximum length of a line in the DB: 0 4096"
+
+    P0F_SSL_DB text "" "Name of the database to use"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

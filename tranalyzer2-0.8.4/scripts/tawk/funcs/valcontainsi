@@ -1,0 +1,25 @@
+#!/usr/bin/env awk
+#
+# Returns true if one item of 'val' split by 'sep' is 'item' (case insensitive)
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - contains
+#   - containsi
+#   - cvalcontains
+#   - cvalcontainsi
+#   - rvalcontains
+#   - rvalcontainsi
+#   - valcontains
+#
+# Examples:
+#   - tawk 'valcontainsi("str1_str2_str3", "_", "str3")' file.txt
+#   - tawk 'valcontainsi("Str1;STR2;StR3", ";", "str2") { print }' file.txt
+
+@include "valcontains"
+
+function valcontainsi(val, sep, item) {
+    return valcontains(val, sep, item, 1)
+}

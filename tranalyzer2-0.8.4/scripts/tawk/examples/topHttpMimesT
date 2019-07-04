@@ -1,0 +1,32 @@
+#!/usr/bin/env awk
+#
+# Returns the top HTTP content-type (type only)
+#
+# Dependencies:
+#   - httpSniffer
+#
+# Examples:
+#   - tawk 'topHttpMimesT()' file.txt
+#   - tawk 'topHttpMimesT(5)' file.txt
+
+@include "aggr"
+@include "hdr"
+@include "strisempty"
+@include "_validate_col"
+
+function topHttpMimesT(n,        _i, _l, _m) {
+    _validate_col("httpMimes")
+    if (hdr()) {
+        if (__PRIHDR__) print $httpMimes, "Flows"
+    } else if (!strisempty($httpMimes)) {
+        _l = split(tolower($httpMimes), _m, "\";\"");
+        gsub(/^"/, "", _m[1])  # remove leading quote
+        gsub(/"$/, "", _m[_l]) # remove trailing quote
+        for (_i = 1; _i <= _l; _i++) {
+            if (!strisempty(_m[_i]) && _m[_i] ~ /.*\/.*/) {
+                gsub(/\/.+$/, "", _m[_i])
+                aggr(_m[_i], "flows", n)
+            }
+        }
+    }
+}

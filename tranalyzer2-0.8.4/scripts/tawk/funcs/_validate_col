@@ -1,0 +1,43 @@
+#!/usr/bin/env awk
+#
+# Test whether a column exists (its number is different from 0).
+# Multiple names can be provided in a semi-colon separated string.
+# Return the index of the first column with a non-zero index
+# If none of the column was found, exits and prints the column names.
+#
+# Parameters:
+#   - names   : a semi-colon separated list of column names
+#   - extname : a "default" column number, e.g., _my_t2ColName
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '_validate_col("flowInd")' file.txt
+#   - tawk '_validate_col("flowInd") { print $flowInd }' file.txt
+#   - tawk '{ sip = _validate_col("srcIP4;srcIP6"); print $sip }' file.txt
+#   - tawk '{ dip = _validate_col("dstIP", _my_dstIP); print $dip }' file.txt
+
+@include "COL"
+@include "printerr"
+
+function _validate_col(names, extname,        _c, _i, _n, _name) {
+    _n = split(names, _name, ";")
+    for (_i = 1; _i <= _n; _i++) {
+        _c = COL[_name[_i]]
+        if (_c > 0) {
+            if (hdr()) _c += __HDROFF__
+            return _c
+        }
+    }
+    if (extname) {
+        if (hdr()) extname += __HDROFF__
+        return extname
+    }
+    if (_n > 1) {
+        printerr("Columns '" names "' do not exist")
+    } else {
+        printerr("Column '" names "' does not exist")
+    }
+    exit(1)
+}

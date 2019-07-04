@@ -1,0 +1,52 @@
+# Bash/ZSH completion for t2conf
+
+_t2conf() {
+    #compdef t2conf
+    local cur prev
+    if type compdef &> /dev/null; then
+        [ $CURRENT -gt 2 ] && prev="${words[CURRENT-1]}"
+    else
+        local words cword
+        _init_completion || return
+    fi
+    case "$prev" in
+        -t|-p)
+            if type compdef &> /dev/null; then
+                _files -/
+            else
+                _filedir -d
+            fi
+            return
+            ;;
+        -s|-r|--patch|--rpatch)
+            if type compdef &> /dev/null; then
+                _files
+            else
+                _filedir
+            fi
+            return
+            ;;
+    esac
+    local plugins=(tranalyzer2)
+    for i in "$T2PLHOME/"*; do
+        local b=$(basename "$i")
+        if [ -d "$i" ] && [ "$b" != "t2PSkel" ]; then
+            plugins+=($b)
+        fi
+    done
+    if [[ "${words[CURRENT]}" == -* ]]; then
+        _arguments --
+    elif [[ "$cur" = -* ]]; then
+        COMPREPLY=($(compgen -W "$(_parse_help "$T2HOME/scripts/t2conf/t2conf")" -- "$cur"))
+    elif type compdef &> /dev/null; then
+        compadd "${plugins[@]}"
+    else
+        COMPREPLY=($(compgen -W "${plugins[*]}" -- "$cur"))
+    fi
+}
+
+if type compdef &> /dev/null; then
+    compdef _t2conf t2conf
+else
+    complete -F _t2conf t2conf
+fi

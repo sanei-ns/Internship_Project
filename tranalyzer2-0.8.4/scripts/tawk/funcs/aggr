@@ -1,0 +1,97 @@
+#!/usr/bin/env awk
+#
+# Performs aggregation of 'fields' and store the sum of 'val'.
+#
+# If 'val' is omitted, the empty string or equal to "Flows" (case insensitive),
+# counts the number of flows.
+#
+# If 'num' is omitted or 0, returns the full list, otherwise
+# the top ('num' > 0) or bottom ('num' < 0) 'num' results
+#
+# Results are sorted according to the first value of 'val'.
+#
+# Parameters:
+#   - fields : tab separated list of fields to aggregate
+#   - [val]  : tab separated list of values to aggregate [default: "flows"]
+#   - [num]  : number of records to return [default: all]
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - aggrrep
+#
+# Examples:
+#   - tawk 'aggr($httpUsrAg)' file.txt
+#   - tawk 'shost("1.2.3.4") && !dnet("1.2.3.0/24") {
+#         aggr($dstIP4, $numBytesSnt)
+#     }' file.txt
+#   - tawk 'snet("1.2.3.4/24") && !dnet("1.2.3.0/24") {
+#         aggr($srcIP4 OFS $dstIP4, $numBytesSnt)
+#     }' file.txt
+#   - tawk 'snet("1.2.3.4/24") && !dnet("1.2.3.0/24") {
+#         aggr(tuple2(), "Flows", 5)
+#     }' file.txt
+#   - tawk 'snet("1.2.3.4/24") && !dnet("1.2.3.0/24") {
+#         aggr(tuple2() OFS $l4Proto, $numPktsSnt OFS $numBytesSnt OFS "Flows")
+#     }' file.txt
+
+@include "hdr"
+@include "max2"
+@include "streqi"
+@include "strisempty"
+
+function aggr(fields, val, num,        _i, _f, _l, _vval) {
+    if (strisempty(val)) val = "Flows"
+    if (num < 0) {
+        __AGGRNUM__ = -num
+    } else {
+        __AGGRNUM__ = num
+        __AGGRORDER__ = "r" # reverse sort
+    }
+    if (hdr()) {
+        __AGGRHDR__ = fields OFS val
+    } else {
+        _l = split(val, _vval, OFS)
+        split(__AGGR__[fields], _f, OFS)
+        for (_i = 1; _i <= _l; _i++) {
+            if (streqi(_vval[_i], "flows")) {
+                _vval[_i] = 1
+            }
+            _f[_i] += _vval[_i]
+        }
+        # Rebuild val
+        val = _f[1]
+        for (_i = 2; _i <= _l; _i++) {
+            val = val OFS _f[_i]
+        }
+        __AGGR__[fields] = val
+    }
+}
+
+# Print the result of the aggr() function
+# (see END block at the end of this file)
+function _priaggr(        _k, _key, _idx, _aggrcmd, _line, _linenum) {
+    for (_key in __AGGR__) {
+        if (length(_aggrcmd) == 0) {
+            _idx = max2(2, split(_key, _k, OFS)+1)
+            _aggrcmd = "sort -t'"OFS"' -n" __AGGRORDER__ "k" _idx
+        }
+        print _key OFS __AGGR__[_key] |& _aggrcmd
+    }
+    close(_aggrcmd, "to")
+    if (__PRIHDR__ && __AGGRHDR__) print __AGGRHDR__
+    while ((__AGGRNUM__ == 0 || _linenum < __AGGRNUM__) && (_aggrcmd |& getline _line) > 0) {
+        print _line
+        _linenum++
+    }
+    close(_aggrcmd)
+    __AGGRHDR__ = ""
+    #__AGGR__ = ""
+}
+
+END {
+    if (length(__AGGR__) > 0) {
+        _priaggr()
+    }
+}

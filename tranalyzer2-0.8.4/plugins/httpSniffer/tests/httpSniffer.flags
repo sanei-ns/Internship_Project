@@ -1,0 +1,48 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/httpSniffer
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/httpSniffer.h
+HTTP_MIME           src/httpSniffer.h
+HTTP_STAT           src/httpSniffer.h
+HTTP_MCNT           src/httpSniffer.h
+HTTP_HOST           src/httpSniffer.h
+HTTP_URL            src/httpSniffer.h
+HTTP_COOKIE         src/httpSniffer.h
+HTTP_IMAGE          src/httpSniffer.h
+HTTP_VIDEO          src/httpSniffer.h
+HTTP_AUDIO          src/httpSniffer.h
+HTTP_MSG            src/httpSniffer.h
+HTTP_APPL           src/httpSniffer.h
+HTTP_TEXT           src/httpSniffer.h
+HTTP_BODY           src/httpSniffer.h
+HTTP_BDURL          src/httpSniffer.h
+HTTP_USRAG          src/httpSniffer.h
+HTTP_XFRWD          src/httpSniffer.h
+HTTP_REFRR          src/httpSniffer.h
+HTTP_VIA            src/httpSniffer.h
+HTTP_LOC            src/httpSniffer.h
+HTTP_SERV           src/httpSniffer.h
+HTTP_PWR            src/httpSniffer.h
+HTTP_STATAGA        src/httpSniffer.h
+HTTP_HOSTAGA        src/httpSniffer.h
+HTTP_URLAGA         src/httpSniffer.h
+HTTP_USRAGA         src/httpSniffer.h
+HTTP_XFRWDA         src/httpSniffer.h
+HTTP_REFRRA         src/httpSniffer.h
+HTTP_VIAA           src/httpSniffer.h
+HTTP_LOCA           src/httpSniffer.h
+HTTP_SERVA          src/httpSniffer.h
+HTTP_PWRA           src/httpSniffer.h
+HTTP_SAVE_IMAGE     src/httpSniffer.h
+HTTP_SAVE_VIDEO     src/httpSniffer.h
+HTTP_SAVE_AUDIO     src/httpSniffer.h
+HTTP_SAVE_MSG       src/httpSniffer.h
+HTTP_SAVE_TEXT      src/httpSniffer.h
+HTTP_SAVE_APPL      src/httpSniffer.h
+HTTP_RM_PICDIR      src/httpSniffer.h

@@ -1,0 +1,61 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {protoStats}
+    {Protocol Statistics}
+    {Tranalyzer Development Team} % author(s)
+
+\section{protoStats}\label{s:protoStats}
+
+\subsection{Description}
+The protoStats plugin provides protocol/port sorted frequency statistics about the observed OSI layer 4 protocols and ports to the file named {\tt PREFIX\_protocols}. Protocols numbers are decoded via a {\tt proto.txt} file, automatically installed with the plugin.
+
+\subsection{Dependencies}
+
+\subsubsection{Required Files}
+The file {\tt proto.txt} is required.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+
+\begin{center}
+    \begin{tabular}{lcl}
+        \toprule
+        {\bf Name} & {\bf Default} & {\bf Description} \\
+        \midrule
+        {\tt ETH\_STAT}     & 1 & Output layer 2 statistics\\
+        {\tt SCTP\_STAT}    & 0 & Output SCTP statistics\\
+        {\tt UDPLITE\_STAT} & 0 & Output UDP-Lite statistics\\
+        \bottomrule
+    \end{tabular}
+\end{center}
+
+\subsection{Flow File Output}
+None.
+
+\subsection{Additional Output}
+\begin{itemize}
+    \item {\tt PREFIX\_protocols.txt}: protocol statistics
+\end{itemize}
+
+\subsection{Post-Processing}
+The {\tt\tranref{protStat}} script can be used to sort the {\tt PREFIX\_protocols.txt} file for the most or least occurring protocols (in terms of number of packets or bytes).
+It can output the top or bottom $N$ protocols or only those with at least a given percentage:
+\begin{itemize}
+    \item list all the options: {\tt protStat --{}--help}
+    \item sorted list of protocols (by packets): {\tt protStat PREFIX\_protocols.txt}
+    \item sorted list of protocols (by bytes): {\tt protStat PREFIX\_protocols.txt --b}
+    \item top 10 protocols (by packets): {\tt protStat PREFIX\_protocols.txt --n 10}
+    \item bottom 5 protocols (by bytes): {\tt protStat PREFIX\_protocols.txt --n --5 --b}
+    \item protocols with packets percentage greater than 20\%: {\tt protStat PREFIX\_protocols.txt --p 20}
+    \item protocols with bytes percentage smaller than 5\%: {\tt protStat PREFIX\_protocols.txt --b --p --5}
+    \item TCP and UDP statistics only: {\tt protStat PREFIX\_protocols.txt --udp --tcp}
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,15 @@
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/regex_pcre
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/regex_pcre.h
+EXPERTMODE      src/regex_pcre.h
+PKTTIME         src/regex_pcre.h
+LABELSCANS      src/regex_pcre.h
+
+# src/regfile_pcre.h
+RULE_OPTIMIZE   src/regfile_pcre.h

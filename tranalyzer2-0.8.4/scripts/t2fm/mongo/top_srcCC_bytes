@@ -1,0 +1,88 @@
+cursor = db.flow.aggregate([
+    {
+        $match : {
+            flowStat : { $bitsAnySet : NumberInt(0xc000) },  // IPv4/6 only
+            timeFirst : { $gte : time_from },
+            timeLast  : { $lte : time_to },
+        }
+    },
+    {
+        $project : {
+            cc : {
+                $cond : {
+                    if : {
+                        $eq : [
+                            { $mod : [ "$flowStat", 2 ] },
+                            0
+                        ]
+                    },
+                    then : { $toUpper : "$srcIPCC" },
+                    else : { $toUpper : "$dstIPCC" }
+                }
+            },
+            bytes : {
+                $cond : {
+                    if : {
+                        $eq : [
+                            { $mod : [ "$flowStat", 2 ] },
+                            0
+                        ]
+                    },
+                    then : "$numBytesSnt",
+                    else : "$numBytesRcvd"
+                }
+            }
+        }
+    },
+    {
+        $project : {
+            bytes : "$bytes",
+            cc : {
+                $switch : {
+                    branches : [
+                        {
+                            case : {
+                                $or : [
+                                    { $eq : [ "$cc", "FF" ] },
+                                    { $eq : [ "$cc", "--" ] },
+                                ]
+                            },
+                            then : "N/A"
+                        },
+                        {
+                            // XXX hack to test for /^[0-9]+$/
+                            case : {
+                                $eq : [
+                                    { $toUpper : "$cc" },
+                                    { $toLower : "$cc" } ],
+                            },
+                            then : "--"
+                        },
+                    ],
+                    default : "$cc"
+                }
+            }
+        }
+    },
+    {
+        $group : {
+            _id : "$cc",
+            count : { $sum : "$bytes" }
+        }
+    },
+    {
+        $sort : { count : -1 }
+    },
+    {
+        $limit : n
+    }
+])
+
+cursor.forEach(
+    function(e) {
+        print(
+              e._id + "\t"
+            + e.count
+        )
+    }
+)

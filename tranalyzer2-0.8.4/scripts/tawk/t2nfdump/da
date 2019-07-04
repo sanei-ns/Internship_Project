@@ -1,0 +1,18 @@
+#!/usr/bin/env awk
+#
+# Destination Address
+#
+# Dependencies:
+#   - basicFlow
+#
+# Example:
+#   - tawk '{ print da() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function da(        _dip) {
+    _dip = _validate_col("dstIP4;dstIP6;dstIP", _my_dstIP)
+    if (hdr()) return "Dst IP Addr"
+    return $_dip
+}

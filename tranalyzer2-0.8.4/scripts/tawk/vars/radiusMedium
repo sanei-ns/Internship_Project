@@ -1,0 +1,17 @@
+#H radiusMedium | Description
+#H =============================================================================
+              1 | IPv4 (IP version 4)
+              2 | IPv6 (IP version 6)
+              3 | NSAP
+              4 | HDLC (8-bit multidrop)
+              5 | BBN 1822
+              6 | 802 (includes all 802 media plus Ethernet "canonical format")
+              7 | E.163 (POTS)
+              8 | E.164 (SMDS, Frame Relay, ATM)
+              9 | F.69 (Telex)
+             10 | X.121 (X.25, Frame Relay)
+             11 | IPX
+             12 | Appletalk
+             13 | Decnet IV
+             14 | Banyan Vines
+             15 | E.164 with NSAP format subaddress

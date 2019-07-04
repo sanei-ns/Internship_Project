@@ -1,0 +1,139 @@
+.TH T2CONF "1" "January 2016" "0.1" "User Commands"
+
+.SH NAME
+t2conf \- build, configure, activate and deactivate Tranalyzer plugins.
+
+.SH SYNOPSIS
+.B t2conf
+[\fI\,OPTIONS\/\fR...]
+
+.SH DESCRIPTION
+\fBt2conf\fR facilitates the configuration and building of Tranalyzer and plugins.
+
+.SH OPTIONS
+.TP
+\fB\-t\fR \fIpath\fR
+set tranalyzer folder to '\fIpath\fR' [$T2HOME]
+.TP
+\fB\-p\fR \fIpath\fR
+set plugin folder to '\fIpath\fR' [~/.tranalyzer/plugins]
+.TP
+\fB\-s\fR [\fIfile\fR]
+save loaded plugins in '\fIfile\fR' [/tmp/t2pl_state]
+.TP
+\fB\-r\fR [\fIfile\fR]
+restore previous state from '\fIfile\fR' [/tmp/t2pl_state]
+.TP
+\fB\-t2\fR
+configure and build Tranalyzer2 first
+.TP
+\fB\-i\fR
+install Tranalyzer2 in \fI\,/usr/local/bin\/\fP
+.TP
+\fB\-D \fIname=value\fR
+set the define \fIname\fR to \fIvalue\fR
+(option only available if ONE plugin is being configured)
+.TP
+\fB\--patch\fR \fIfile\fR
+configures tranalyzer according to '\fIfile\fR' whose format is
+.RS
+FLAG <tab> NEWVAL <tab> OLDVAL <tab> FILE or
+.RE
+.RS
+FLAG <tab> NEWVAL <tab> FILE,
+.RE
+.RS
+where FILE is relative to '\-t'
+.RE
+.TP
+\fB\--rpatch\fR \fIfile\fR
+same as \fB\--patch\fR, but restores OLDVAL
+.TP
+\fB\--dual\fR
+activates IPv4 and IPv6 dissection
+.TP
+\fB\--ip6\fR
+activates IPv6 dissection (deactivates IPv4)
+.TP
+\fB\--ip4\fR
+activates IPv4 dissection (deactivates IPv6)
+.TP
+\fB\--eth\fR
+activates Ethernet flows
+.TP
+\fB\--noeth\fR
+deactivates Ethernet flows
+.TP
+\fB\-m\fR
+activates monitoring mode
+.TP
+\fB\-a\fR
+activates all plugins
+.TP
+\fB\-0\fR
+deactivates all plugins
+.TP
+\fB\-9\fR
+activates pcapd only
+.TP
+\fB\-q\fR
+deactivates pcapd and restore previous state
+.TP
+\fB\-x\fR
+exit after performing \fB\-t2\fR, \fB\-a\fR, \fB\-r\fR, \fB\-p\fR, \fB\-q\fR, \fB--patch\fR or \fB--rpatch\fR option
+.TP
+\fB\-c\fR
+run $EDITOR for every plugin that needs to be built
+.TP
+\fB\-f\fR
+force rebuild of the plugins (./autogen.sh)
+.TP
+\fB\-d\fR
+build plugins in debug mode (./autogen.sh \fB\-d\fR)
+.TP
+\fB\-l\fR
+lazy mode (only build plugins if they do not exist)
+.TP
+\fB\-L\fR [\fIfile\fR]
+edit plugins loading list \fIfile\fR
+(if \fIfile\fR is omitted, edit \fI~/.tranalyzer/plugins/plugins.load\fR)
+.TP
+\fB\-n\fR
+sort by plugin name instead of plugin number
+.TP
+\fB\-v\fR
+enable verbose mode
+.TP
+\fB\-h\fR
+display this help and exit
+
+.SH EXIT STATUS
+\fBt2conf\fR returns 0 on success. Any different value is an indication of error.
+
+.SH AUTHORS
+\fBt2conf\fR was written by Tranalyzer Development Team
+
+.SH BUGS
+Please send problems, bugs, questions and suggestions to:
+
+.ti +8
+\fItranalyzer@rdit.ch\fR
+
+.SH FILES
+\fI~/.tranalyzer/plugins/t2confrc\fR
+.RS
+Set of predefined settings for \fBt2conf\fR
+
+.SH DISTRIBUTION
+The latest version of \fBt2conf\fR can be found at
+
+.ti +8
+\fIhttps://tranalyzer.com\fR
+
+.SH "SEE ALSO"
+\fItranalyzer(1)\fR.
+
+The full documentation for \fBt2conf\fR is available at
+
+.ti +8
+\fIhttps://tranalyzer.com/downloads/doc/documentation.pdf\fR

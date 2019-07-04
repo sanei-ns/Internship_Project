@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+source "$(dirname "$0")/../../../scripts/t2utils.sh"
+
+INFILE="src/netflow9r.h"
+OUTFILE="src/netflow9.h"
+
+if [ ! -f "$INFILE" ]; then
+    printerr "'$INFILE' could not be found."
+    printinf "$SNAME must be run from netflowSink root folder"
+    exit 1
+fi
+
+T2MPLS=$(get_define BFO_MAX_MPLS ../basicFlow/src/basicFlow.h)
+T2ETH=$(get_define ETH_ACTIVATE ../../tranalyzer2/src/networkHeaders.h)
+
+if [ -z "$T2MPLS" ] || [ -z "$T2ETH" ]; then
+    printerr "Failed to get define from basicFlow or tranalyzer2"
+    exit 1
+fi
+
+if [ $T2MPLS -gt 10 ]; then
+   T2MPLS=10
+fi
+
+$AWK -F"\t" -v t=$T2MPLS -v e=$T2ETH '{
+    if (index($0, "NF9_MPLS_LABEL_1,")) {
+        for (i = 1; i <= t; i++) {
+            print "\tNF9_MPLS_LABEL_"i", NF9_MPLS_LABEL_"i"_LEN,"
+        }
+    } else if (index($0, "nfMpls[BFO_MAX_MPLS")) {
+        if (t) print
+    } else if (index($0, "NF9_OUT_SRC_MAC,")) {
+        print "\tNF9_OUT_SRC_MAC, NF9_OUT_SRC_MAC_LEN,"
+    } else {
+        print
+    }
+}' "$INFILE" > "$OUTFILE"

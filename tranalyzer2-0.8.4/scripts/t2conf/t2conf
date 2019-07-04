@@ -1,0 +1,775 @@
+#!/usr/bin/env bash
+#
+# Use this script to build, configure, activate and deactivate Tranalyzer plugins.
+# Run t2conf --help for a full list of options.
+
+source "$(dirname "$0")/../t2utils.sh"
+
+# Default values
+EDITOR="${EDITOR:-$(which vim)}"
+PLUGIN_FOLDER="$HOME/.tranalyzer/plugins"
+DISABLED_FOLDER="$PLUGIN_FOLDER/disabled"
+T2CONFRC="$PLUGIN_FOLDER/t2confrc"
+PLUGIN_LIST="$PLUGIN_FOLDER/plugins.load"
+PLUGIN_STATE="/tmp/t2pl_state"
+
+usage() {
+    printf "Usage:\n"
+    printf "    $SNAME [OPTION...] [plugin...]\n\n"
+    printf "Optional arguments:\n"
+    printf "    -t path        set tranalyzer folder to 'path' [~/tranalyzer2]\n"
+    printf "    -p path        set plugin folder to 'path' [~/.tranalyzer/plugins]\n"
+    printf "\n"
+    printf "    -s [file]      save loaded plugins in 'file' [/tmp/t2pl_state]\n"
+    printf "    -r [file]      restore previous state from 'file' [/tmp/t2pl_state]\n"
+    printf "\n"
+    printf "    -t2            configure and build Tranalyzer2 first\n"
+    printf "    -i             install Tranalyzer2 in /usr/local/bin\n"
+    printf "\n"
+    printf "    -D name=value  Set the define 'name' to 'value'\n"
+    printf "                   (option only available if ONE plugin is being configured)\n"
+    printf "\n"
+    printf "    --patch file   configures tranalyzer according to 'file' whose format is\n"
+    printf "                   FLAG <tab> NEWVAL <tab> OLDVAL <tab> FILE or\n"
+    printf "                   FLAG <tab> VAL <tab> FILE\n"
+    printf "                   where FILE is relative '-t' option\n"
+    printf "    --rpatch file  same as --patch, but restores OLDVAL\n"
+    printf "\n"
+    printf "    --dual         activates IPv4 and IPv6 dissection\n"
+    printf "    --ip6          activates IPv6 dissection (deactivates IPv4)\n"
+    printf "    --ip4          activates IPv4 dissection (deactivates IPv6)\n"
+    printf "    --eth          activates Ethernet flows\n"
+    printf "    --noeth        deactivates Ethernet flows\n"
+    printf "    -m             activates monitoring mode\n"
+    printf "\n"
+    printf "    -a             activates all plugins\n"
+    printf "    -0             deactivates all plugins\n"
+    printf "\n"
+    printf "    -9             activates pcapd only\n"
+    printf "    -q             deactivates pcapd and restore previous state\n"
+    printf "\n"
+    printf "    -x             exit after performing -t2, -a, -r, -p, -q, --patch or\n"
+    printf "                   --rpatch option\n"
+    printf "\n"
+    printf "    -c             run \$EDITOR for every plugin that needs to be built\n"
+    printf "    -f             force rebuild of the plugins (./autogen.sh -r)\n"
+    printf "    -d             build plugins in debug mode (./autogen.sh -d)\n"
+    printf "\n"
+    printf "    -l             lazy mode (only build plugins if they do not exist)\n"
+    printf "\n"
+    printf "    -L [name]      edit plugins loading list 'name'\n"
+    printf "                   [default: ~/.tranalyzer/plugins/plugins.load]\n"
+    printf "\n"
+    printf "    -n             sort by plugin name instead of plugin number\n"
+    printf "\n"
+    printf "    -v             enable verbose mode\n"
+    printf "\n"
+    printf "    -h             display this help and exit\n"
+}
+
+conf_plugin() {
+    if [ -z "$1" ]; then
+        printerr "missing argument for function conf_plugin"
+        exit 1
+    fi
+    local name="$(tr -d "/" <<< "$1")"
+    if [ "$name" = "tranalyzer2" ]; then
+        cd "$T2HOME/$name"
+    else
+        cd "$T2PLHOME/$name"
+    fi
+    if [ -f "t2plconf" ]; then
+        ./t2plconf
+    else
+        $EDITOR "src/${name}.h"
+    fi
+}
+
+build_t2() {
+    cd "$T2HOME/tranalyzer2/"
+    if [ $LAZY ] && [ -f "src/tranalyzer" ]; then
+        true
+    else
+        ./autogen.sh $FORCE $DEBUG $INSTALL
+    fi
+    T2STAT=$?
+    if [ $T2STAT -ne 0 ]; then
+        echo "Press [Enter] to return to the menu, 'C' to continue and 'X' to exit"
+        read act
+        act="$(tr '[:lower:]' '[:upper:]' <<< $act)"
+        if [ "X" = "$act" ]; then
+            exit 1
+        fi
+    fi
+}
+
+build_plugin() {
+    if [ -z "$1" ]; then
+        printerr "missing argument for function build_plugin"
+        exit 1
+    fi
+    local index="$1"
+    local name="${PLUGINS[$index]}"
+    if [ $LAZY ] && [ -n "$(ls "$DISABLED_FOLDER" | grep "_${name}.so$")" ]; then
+        mv "$DISABLED_FOLDER/"*"_${name}.so" "$PLUGIN_FOLDER"
+        BUILT[${#BUILT[@]}]="${PLUGINS[$index]}"
+    elif [ $LAZY ] && [ -f "$T2PLHOME/$name/src/.libs/lib${name}.so.0.0.0" ]; then
+        cp "$T2PLHOME/$name/src/.libs/lib${name}.so.0.0.0" "$PLUGIN_FOLDER/${index}_${name}.so"
+        BUILT[${#BUILT[@]}]="${PLUGINS[$index]}"
+    else
+        cd "$T2PLHOME/$name"
+        [ $CONF ] && $EDITOR "src/${name}.h"
+        ./autogen.sh $FORCE $DEBUG -p "$PLUGIN_FOLDER"
+        if [ $? -ne 0 ]; then
+            FAILED[${#FAILED[@]}]="${PLUGINS[$index]}"
+        else
+            BUILT[${#BUILT[@]}]="${PLUGINS[$index]}"
+        fi
+        cd ..
+    fi
+}
+
+save_state() {
+    if [ "$(ls "$PLUGIN_FOLDER" | grep .so$)" ]; then
+        ls "$PLUGIN_FOLDER" | grep .so$ > "$PLUGIN_STATE"
+    fi
+}
+
+restore_state() {
+    if [ -f "$PLUGIN_STATE" ] && [ -n "$(file -i "$PLUGIN_STATE" | grep "text/plain")" ]; then
+        deactivate_all
+        for i in $(cat "$PLUGIN_STATE"); do
+            local num="$(cut -d_ -f1 <<< "$i")"
+            if [[ "${num:0:1}" != "#" ]]; then
+                build_plugin "$num"
+            fi
+        done
+    else
+        printerr "file '$PLUGIN_STATE' does not exist or has invalid format"
+        exit 1
+    fi
+}
+
+deactivate_all() {
+    if [ -n "$(ls "$PLUGIN_FOLDER" | grep .so$)" ]; then
+        if [ $LAZY ]; then
+            mv "$PLUGIN_FOLDER/"*so "$DISABLED_FOLDER"
+        else
+            rm -f "$PLUGIN_FOLDER/"*so
+        fi
+    fi
+}
+
+activate_pcapd() {
+    if [ ! -d "$T2PLHOME/pcapd" ]; then
+        printerr "pcapd plugin not available"
+        exit 1
+    fi
+    save_state
+    deactivate_all
+    build_plugin "$(grep "PLUGINORDER=" "$T2PLHOME/pcapd/autogen.sh" | cut -d= -f2)"
+}
+
+deactivate_pcapd() {
+    restore_state
+    if [ "$(ls "$PLUGIN_FOLDER" | grep _pcapd.so$)" ]; then
+        if [ $LAZY ]; then
+            mv "$PLUGIN_FOLDER"/*_pcapd.so "$DISABLED_FOLDER"
+        else
+            rm -f "$PLUGIN_FOLDER"/*_pcapd.so
+        fi
+    fi
+}
+
+set_define() {
+    if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
+        printerr "missing argument for function set_define"
+        exit 1
+    fi
+    local name="$1"
+    local value="$2"
+    local file="$3"
+    local files
+    if [ -d "$file" ]; then
+        files=("$file"/*.h)
+    elif [ -f "$file" ]; then
+        files=("$file")
+    else
+        printerr "file '$file' does not exist"
+        exit 1
+    fi
+    if [ -z "$(grep "^#define[[:space:]]\+$name[[:space:]]\+" "${files[@]}")" ]; then
+        printerr "macro '$name' does not exist in '$file'"
+        exit 1
+    fi
+    # escape /, *, & and . from $value
+    local newval="$($SED 's/\([/*&.]\)/\\\1/g' <<< "$value")"
+    perl -i -pe "s/(^#define\s+$name\s+)([^\s]((?!\s*\/[\/\*]|\s*$).)*)(.*$)/\${1}$newval\${4}/p" "${files[@]}"
+}
+
+validate_patch() {
+    cd "$T2HOME"
+    [ $VERBOSE ] && printf "Validating patch '%s'\n" "$PATCH"
+    local err="$($AWK -F"\t" -v rpatch="$RPATCH" '
+        /^#/ || /^%/ || /^[[:space:]]*$/ { next } # skip comments and empty lines
+        old_nf == 0 { old_nf = NF }
+        old_nf != NF {
+            print "Invalid patch: " old_nf " columns expected, found " NF ":\n" $0
+            exit
+        }
+        NF == 3 && rpatch {
+            print "Cannot revert patch: four columns required, only three found:\n" $0
+            exit
+        }
+        NF != 3 && NF != 4 {
+            print "Invalid patch: expected three or four columns, found " NF ":\n" $0
+            exit
+        }
+        {
+            old_nf = NF
+        }
+    ' "$PATCH")"
+    if [ -n "$err" ]; then
+        printerr "$err"
+        exit 1
+    fi
+}
+
+t2_interactive_patch() {
+    local plugin="${plugins[0]}"
+    if [ "$plugin" = "tranalyzer2" ]; then
+        cd "$T2HOME/$plugin"
+    else
+        cd "$T2PLHOME/$plugin"
+    fi
+    local _oldifs="$IFS"
+    IFS=$'\n'
+    for i in ${DEFINE[@]}; do
+        name="$($SED 's/^\([^=]\+\)=.*$/\1/' <<< "$i")"
+        value="$($SED 's/^[^=]\+=\(.*\)$/\1/' <<< "$i")"
+        set_define "$name" "$value" "src"
+    done
+    IFS="$_oldifs"
+}
+
+t2_patch() {
+    cd "$T2HOME"
+    validate_patch
+    [ $VERBOSE ] && printf "Applying patch '%s'\n" "$PATCH"
+    OLDIFS="$IFS"
+    while IFS=$'\t' read -r N V F; do
+        [ -z "$N" -o -z "$V" -o -z "$F" ] && continue
+        [ $VERBOSE ] && printf "set_define %s %s %s\n" "$N" "$V" "$F"
+        set_define "$N" "$V" "$F"
+    done <<< "$($AWK -F"\t" -v OFS="\t" -v val=$((RPATCH+2)) '
+        /^#/ || /^%/ || /^[[:space:]]*$/ { next } # skip comments and empty lines
+        NF == 3 { print $1, $2, $3 }
+        NF == 4 { print $1, $val, $4 }
+    ' "$PATCH")"
+    IFS="$OLDIFS"
+    [ $VERBOSE ] && printf "Finished applying patch '%s'\n" "$PATCH"
+}
+
+print_t2_stat() {
+    if [ $BUILDT2 ] && [ $T2STAT -ne 2 ]; then
+        if [ $T2STAT -ne 0 ]; then
+            printerr "\nFailed to build Tranalyzer2\n"
+        else
+            printok "\nTranalyzer2 successfully built\n"
+        fi
+    fi
+}
+
+print_pl_stat() {
+    local sorted
+    if [ $VERBOSE ] && [ ${#BUILT[@]} -ne 0 ]; then
+        printok "\nThe following plugins were successfully built:"
+        sorted=$(tr ' ' '\n' <<< "${BUILT[*]}" | sort)
+        for i in $sorted; do
+            printok "    $i"
+        done
+    fi
+    if [ ${#FAILED[@]} -ne 0 ]; then
+        printerr "\nThe following plugins could not be built:"
+        sorted=$(tr ' ' '\n' <<< "${FAILED[*]}" | sort)
+        for i in $sorted; do
+            printerr "    $i"
+        done
+        exit 1
+    fi
+    if [ -z "$(ls "$PLUGIN_FOLDER" | grep ".so$")" ]; then
+        printwrn "\nNo plugin activated\n"
+    fi
+}
+
+_cleanup() {
+    local ret=$1
+    [ -f "$tempfile" ] && rm -f "$tempfile"
+    exit $ret
+}
+
+plugins=()
+while [ $# -gt 0 ]; do
+    case $1 in
+        -p)
+            validate_next_arg "$1" "$2"
+            if [ -e "$2" ] && [ ! -d "$2" ]; then
+                printerr "Option '$1': '$2' is not a directory"
+                abort_with_help
+            fi
+            [ ! -d "$2" ] && mkdir "$2"
+            PLUGIN_FOLDER="$($READLINK -f "$2")"
+            DISABLED_FOLDER="$PLUGIN_FOLDER/disabled"
+            T2CONFRC="$PLUGIN_FOLDER/t2confrc"
+            [ -z "$EDITPLLIST" ] && PLUGIN_LIST="$PLUGIN_FOLDER/plugins.load"
+            shift
+            ;;
+        -t)
+            validate_next_arg "$1" "$2"
+            if [ ! -d "$2" ]; then
+                printerr "Option '$1': '$2' is not a directory"
+                abort_with_help
+            fi
+            T2HOME="$($READLINK -f "$2")"
+            T2PLHOME="$T2HOME/plugins"
+            shift
+            ;;
+        -s)
+            SAVE=1
+            if [ -n "$2" ]; then
+                PLUGIN_STATE="$($READLINK -f "$2")"
+                shift
+            fi
+            ;;
+        -r)
+            RESTORE=1
+            if [ -n "$2" ]; then
+                if [ ! -f "$2" ]; then
+                    printerr "Option '$1': '$2' is not a valid file"
+                    abort_with_help
+                fi
+                PLUGIN_STATE="$($READLINK -f "$2")"
+                shift
+            fi
+            ;;
+        -L)
+            EDITPLLIST=1
+            if [ -n "$2" ] && [ "${2:0:1}" != "-" ]; then
+                PLUGIN_LIST="$2"
+                shift
+            fi
+            ;;
+        --rpatch|--patch)
+            validate_next_arg "$1" "$2"
+            if [ ! -f "$2" ]; then
+                printerr "Option '$1': '$2' is not a valid file"
+                abort_with_help
+            fi
+            PATCH="$($READLINK -f "$2")"
+            if [ "${1:2:1}" == "r" ]; then
+                RPATCH=1
+            fi
+            shift
+            ;;
+        -D)
+            validate_next_arg "$1" "$2"
+            if [ -z "$($AWK -F= 'NF == 2' <<< "$2")" ]; then
+                printerr "Option '$1': expected name=value, found '$2'"
+                abort_with_help
+            fi
+            DEFINE+=("$2")
+            shift
+            ;;
+        # T2 core configuration
+        -t2) BUILDT2=1;;
+        --dual) DUAL=1; BUILDT2=1;;
+        --ip6) IP6=1; BUILDT2=1;;
+        --ip4) IP4=1; BUILDT2=1;;
+        --eth) ETH=1; BUILDT2=1;;
+        --noeth) NOETH=1; BUILDT2=1;;
+        -m|--monitoring) MON=1; BUILDT2=1;;
+        -a|--all) ALL=1;;
+        -0|--none) NONE=1;;
+        -9|--pcapd) PCAPD=1;;
+        -q) DPCAPD=1;;
+        -x) EXIT=1;;
+        -c) CONF=1;;
+        -d|--debug) DEBUG="-d";;
+        -f|--force) FORCE="-r";;
+        -i|--install) INSTALL="-i";;
+        -l|--lazy) LAZY=1;;
+        -n) SORTNAME=1;;
+        -v|--verbose) VERBOSE=1;;
+        -h|--help) usage; exit 0;;
+        *)
+            if [ ! -f "$T2PLHOME/$1/autogen.sh" ] && [ "$1" != "tranalyzer2" ]; then
+                abort_option_unknown "$1"
+            fi
+            plugins+=($1)
+            ;;
+    esac
+    shift
+done
+
+if [ $ALL ] && [ $NONE ]; then
+    printerr "Cannot activate all and no plugins at the same time"
+    exit 1
+fi
+
+if [ ! -d "$T2HOME" ]; then
+    printerr "Tranalyzer folder '$T2HOME' does not exist"
+    printf "Use '-t' option to specify the correct path\n"
+    exit 1
+fi
+
+if [ ! -f "$T2HOME/tranalyzer2/src/tranalyzer" ] && [ -z "$EDITPLLIST" ]; then
+    BUILDT2=1
+fi
+
+# Dependencies
+check_dependency dialog
+
+# associative arrays were introduced in bash 4
+if [[ ${BASH_VERSINFO[0]} < 4 ]]; then
+    printerr "minimum bash version required is '4', found '$(cut -d- -f1 <<< "$BASH_VERSION")'"
+    exit 1
+fi
+
+DVER="$(dialog --version | $AWK '{print $2}')"
+if [[ $(cut -d- -f1 <<< "$DVER") < 1.1 ]] ||
+   [[ $(cut -d- -f2 <<< "$DVER") < 20120703 ]]; then
+    printerr "minimum dialog version required is '1.1-20120703', found '$DVER'"
+    exit 1
+fi
+
+# Dialog return value
+OK=0
+CANCEL=1
+HELP=2
+EXTRA=3
+ITEM_HELP=4
+ESC=255
+
+# setup tempfile
+tempfile=`(tempfile) 2> /dev/null` || tempfile=/tmp/test$$
+
+trap "trap - SIGTERM && _cleanup 1" HUP INT QUIT TERM
+trap "_cleanup \$?" EXIT
+
+predef_settings() {
+    cd "$T2HOME"
+    local c=0
+    local desc=()
+    local act=()
+    local line
+    while read line; do
+        if [ -z "$line" ] || [ -n "$(grep "^##[[:space:]]*" <<< $line)" ]; then
+            continue # skip empty lines and comments
+        elif [ -n "$(grep "^#[[:space:]]*" <<< $line)" ]; then
+            desc+=($c)
+            desc+=("$(perl -pe 's/^#\s*//' <<< "$line" | perl -pe 's/\s*\[on\]|\[off\]\s*$//')")
+            # TODO set to current value?
+            desc+=("$(perl -lpe 's/^#\s*.*\s*\[(on|off)\]\s*$/\1/' <<< "$line")")
+            c=$((c+1))
+        else
+            act[$((c-1))]+="$line | "
+        fi
+    done < "$T2CONFRC"
+
+    dialog --no-lines --no-shadow --title "Tranalyzer2" \
+            --ok-label "Build" --default-item "$index" \
+            --extra-button --extra-label "Back" \
+            --checklist "Select options: " 20 70 20 \
+            "${desc[@]}" 2> "$tempfile"
+    local ret=$?
+    if [ $ret -eq 0 ] || [ $ret -eq 1 ]; then # build or back
+        for i in $(seq 0 $((c-1))); do
+            local on="$(grep "\b$i\b" "$tempfile")"
+            while IFS="|" read line; do
+                line="$(perl -pe 's/^\s*//' <<< "$line")"
+                line="$(perl -pe 's/\s*$//' <<< "$line")"
+                [ -z "$line" ] && continue
+                while IFS=$'\t' read -r d v1 v2 f; do
+                    if [ ! -f "$f" ]; then
+                        printerr "t2confrc: '$f' is not a valid file"
+                    elif [ -z "$d" ] || [ -z "$v1" ] || [ -z "$v2" ]; then
+                        printerr "t2confrc: invalid line: '$line'"
+                    elif [ -n "$on" ]; then
+                        [ $VERBOSE ] && printf "set_define %s %s %s\n" "$d" "$v1" "$f"
+                        set_define "$d" "$v1" "$f"
+                    else
+                        [ $VERBOSE ] && printf "set_define %s %s %s\n" "$d" "$v2" "$f"
+                        set_define "$d" "$v2" "$f"
+                    fi
+                done <<< "$line"
+            done <<< "$(tr '|' '\n' <<< "${act[$i]}")"
+        done
+    fi
+
+    rm -f "$tempfile"
+
+    return $ret
+}
+
+if [ -n "$DEFINE" ]; then
+    if [ ${#plugins[@]} -ne 1 ]; then
+        printerr "-D option can only be used with ONE plugin"
+        abort_with_help
+    fi
+    t2_interactive_patch
+    exit 0
+fi
+
+if [ -n "$PATCH" ]; then
+    t2_patch
+    exit 0
+fi
+
+if [ ! -d "$PLUGIN_FOLDER" ]; then
+    printwrn "Plugin folder '$PLUGIN_FOLDER' does not exist"
+    read -p "Create it (Y/n)? " ans
+    case $ans in
+        [yY]|[yY][eE][sS]|"")
+                mkdir -p "$PLUGIN_FOLDER"
+                if [ $? -ne 0 ]; then
+                    printerr "could not create folder '$PLUGIN_FOLDER'"
+                    exit 1
+                fi
+                ;;
+             *)
+                printf "Use '-p' option to specify a different path\n"
+                exit 1;;
+    esac
+fi
+
+if [ -n "$plugins" ]; then
+    for i in ${plugins[@]}; do
+        conf_plugin "$i"
+    done
+    exit 0
+fi
+
+if [ $BUILDT2 ]; then
+    cd "$T2HOME/tranalyzer2/src"
+    if [ $DUAL ]; then
+        set_define "IPV6_ACTIVATE" "2" "networkHeaders.h"
+        unset LAZY
+    elif [ $IP6 ]; then
+        set_define "IPV6_ACTIVATE" "1" "networkHeaders.h"
+        unset LAZY
+    elif [ $IP4 ]; then
+        set_define "IPV6_ACTIVATE" "0" "networkHeaders.h"
+        unset LAZY
+    fi
+    if [ $ETH ]; then
+        set_define "ETH_ACTIVATE" "1" "networkHeaders.h"
+        unset LAZY
+    elif [ $NOETH ]; then
+        set_define "ETH_ACTIVATE" "0" "networkHeaders.h"
+        unset LAZY
+    fi
+    if [ $MON ]; then
+        set_define "MONINTPSYNC"    "1" "main.h"
+        set_define "MONINTTMPCP"    "1" "main.h"
+        set_define "VERBOSE"        "0" "tranalyzer.h"
+        set_define "DIFF_REPORT"    "1" "tranalyzer.h"
+        set_define "MACHINE_REPORT" "1" "tranalyzer.h"
+        unset LAZY
+    fi
+    if [ $EXIT ]; then
+        tput clear
+        exit 0
+    fi
+    HDRF=(main.h networkHeaders.h packetCapture.h tranalyzer.h)
+    if [ -f "$T2CONFRC" ]; then
+        HDR+=(0 "Predefined settings")
+    fi
+    c=1
+    for i in ${HDRF[@]}; do
+        HDR+=($c "$i")
+        c=$((c+1))
+    done
+    HDR+=($c "Select a file...")
+    FACT=$c
+    ret=3
+    while [ $ret -eq 3 ] || [ "C" != "$act" ]; do
+        act="C"
+        exec 3>&1
+        select=$(dialog --title "Tranalyzer2" --clear \
+            --ok-label "Build T2" \
+            --default-item "$select" \
+            --extra-button --extra-label "Edit" \
+            --menu "Select 'Predefined settings' or a header file:" 20 70 20 \
+            "${HDR[@]}" 2>&1 1>&3)
+        ret=$?
+        exec 3>&-
+        tput clear
+        if [ $ret -eq 3 ]; then
+            if [ $select -eq 0 ]; then
+                predef_settings
+            elif [ $select -eq $FACT ]; then
+                FILE="$(dialog --stdout --title "Tranalyzer2" --clear --fselect "$T2HOME/tranalyzer2/src/" 20 70)"
+                if [ -n "$FILE" ] && [ -f "$FILE" ]; then
+                    $EDITOR "$FILE" # edit selected file
+                fi
+            else
+                $EDITOR "${HDRF[$((select-1))]}" # edit selected file
+            fi
+        fi
+        if [ $ret -eq 0 ]; then
+            build_t2
+        elif [ $ret -ne 3 ]; then
+            T2STAT=2
+        fi
+    done
+    if [ $EXIT ] && [ ! $ALL ] && [ ! $PCAPD ] && [ ! $DPCAPD ] && [ ! $RESTORE ]; then
+        tput clear
+        print_t2_stat
+        exit 0
+    fi
+fi
+
+if [ $LAZY ] && [ ! -d "$DISABLED_FOLDER" ]; then
+    mkdir -p "$DISABLED_FOLDER"
+fi
+
+declare -A PLUGINS
+
+IGNORE=(t2PSkel)
+
+for plugin in "$T2PLHOME/"*; do
+    P="${plugin##**/}"
+    BLACKLISTED=$(grep -w "$P" <<< "${IGNORE[*]}")
+    if [ -d "$plugin" ] && [ -f "$plugin/autogen.sh" ] && [ ! "$BLACKLISTED" ]; then
+        N="$(grep "^PLUGINORDER=" $plugin/autogen.sh | cut -d= -f2)"
+        if [ "${#N}" -eq 3 ] && [ -n "$P" ]; then
+            if [ -n "${PLUGINS[$N]}" ]; then
+                printerr "Error: a plugin with number $N already exists: ${PLUGINS[$N]}, $P"
+                unset -v PLUGINS
+                exit 1
+            fi
+            PLUGINS["$N"]="$P"
+        fi
+    fi
+done
+
+if [ $RESTORE ]; then
+    restore_state
+fi
+
+if [ $PCAPD ]; then
+    activate_pcapd
+elif [ $DPCAPD ]; then
+    deactivate_pcapd
+fi
+
+if [ $EXIT ]; then
+    if [ $ALL ]; then
+        deactivate_all
+        for i in ${!PLUGINS[@]}; do
+            build_plugin "$i"
+        done
+    fi
+    tput clear
+    print_t2_stat
+    print_pl_stat
+    if [ $SAVE ]; then
+        save_state
+    fi
+    exit 0
+fi
+
+if [ $SORTNAME ]; then
+    SORT="sort -k2"
+else
+    SORT="sort -n"
+fi
+
+ret=$CANCEL
+while [ $ret -ne $OK ]; do
+    ALL=$(for i in ${!PLUGINS[@]}; do
+        if [ -s "$tempfile" ]; then
+            if [ -n "$(grep "\b$i\b" "$tempfile")" ]; then
+                echo "$i ${PLUGINS[$i]} on"
+            else
+                echo "$i ${PLUGINS[$i]} off"
+            fi
+        elif [ $EDITPLLIST ]; then
+            if [ $ALL ]; then
+                echo "$i ${PLUGINS[$i]} on"
+            elif [ $NONE ]; then
+                echo "$i ${PLUGINS[$i]} off"
+            elif [ ! -f "$PLUGIN_LIST" ] || [ -n "$($AWK -v p="^[0-9]{3}_${PLUGINS[$i]}.so$" '$0 ~ p' "$PLUGIN_LIST")" ]; then
+                echo "$i ${PLUGINS[$i]} on"
+            else
+                echo "$i ${PLUGINS[$i]} off"
+            fi
+        elif [ ! $ALL ] && {
+            [ -z "$(ls "$PLUGIN_FOLDER" | grep ${i}_${PLUGINS[$i]}.so)" ] ||
+            [ $NONE ]
+        };
+        then
+            echo "$i ${PLUGINS[$i]} off"
+        else
+            echo "$i ${PLUGINS[$i]} on"
+        fi
+    done | $SORT)
+
+    XTRA="--help-button --help-label Configure --help-status"
+    if [ -z "$EDITPLLIST" ]; then
+        OKLABEL="Build"
+    else
+        OKLABEL="OK"
+    fi
+
+    dialog --no-lines --no-shadow --title "Tranalyzer2" \
+        --ok-label "$OKLABEL" --default-item "$index" \
+        $XTRA \
+        --checklist "\nSelect plugins:\n\nUse the space bar to activate/deactivate plugins" 20 70 20 \
+        $(xargs <<< "$ALL") 2> "$tempfile"
+    ret=$?
+    case $ret in
+        $OK) ;;
+        $HELP) # Configure
+            index="$($AWK '{ print $2 }' "$tempfile" | tr -d \")"
+            conf_plugin "${PLUGINS[$index]}"
+            perl -i -pe 's/^HELP\s+\d{3}\s*//' "$tempfile" # Removed HELP $index
+            ;;
+        *)
+            rm -f "$tempfile"
+            unset -v PLUGINS
+            tput clear
+            exit 0
+            ;;
+    esac
+done
+
+if [ "$tempfile" ]; then
+    if [ "$EDITPLLIST" ]; then
+        rm -f "$PLUGIN_LIST"
+        for i in ${!PLUGINS[@]}; do
+            if [ -n "$(grep -w "$i" "$tempfile")" ]; then
+                echo "${i}_${PLUGINS[$i]}.so" >> "$PLUGIN_LIST"
+            else
+                echo "#${i}_${PLUGINS[$i]}.so" >> "$PLUGIN_LIST"
+            fi
+        done
+        sort -o "$PLUGIN_LIST" "$PLUGIN_LIST"
+    else
+        deactivate_all
+        for i in $(cat "$tempfile"); do
+            build_plugin "$i"
+        done
+    fi
+    rm -f "$tempfile"
+fi
+
+unset -v PLUGINS
+
+tput clear
+print_t2_stat
+print_pl_stat
+
+if [ $SAVE ]; then
+    save_state
+fi

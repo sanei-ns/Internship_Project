@@ -1,0 +1,5 @@
+#H bit | ospfAuType | Description
+#H =============================================================================
+     1 | 0x0002     | Null authentication
+     2 | 0x0004     | Simple password
+     3 | 0x0008     | Cryptographic authentication

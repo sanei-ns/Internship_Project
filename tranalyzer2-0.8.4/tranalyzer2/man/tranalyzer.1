@@ -1,0 +1,158 @@
+.\"
+.\" This program is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 2, or (at your option)
+.\" any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software Foundation,
+.\" Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+.\"
+.IX Title Tranalyzer2 1
+.TH TRANALYZER2 1 "July 2018" "0.8.0" "Tranalyzer2 (Anteater)"
+
+.SH NAME
+Tranalyzer2 \- High performance flow based network traffic analyzer
+
+.SH SYNOPSIS
+.B tranalyzer
+[\ \fB\-r\fR\ \fIpcap\fR | \fB\-R\fR \fIfile\fR | \fB\-D\fR \fIexpr[:schr][,stop]\fR | \fB\-i\fR\ \fIiface\fR\ ] \" input
+.br
+.ti +11
+[\ \fB\-w\fR\ \fIprefix\fR | \fB\-W\fR\ \fIprefix[:size][,start]\fR \] \" output
+.br
+.ti +11
+[\ \fB\-p\fR\ \fIpath\fR\ ]
+.br
+.ti +11
+[\ \fB\-b\fR\ \fIfile\fR\ ]
+.br
+.ti +11
+[\ \fB\-e\fR\ \fIfile\fR\ ]
+.br
+.ti +11
+[\ \fB\-f\fR\ \fIhashfactor\fR\ ]
+.br
+.ti +11
+[\ \fB\-c\fR\ \fIcpu\fR\ ]
+.br
+.ti +11
+[\ \fB\-x\fR\ \fIid\fR\ ]
+.br
+.ti +11
+[\ \fB\-s\fR\ ]
+.br
+.ti +11
+[\ \fB\-l\fR\ ]
+.br
+.ti +11
+[\ \fB\-F\fR\ \fIfile\fR\ ]
+.br
+.ti +11
+[\ \fIbpf\fR\ ]
+
+.SH DESCRIPTION
+\fBTranalyzer2\fR analyzes a PCAP file \fIpcap\fR, processes a list of PCAP files listed in \fIfile\fR or captures traffic from a given interface \fIinterface\fR. Output is written to files with prefix \fIprefix\fR or to the standard output if \fB\-w\fR is omitted.
+
+.SH INPUT OPTIONS
+.TP
+\fB\-i\fR\ \fIinterface\fR
+.br
+Listen on \fIinterface\fR.
+.TP
+\fB\-r\fR\ \fIpcap\fR
+Read packets from PCAP file \fIpcap\fR or from standard input if \fIpcap\fR is "-".
+.TP
+\fB\-R\fR\ \fIfile\fR
+Process every PCAP file listed in \fIfile\fR.
+.TP
+\fB\-D\fR\ \fIexpr[:schr][,stop]\fR
+Process every PCAP file whose name matches \fIexpr\fR, up to an optional last index \fIstop\fR.
+If \fIstop\fR is omitted, then Tranalyzer never stops.
+\fIexpr\fR can be a filename, e.g., file.pcap0, or an expression, such as "dump*.pcap00", where the star matches anything (note the quotes to prevent the shell from interpreting the expression).
+\fIschr\fR can be used to specify the last character before the index.
+.SH OUTPUT OPTIONS
+.TP
+\fB\-w\fR\ \fIprefix\fR
+Append \fIprefix\fR to any output file produced. If omitted, then output is diverted to \fIstdout\fR.
+.br
+.TP
+\fB\-W\fR\ \fIprefix[:size][,start]\fR
+Like \fB-w\fR, but fragment flow files according to \fIsize\fR, producing files starting with index \fIstart\fR.
+\fIsize\fR can be specified in bytes (default), KB ('K'), MB ('M') or GB ('G').
+Scientific notation, i.e., 1e5 or 1E5 (=100000), can be used as well.
+If a 'f' is appended, e.g., 10Kf, then \fIsize\fR denotes the number of flows.
+.br
+.TP
+.B \-l
+Prints end report in \fIprefix\fR_log.txt instead of stdout
+.br
+.TP
+.B \-s
+Activates forensics packet mode. This results in a special packet based output file. (Currently produced by tcpFlags plugin)
+.SH OPTIONS
+.TP
+\fB\-p\fR\ \fIpath\fR
+Load plugins from \fIpath\fR instead of ~/.tranalyzer/plugins/
+.br
+.TP
+\fB\-b\fR \fIfile\fR
+Use white-/black-list \fIfile\fR to control loading of plugins (default: plugin_folder/plugin_blacklist.txt)
+.br
+.TP
+\fB\-e\fR\ \fIfile\fR
+Extracts all flows listed in \fIfile\fR from the input PCAP file and writes them in a new PCAP file. Requires the pcapd plugin.
+.br
+.TP
+\fB\-f\fR\ \fIhashfactor\fR
+Sets hash multiplication factor.
+.br
+.TP
+\fB\-x\fR\ \fIid\fR
+Tranalyzer2 is in sensor mode and requires a sensor ID \fIid\fR.
+.br
+.TP
+\fB\-c\fR\ \fIcpu\fR
+Binds Tranalyzer2 to core number \fIcpu\fR. If \fIcpu\fR is 0, then the operating system selects the core to bind.
+.br
+.TP
+\fB\-F\fR\ \fIfile\fR
+Read BPF filter from \fIfile\fR.
+.br
+.TP
+.I bpf
+Berkeley Packet Filter syntax as in tcpdump.
+
+.SH FILES
+.I ~/.tranalyzer/plugins/
+.RS
+Default plugins folder.
+
+.SH EXIT STATUS
+\fBTranalyzer2\fR returns 0 on success. Any different value is an indication of error.
+
+.SH AUTHORS
+.B Tranalyzer2
+was written by Stefan Burschka, Benoit Dupasquier and Torben Ruehl
+.SH BUGS
+Please send problems, bugs, questions and suggestions to:
+.ti +24
+\fItranalyzer@rdit.ch\fR
+
+.SH DISTRIBUTION
+The latest version of \fBTranalyzer2\fR can be found at
+.ti +22
+\fIhttps://tranalyzer.com\fR
+
+.SH SEE ALSO
+\fIawk\fR(1), \fIbpf\fR(2), \fIdumpcap\fR(1), \fIeditcap\fR(1), \fImergecap\fR(1), \fIpcap\fR(3PCAP), \fIpcap-linktype\fR(7), \fIpcap-savefile\fR(5), \fItcpdump\fR(8), \fItext2pcap\fR(1), \fItshark\fR(1).
+
+The full documentation for \fBTranalyzer2\fR is available at
+
+.ti +6
+.I https://tranalyzer.com/downloads/doc/documentation.pdf

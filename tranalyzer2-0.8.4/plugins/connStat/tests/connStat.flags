@@ -1,0 +1,11 @@
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/connStat
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/connStat.h
+CS_HSDRM    src/connStat.h
+CS_SDIPMAX  src/connStat.h

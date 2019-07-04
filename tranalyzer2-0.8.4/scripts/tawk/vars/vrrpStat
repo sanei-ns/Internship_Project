@@ -1,0 +1,18 @@
+#H bit | vrrpStat | Description
+#H =============================================================================
+     0 | 0x0001   | Flow is VRRP
+#W   1 | 0x0002   | Invalid version
+#W   2 | 0x0004   | Invalid type
+#W   3 | 0x0008   | Invalid checksum
+#W   4 | 0x0010   | Invalid TTL (should be 255)
+#W   5 | 0x0020   | Invalid destination IP (should be 224.0.0.18)
+#W   6 | 0x0040   | Invalid destination MAC (should be 00:00:5e:00:01:routerID)
+     7 | 0x0080   | -
+#W   8 | 0x0100   | Virtual Router ID list truncated... increase VRRP_NUM_VRID
+#W   9 | 0x0200   | IP list truncated... increase VRRP_NUM_IP
+    10 | 0x0400   | -
+    11 | 0x0800   | -
+    12 | 0x1000   | -
+    13 | 0x2000   | -
+#W  14 | 0x4000   | Packet snapped
+#W  15 | 0x8000   | Malformed packet... covert channel?

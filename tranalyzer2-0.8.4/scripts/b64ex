@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+#
+# Extract attachements from emails by smtpDecode
+
+source "$(dirname "$0")/t2utils.sh"
+
+if [ ! -f "$1" ]; then
+    echo "Usage: $SNAME file"
+    exit 1
+fi
+
+B=($($AWK 'BEGIN {s=0} {
+      if ($0 == "\r") {
+          if (s == 2) s = 3;
+          next;
+      }
+      if ( s == 0 ){
+          if ( index($0,"Content-Type:") ) s = 1;
+          next;
+      }
+      if ( s == 1 ) {
+          i = index($0,"name=");
+          if (i) {
+             split($0, A, "=");
+             a = substr(A[2],2,length(A[2])-3);
+          } else if ( index($0,": base64")) {
+              s = 2;
+              gsub(" ", "_", a);
+              print a"_b64";
+          }
+          next;
+      }
+      if ( s == 3 ) {
+            if (index($0, "------=_NextPart") ) {s = 0; next;}
+            else if (index($0,"Content") == 0) print $0 > a"_b64";
+      }
+}' $1 | tr ' ' '_'))
+
+for i in ${B[*]}; do
+   echo ${i:0:${#i}-4}
+   base64 -id $i > ${i:0:${#i}-4}
+   rm "$i"
+done

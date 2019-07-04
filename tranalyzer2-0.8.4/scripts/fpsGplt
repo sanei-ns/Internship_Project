@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+#
+# This script transform packet signal from nFrstPkts in flowfile to gnuplot or t2plot format
+# It depends on the configuration of the nFrstPkts plugin
+
+source "$(dirname "$0")/t2utils.sh"
+
+usage() {
+    echo "Usage:"
+    echo "    $SNAME [OPTION...] <FILE>"
+    echo
+    echo "Optional arguments:"
+    echo
+    echo "    -f findex        Flow index to extract, default: all flows"
+    echo "    -d 0|1           Flow Direction: 0, 1; default both "
+    echo "    -t               No Time: counts on x axis; default time on x axis"
+    echo "    -i               Invert B Flow PL"
+    echo "    -s               Time sorted ascending"
+    echo "    -p s             Sample sorted signal with smplIAT in [s]; f = 1/smplIAT"
+    echo "    -e s             Time for each PL pulse edge in [s]"
+    echo
+    echo "    -h, --help       Show this help, then exit"
+}
+
+# Default config values
+
+# Time for each PL pulse edge between 0 and PL in s
+EDG=0.000010
+
+# x-axis is time
+TM=1
+
+# do not invert B flow PL
+INVB=0
+
+while [ $# -ne 0 ]; do
+    case "$1" in
+        -f|--flowInd)
+            validate_next_num "$1" "$2"
+            FLI="$2"
+            shift
+            ;;
+        -d|--dir)
+            validate_next_num "$1" "$2"
+            DIR="$2"
+            shift
+            ;;
+        -p|--sample)
+            validate_next_arg "$1" "$2"
+            smplIAT="$2"
+            shift
+            ;;
+        -e|--edge)
+            validate_next_arg "$1" "$2"
+            EDG="$2"
+            shift
+            ;;
+        -t|--time) TM=0;;
+        -i|--invB) INVB=1;;
+        -s|--sort) SRT=1;;
+        -h|-\?|--help) usage; exit 0;;
+        *)
+            if [ ! -f "$1" ]; then
+                abort_option_unknown "$1"
+            fi
+            FILE="$1"
+            ;;
+    esac
+    shift
+done
+
+if [ ! -f "$FILE" ]; then
+    abort_required_file
+fi
+
+$TAWK -t -H -v edge="$EDG" -v fli="$FLI" -v statD="$DIR" -v Tm="$TM" -v invB="$INVB" -v srt="$SRT" '
+    NR == 2 {
+        if (Tm) {
+            print "time[s]\tPL"
+        } else {
+            print "sample\tPL"
+        }
+
+        split($L2L3L4Pl_Iat_nP, A, ";")
+        split(A[1], B, "_")
+
+        if (Tm && (strtonum(B[1]) != 0 || strtonum(B[2]) !=0)) {
+            print "0.000000\t0"
+        }
+    }
+
+    fli != "" && $flowInd != fli { next }
+
+    {
+        a = strtonum(substr($flowStat, 18, 1))
+        if (statD != "" && a != statD) next
+
+        if (L2L3L4Pl_Iat_nP != 0) {
+            n = split($L2L3L4Pl_Iat_nP, A, ";")
+            for (i = 1; i <= n; i++) {
+                split(A[i], B, "_")
+                if (invB && a == 1) B[1] = -B[1]
+                if (Tm) {
+                    printf "%f\t0\n", B[2]-edge, B[1]
+                    printf "%f\t%d\n", B[2], B[1]
+                    printf "%f\t%d\n", B[2]+B[3], B[1]
+                    printf "%f\t0\n", B[2]+B[3]+edge, B[1]
+                } else if (srt) {
+                    printf "%f\t%d\n", B[2], B[1]
+                } else {
+                    printf "%d\t%d\n", tm++, B[1]
+                }
+            }
+        } else {
+            n = split($L2L3L4Pl_Iat, A, ";")
+            for (i = 1; i <= n; i++) {
+                split(A[i], B, "_")
+                if (invB && a == 1) B[1] = -B[1]
+                if (Tm || srt) {
+                    printf "%f\t%d\n", B[2], B[1]
+                } else {
+                    printf "%d\t%d\n", tm++, B[1]
+                }
+            }
+        }
+        s = 0
+    }' "$FILE" > "${FILE}_nps.txt"
+
+if [ $SRT ] || [ $smplIAT  ]; then
+    $AWKF 'NR != 1' ${FILE}_nps.txt | LC_ALL=C sort -t$'\t' -n -k1,1 |
+        $AWKF -v Tm="$TM" -v srt="$SRT" '
+            BEGIN {
+                spl = 0
+                if (srt && !Tm) {
+                    print "sample\tPL"
+                } else {
+                    print "time[s]\tPL"
+                }
+            }
+            {
+                if (srt && !Tm) {
+                    printf "%d\t%d\n", spl++, $2
+                } else {
+                    print
+                }
+            }' > "${FILE}_nps_srt.txt"
+fi
+
+if [ $smplIAT ]; then
+    $AWKF -v Tm="$TM" -v srt="$SRT" -v smplIAT="$smplIAT" '
+        BEGIN {
+            n = 0
+            if (srt && !Tm) {
+                print "sample\tPL"
+            } else {
+                print "time[s]\tPL"
+            }
+        }
+        NR != 1 {
+            for (i = n; i <= $1; i += smplIAT) {
+                printf "%f\t%d\n", i, $2
+            }
+            n = i
+        }' "${FILE}_nps_srt.txt" > "${FILE}_nps_srt_smpl.txt"
+fi

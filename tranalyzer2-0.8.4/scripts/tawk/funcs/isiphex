@@ -1,0 +1,20 @@
+#!/usr/bin/env awk
+#
+# Returns true if 'v' is an IPv4 address in hexadecimal notation
+#
+# Parameters:
+#   - v : the value to test
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk 'isiphex($dstIP4)' file.txt
+#   - tawk 'isiphex($srcIP4) { print }' file.txt
+#   - tawk '{ print isiphex("0x01020304") }' file.txt
+
+@include "hdr"
+
+function isiphex(v) {
+    return (v ~ /^0x[[:xdigit:]]{1,8}$/ || (__PRIHDR__ && hdr()))
+}

@@ -1,0 +1,25 @@
+#!/usr/bin/env awk
+#
+# Returns true if one item of the repetitive value 'val' is 'item' (case insensitive)
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - contains
+#   - containsi
+#   - cvalcontains
+#   - cvalcontainsi
+#   - rvalcontains
+#   - valcontains
+#   - valcontainsi
+#
+# Examples:
+#   - tawk 'rvalcontainsi($ethVlanID, 20)' file.txt
+#   - tawk 'rvalcontainsi("str1;STR2;str3", "str2") { print }' file.txt
+
+@include "rvalcontains"
+
+function rvalcontainsi(val, item) {
+    return rvalcontains(val, item, 1)
+}

@@ -1,0 +1,45 @@
+cursor = db.flow.aggregate([
+    {
+        $match : {
+            "sslJA3Hash" : { $exists : true },
+            timeFirst : { $gte : time_from },
+            timeLast  : { $lte : time_to },
+        }
+    },
+    {
+        $unwind : "$sslJA3Hash"
+    },
+    {
+        $unwind : {
+            path: "$sslJA3Desc",
+            preserveNullAndEmptyArrays : true
+        }
+    },
+    {
+        $group : {
+            _id : {
+                hash : "$sslJA3Hash",
+                desc : {
+                    $ifNull : [ "$sslJA3Desc", { $literal : "" } ]
+                }
+            },
+            count : { $sum : 1 }
+        }
+    },
+    {
+        $sort : { count : -1 }
+    },
+    {
+        $limit : n
+    }
+])
+
+cursor.forEach(
+    function(e) {
+        print(
+              e._id.hash + "\t"
+            + e._id.desc + "\t"
+            + e.count
+        )
+    }
+)

@@ -1,0 +1,65 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {jsonSink}
+    {JSON Output}
+    {Tranalyzer Development Team} % author(s)
+
+\section{jsonSink}\label{s:jsonSink}
+
+\subsection{Description}
+The jsonSink plugin generates JSON output in a file {\tt PREFIX\_flows.json}, where {\tt PREFIX} is provided via Tranalyzer {\tt --w} or {\tt --W} option.
+
+\subsection{Dependencies}
+
+\subsubsection{External Libraries}
+If gzip compression is activated ({\tt GZ\_COMPRESS=1}), then {\bf zlib} must be installed.
+
+\paragraph{Kali/Ubuntu:} {\tt sudo apt-get install zlib1g-dev}
+\paragraph{Arch:} {\tt sudo pacman -S zlib}
+\paragraph{Fedora/Red Hat:} {\tt sudo yum install zlib-devel}
+\paragraph{Gentoo:} {\tt sudo emerge zlib}
+\paragraph{OpenSUSE:} {\tt sudo zypper install zlib-devel}
+\paragraph{Mac OS X:} {\tt brew install zlib}\footnote{Brew is a packet manager for Mac OS X that can be found here: \url{https://brew.sh}}
+
+\subsection{Configuration Flags}
+
+The following flags can be used to control the output of the plugin:
+
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt SOCKET\_ON} & 0 & Whether to output to a socket (1) or to a file (0)\\\\
+    {\tt SOCKET\_ADDR} & {\tt\small ``127.0.0.1''} & Address of the socket & {\tt\small SOCKET\_ON=1}\\
+    {\tt SOCKET\_PORT} & 5000 & Port of the socket & {\tt\small SOCKET\_ON=1}\\\\
+    {\tt GZ\_COMPRESS} & 0 & Compress (gzip) the output\\
+    {\tt JSON\_SPLIT} & 1 & Split the output file & {\tt\small SOCKET\_ON=0}\\
+                        && (Tranalyzer {\tt --W} option)\\\\
+    {\tt JSON\_ROOT\_NODE} & 0 & Add a root node (array)\\
+    {\tt SUPPRESS\_EMPTY\_ARRAY} & 1 & Do not output empty fields\\
+    {\tt JSON\_NO\_SPACES} & 1 & Suppress unnecessary spaces\\
+    {\tt JS\_BUFFER\_SIZE} & 1024*1024 & Size of output buffer\\\\
+    {\tt JSON\_SUFFIX} & {\tt\small ``\_flows.json''} & Suffix for output file & {\tt\small SOCKET\_ON=0}\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Custom File Output}
+\begin{itemize}
+    \item {\tt PREFIX\_flows.json}: JSON representation of Tranalyzer output
+\end{itemize}
+
+\subsection{Example}
+To send compressed data over a socket ({\tt SOCKET\_ON=1} and {\tt GZ\_COMPRESS=1}):
+\begin{enumerate}
+    \item {\tt nc -l 127.0.0.1 5000 | gunzip}
+    \item {\tt tranalyzer -r file.pcap}
+\end{enumerate}
+
+\end{document}

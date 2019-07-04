@@ -1,0 +1,22 @@
+#H bit | natStat     | Description
+#H =============================================================================
+     0 | 0x0000 0001 | STUN protocol
+     1 | 0x0000 0002 | TURN protocol
+     2 | 0x0000 0004 | ICE protocol
+     3 | 0x0000 0008 | SIP protocol
+
+     4 | 0x0000 0010 | Microsoft Extension
+     5 | 0x0000 0020 | Even Port
+     6 | 0x0000 0040 | Reserve next port
+     7 | 0x0000 0080 | don't fragment
+
+     8 | 0x0000 0100 | nonce
+
+    12 | 0x0000 1000 | 
+    13 | 0x0000 2000 | deprecated message attribute 
+    14 | 0x0000 4000 | STUN over non-standard port
+#W  15 | 0x0000 8000 | malformed message
+
+    16 | 0x0001 0000 | Port Mapping Protocol (PMP)
+
+#W  31 | 0x8000 0000 | Packet snapped, analysis incomplete

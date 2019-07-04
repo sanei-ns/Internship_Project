@@ -1,0 +1,106 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {tp0f} % Plugin name
+    {tp0f} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{tp0f}\label{s:tp0f}
+
+\subsection{Description}
+The tp0f plugin classifies IP addresses according to OS type and version.
+It uses initial TTL and window size and can also use the rules from p0f.
+%With additional HTTP and HTTPS rules programs such as browser versions can also be classified.
+%At compilation a script {\tt tp0fL34conv} converts the supplied p0f file into a T2 readable file
+%defined by {\tt TP0FL34FILE} in {\em tp0f.h}.
+In order to label non-TCP flows, the plugin can store a hash of already classified IP addresses.
+
+\subsubsection{Required Files}
+If {\tt TP0FRULES=1}, then the file {\tt tp0fL34.txt} is required.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt TP0FRULES} & 1 & 0: standard OS guessing; 1: OS guessing and p0f L3/4 rules\\
+    {\tt TP0FHSH}   & 1 & 0: no IP hash; 1: IP hash to recognize IP already classified\\
+    {\tt TP0FRC}    & 0 & 0: only human readable; 1: tp0f rule and classifier numbers\\
+    {\tt TP0FL34FILE} & {\tt\small "tp0fL34.txt"} & file containing converted L3/4 rules \\
+    \bottomrule
+\end{longtable}
+
+In {\em tp0flist.h}:
+
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt MAXLINELN} & 4096 & maximal line input buffer size for {\em tp0fL34.txt}\\
+    {\tt TCPOPTMAX} &   40 & maximal TCP option byted codes being stored and processed\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The p0f plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt \nameref{tp0fStat}} & H8  & status\\
+    {\tt tp0fDis}            & U8  & initial ttl distance\\
+    {\tt tp0fRN}             & U16 & rule number that triggered\\
+    {\tt tp0fClass}          & U8  & OS class of rule file\\
+    {\tt tp0fProg}           & U8  & Program category of rule file\\
+    {\tt tp0fVer}            & U8  & version category of rule file\\
+    {\tt tp0fClName}         & SC  & OS class name\\
+    {\tt tp0fPrName}         & SC  & OS/Program name\\
+    {\tt tp0fVerName}        & SC  & OS/Program version name\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{tp0fStat}\label{tp0fStat}
+The {\tt tp0fStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf tp0fStat} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x01} & SYN tp0f rule fired\\
+    {\tt 0x02} & SYN-ACK tp0f rule fired\\
+    {\tt 0x04} & ---\\
+    {\tt 0x08} & ---\\
+    {\tt 0x10} & ---\\
+    {\tt 0x20} & ---\\
+    {\tt 0x40} & IP already seen by tp0f\\
+    {\tt 0x80} & TCP option length or content corrupt \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Plugin Report Output}
+The number of packets which fired a tp0f rule is reported.
+
+%\subsection{Example Output}
+
+%\subsection{Known Bugs and Limitations}
+
+\subsection{TODO}
+\begin{itemize}
+    \item Integrate TLS rules
+    \item Integrate HTTP rules
+\end{itemize}
+
+\subsection{References}
+\begin{itemize}
+    \item \url{http://www.netresec.com/?page=Blog&month=2011-11&post=Passive-OS-Fingerprinting}
+    \item \url{http://lcamtuf.coredump.cx/p0f3/}
+\end{itemize}
+
+\end{document}

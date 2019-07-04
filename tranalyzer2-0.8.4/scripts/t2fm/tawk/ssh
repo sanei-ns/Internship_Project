@@ -1,0 +1,11 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+($nDPIclass ~ /SSH/ && $duration > 0 && $numBytesSnt > 0) { # && (!privip(_sip) || !privip(_dip))) {
+    if (sshVersion != 0) _sshver = unquote($sshVersion)
+    else _sshver = ""
+    print timestamp($timeFirst), $duration, tuple2(), $numPktsSnt, $numBytesSnt, _sshver
+}

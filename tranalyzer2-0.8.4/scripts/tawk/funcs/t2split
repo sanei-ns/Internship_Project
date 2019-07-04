@@ -1,0 +1,41 @@
+#!/usr/bin/env awk
+#
+# Splits values according to sep.
+# If num is omitted or 0, val is split into 'osep' separated columns.
+# If num > 0, returns the num repetition.
+# If num < 0, returns the num item from the end, e.g., -1 for last element.
+# Multiple 'num' can be specified, e.g., "1;-1;2"
+# Output separator 'osep' defaults to OFS
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{ print t2split("abc:def:ghi", ":", 1) }' file.txt
+#   - tawk '{ print t2split("abc!def!ghi", ":", 1, "\n") }' file.txt
+#   - tawk '{ print t2split("a;b;c;d;e", ";", "1;-1", "\n") }' file.txt
+
+@include "abs"
+@include "join"
+
+function t2split(val, sep, num, osep,        _i, _l, _m, _n, _str, _tmp) {
+    if (!osep) osep = OFS
+    _l = split(val, _tmp, sep)
+    if (!num) {
+        return join(_tmp, osep);
+    }
+    _m = split(num, _n, ";")
+    _str = ""
+    for (_i = 1; _i <= _m; _i++) {
+        if (_n[_i] > 0) {
+            if (_n[_i] <= _l) _str = _str osep _tmp[_n[_i]]
+        } else if (_n[_i] < 0) {
+            _n[_i] = abs(_n[_i])
+            if (_n[_i] <= _l) _str = _str osep _tmp[_l + 1 - _n[_i]]
+        } else {
+            # Invalid
+        }
+    }
+    gsub("^" osep, "", _str) # remove leading 'osep'
+    return _str
+}

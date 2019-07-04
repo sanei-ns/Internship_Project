@@ -1,0 +1,25 @@
+-- Returns a list of unique IP addresses
+
+SELECT DISTINCT ip
+
+FROM (
+    SELECT
+        "srcIP" AS ip
+    FROM
+        flow
+    WHERE
+        ("flowStat"::BIGINT & x'c000'::BIGINT) > 0::BIGINT  -- IPv4/6 only
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+
+    UNION ALL
+
+    SELECT
+        "dstIP" AS ip
+    FROM
+        flow
+    WHERE
+        ("flowStat"::BIGINT & x'c000'::BIGINT) > 0::BIGINT  -- IPv4/6 only
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS ips

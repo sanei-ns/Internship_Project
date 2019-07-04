@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+source "$(dirname "$0")/../../../scripts/t2utils.sh"
+
+cd "$T2PLHOME/basicFlow/tor"
+
+#wget -N https://check.torproject.org/cgi-bin/TorBulkExitList.py?ip=1.1.1.1 -O Tor_ip_list_ALL.csv
+wget https://torstatus.blutmagie.de/ip_list_all.php/Tor_ip_list_ALL.csv
+
+if [ -f Tor_ip_list_ALL.csv ]; then
+    printinf "Updating old tor.txt"
+    mv Tor_ip_list_ALL.csv tor4.txt
+else
+    printwrn "No new torfile available, take old tor.txt"
+fi

@@ -1,0 +1,4 @@
+#H bit | syslogStat | Description
+#H =============================================================================
+     0 | 0x01       | Syslog detected
+#W   7 | 0x80       | Counter for facility/severity overflowed

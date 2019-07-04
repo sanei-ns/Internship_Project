@@ -1,0 +1,18 @@
+#!/usr/bin/env awk
+#
+# Output Packets
+#
+# Dependencies:
+#   - basicStats
+#
+# Example:
+#   - tawk '{ print opkt() }' file
+
+@include "hdr"
+@include "_validate_col"
+
+function opkt(        _c) {
+    _c = _validate_col("numPktsSnt", _my_numPktsSnt)
+    if (hdr()) return "Out Pkt"
+    return $_c
+}

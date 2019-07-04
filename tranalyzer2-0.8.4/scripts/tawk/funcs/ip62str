@@ -1,0 +1,32 @@
+#!/usr/bin/env awk
+#
+# Converts an IPv6 address to a string
+#
+# Dependencies:
+#   - None
+#
+# See Also:
+#   - ip2hex: converts an IPv4 address to hex
+#   - ip2num: converts an IPv4 address to a number
+#
+# Examples:
+#   - tawk '{ print ip62str($srcIP6) }' file.txt
+
+@include "isip6"
+
+function ip62str(ip) {
+    if (isip6(ip)) {
+        return ip
+    } else {
+        ip = strtonum(ip)
+        return sprintf("%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x",
+               rshift(and(ip, 0xffff0000000000000000000000000000), 112),
+               rshift(and(ip, 0x0000ffff000000000000000000000000),  96),
+               rshift(and(ip, 0x00000000ffff00000000000000000000),  80),
+               rshift(and(ip, 0x000000000000ffff0000000000000000),  64),
+               rshift(and(ip, 0x0000000000000000ffff000000000000),  48),
+               rshift(and(ip, 0x00000000000000000000ffff00000000),  32),
+               rshift(and(ip, 0x000000000000000000000000ffff0000),  16),
+                      and(ip, 0x0000000000000000000000000000ffff))
+    }
+}

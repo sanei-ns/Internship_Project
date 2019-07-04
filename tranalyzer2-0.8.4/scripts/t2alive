@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+#
+#################################
+# alive server for T2           #
+#################################
+#
+# To be executed in a shell
+# If executed as a cron job, remove the while loop and the sleep
+
+SERVER="127.0.0.1"
+PORT=514
+FAC="<25>"
+STATFILE="/tmp/t2alive.txt"
+REP=10
+
+##################################
+
+trap 's=1' SIGUSR1
+trap 's=2' SIGUSR2
+
+##################################
+
+if [ -f "$STATFILE" ]; then
+    s=`cat "$STATFILE"`
+    s1=$s
+else
+    s=0
+    s1=3
+fi
+
+exec 3<>/dev/udp/${SERVER}/${PORT}
+
+while :
+do
+#   read
+    t2pid=`pgrep tranalyzer`
+    s=0
+    if [ $t2pid ]; then
+        kill -SYS $t2pid
+    fi
+    dt=`date +"%b %d %T"`
+    sleep 1
+    if [ $s1 != $s ]; then
+        t2pid=`pgrep tranalyzer`
+        if [ $s == 2 ]; then
+            echo "$FAC $dt t2alive($$) T2($t2pid) alive and well" >&3
+        elif [ $s == 1 ]; then
+            echo "$FAC $dt t2alive($$) T2($t2pid) alive and stalls" >&3
+        else
+            echo "$FAC $dt t2alive($$) T2 dead!!!" >&3
+        fi
+    fi
+    s1=$s
+    echo $s > "$STATFILE"
+    sleep $REP
+done

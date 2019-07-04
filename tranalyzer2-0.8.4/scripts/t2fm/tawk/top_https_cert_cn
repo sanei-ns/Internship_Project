@@ -1,0 +1,9 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+!strisempty($sslCSubjectCommonName) {
+    aggrrep($sslCSubjectCommonName, "flows", n, 1)
+}

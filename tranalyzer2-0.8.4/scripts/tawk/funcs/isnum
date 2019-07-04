@@ -1,0 +1,19 @@
+#!/usr/bin/env awk
+#
+# Returns true if 'v' is a number, false otherwise
+#
+# Parameters:
+#   - v : the value to test
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk '{ print isnum(-4.2) }' file.txt
+#   - tawk '{ print isnum("test") }' file.txt
+
+@include "hdr"
+
+function isnum(v) {
+    return (v == v + 0) || (__PRIHDR__ && hdr())
+}

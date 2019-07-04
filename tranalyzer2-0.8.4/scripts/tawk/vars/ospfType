@@ -1,0 +1,10 @@
+#H bit | ospfType | Description
+#H =============================================================================
+     0 | 0x01     | -
+     1 | 0x02     | Hello
+     2 | 0x04     | Database Description
+     3 | 0x08     | Link State Request
+     4 | 0x10     | Link State Update
+     5 | 0x20     | Link Stat Acknowledgment
+     6 | 0x40     | -
+     7 | 0x80     | -

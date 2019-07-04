@@ -1,0 +1,34 @@
+#H bit | tcpOptions  | Description
+#H =============================================================================
+     0 | 0x0000 0001 | End of Option List
+     1 | 0x0000 0002 | No-Operation
+     2 | 0x0000 0004 | Maximum Segment Size
+     3 | 0x0000 0008 | Window Scale
+     4 | 0x0000 0010 | SACK Permitted
+     5 | 0x0000 0020 | SACK
+     6 | 0x0000 0040 | Echo (obsoleted by option 8)
+     7 | 0x0000 0080 | Echo Reply (obsoleted by option 8)
+     8 | 0x0000 0100 | Timestamps
+     9 | 0x0000 0200 | Partial Order Connection Permitted (obsolete)
+    10 | 0x0000 0400 | Partial Order Service Profile (obsolete)
+    11 | 0x0000 0800 | CC (obsolete)
+    12 | 0x0000 1000 | CC.NEW (obsolete)
+    13 | 0x0000 2000 | CC.ECHO (obsolete)
+    14 | 0x0000 4000 | TCP Alternate Checksum Request (obsolete)
+    15 | 0x0000 8000 | TCP Alternate Checksum Data (obsolete)
+    16 | 0x0001 0000 | Skeeter
+    17 | 0x0002 0000 | Bubba
+    18 | 0x0004 0000 | Trailer Checksum Option
+    19 | 0x0008 0000 | MD5 Signature Option (obsoleted by option 29)
+    20 | 0x0010 0000 | SCPS Capabilities
+    21 | 0x0020 0000 | Selective Negative Acknowledgements
+    22 | 0x0040 0000 | Record Boundaries
+    23 | 0x0080 0000 | Corruption experienced
+    24 | 0x0100 0000 | SNAP
+    25 | 0x0200 0000 | Unassigned (released 2000-12-18)
+    26 | 0x0400 0000 | TCP Compression Filter
+    27 | 0x0800 0000 | Quick-Start Response
+    28 | 0x1000 0000 | User Timeout Option (also, other known unauthorized use)
+    29 | 0x2000 0000 | TCP Authentication Option (TCP-AO)
+    30 | 0x4000 0000 | Multipath TCP (MPTCP)
+    31 | 0x8000 0000 | all options > 31

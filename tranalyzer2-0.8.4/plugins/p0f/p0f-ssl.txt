@@ -1,0 +1,64 @@
+%num	version	num_ciphers	ciphers[]	num_ext	ext[]	flags	OS	vOS	browser_ver	comment
+1	0x0301	11	4,5,a,9,64,62,3,6,13,12,63	1	ff01	0x00	 Windows	Windows-XP	any_MSIE_Safari-on-Windows-XP	 Windows NT 5.1, Windows NT 5.2 (XP)
+2	0x0301	11	4,5,a,9,64,62,3,6,13,12,63	0	-	0x00	 Windows	Windows-XP	any_MSIE_Safari-on-Windows-XP	 Windows NT 5.1, Windows NT 5.2 (XP)
+3	0x0300	12	4,5,a,9,64,62,3,6,13,12,63,ff	0	-	0x00	 Windows	Windows-XP	any_MSIE_Safari-on-Windows-XP	 with some SSL/TLS options tweaked
+4	0x0300	18	4,5,a,10080,700c0,30080,9,60040,64,62,3,6,20080,40080,13,12,63,ff	0	-	0x01	 Windows	Windows-XP	any_MSIE_Safari-on-Windows-XP	 with some SSL/TLS options tweaked
+5	0x0002	7	10080,700c0,30080,60040,20080,40080,ff	0	-	0x01	 Windows	Windows-XP	any_MSIE_Safari-on-Windows-XP	 with some SSL/TLS options tweaked
+6	0x0301	12	2f,35,5,a,c009,c00a,c013,c014,32,38,13,4	4	?0,a,b,ff01	0x00	 Windows	Windows-Vista	any_MSIE-5.5-6_Chrome-1-4_Safari-on-Windows-Vista	 Windows NT 6.0 (Vista)
+7	0x0301	12	2f,35,5,a,c009,c00a,c013,c014,32,38,13,4	5	?0,5,a,b,ff01	0x00	 Windows	Windows-Vista	any_MSIE-7.0-9.0_Chrome-5-on-Windows-Vista	 Windows NT 6.0 (Vista)
+8	0x0301	12	2f,35,5,a,c013,c014,c009,c00a,32,38,13,4	5	ff01,?0,5,a,b	0x00	 Windows	Windows-7	MSIE_7-9-on-Windows-7	 Windows NT 6.1 (7)
+9	0x0301	12	2f,35,5,a,c013,c014,c009,c00a,32,38,13,4	4	ff01,?0,a,b	0x00	 Windows	Windows-7	Safari_on-Windows-7	 Windows NT 6.1 (7)
+10	0x0301	12	2f,35,5,a,c013,c014,c009,c00a,32,38,13,4	6	ff01,?0,5,a,b,23	0x00	 Windows	Windows-8	MSIE_10-on-Windows-8	 23 usually means NT 6.2
+11	0x0301	12	2f,35,5,a,c013,c014,c009,c00a,32,38,13,4	5	ff01,?0,a,b,23	0x00	 Windows	Windows-8	Safari_Safari-on-Windows-8	 23 usually means NT 6.2
+12	0x0301	11	c00a,c014,88,87,39,38,c00f,*,c003,feff,a	5	?0,ff01,a,b,23	0x20	 Windows,unix	Windows-8	Chrome_6_newer	 Chrome
+13	0x0301	11	c00a,c014,88,87,39,38,c00f,*,c003,feff,a	6	?0,ff01,a,b,23,3374	0x20	 Windows,unix	Windows-8	Chrome_6_newer	 Chrome
+14	0x0301	11	c00a,c014,88,87,39,38,c00f,*,c003,feff,a	7	?0,ff01,a,b,23,3374,5	0x20	 Windows,unix	Windows-8	Chrome_6_newer	 5 is on on windows
+15	0x0300	21	ff,88,87,39,38,84,35,45,44,66,33,32,96,41,4,5,2f,16,13,feff,a	0	-	0x00	 Windows,unix	Windows-8	Chrome_degraded-to-SSLv3.0	 5 is on on windows
+16	0x0301	12	10080,30080,*,40080,39,38,35,*,64,62,3,6	0	-	0x01	 Windows,unix	Windows-8	Firefox_1.X	 Firefox
+17	0x0301	8	39,38,35,*,64,62,3,6	0	-	0x04	 Windows,unix	Windows-8	Firefox_1.X	 Firefox
+18	0x0301	10	c00a,c014,39,38,c00f,*,c00d,c003,feff,a	3	?0,a,b	0x00	 Windows,unix	Windows-8	Firefox_2.X	 Firefox
+19	0x0301	15	c00a,c014,88,87,39,38,c00f,c005,84,35,c007,*,c003,feff,a	4	?0,a,b,23	0x00	 Windows,unix	Windows-8	Firefox_3.0-3.5	 Firefox
+20	0x0301	16	ff,c00a,c014,88,87,38,c00f,c005,84,35,39,*,c00d,c003,feff,a	4	?0,a,b,23	0x00	 Windows,unix	Windows-8	Firefox_3.6.X	 Firefox
+21	0x0301	11	ff,c00a,c014,88,87,39,38,*,c003,feff,a	4	?0,a,b,23	0x00	 Windows,unix	Windows-8	Firefox_4-11	 Firefox
+22	0x0301	10	c00a,c014,88,87,39,38,*,c003,feff,a	5	?0,ff01,a,b,23	0x00	 Windows,unix	Windows-8	Firefox_4-11	 with SSLv2 disalbed
+23	0x0301	11	ff,c00a,c014,88,87,39,38,*,c003,feff,a	3	?0,a,b	0x00	 Windows,unix	Windows-8	Firefox_11-(TOR)	 Lack of a single extension (SessionTicket TLS) is not a very strong signal.
+24	0x0301	11	ff,c00a,c014,88,87,39,38,*,c003,feff,a	5	?0,a,b,23,3374	0x00	 Windows,unix	Windows-8	Firefox_14_newer	 Lack of a single extension (SessionTicket TLS) is not a very strong signal.
+25	0x0300	20	ff,88,87,39,38,84,35,45,44,33,32,96,41,4,5,2f,16,13,feff,a	0	-	0x00	 Windows,unix	Windows-8	Firefox_3.6.X_newer	 with TLS switched off
+26	0x0301	10	2f,5,4,35,a,ff83,*,17,19,1	0	-	0x00	 Mac OS X	old PowerPC box	Safari_4.X	 Safari on old PowerPC box
+27	0x0301	13	2f,5,4,35,a,ff83,*,17,19,1,10080,*,700c0	0	-	0x01	 Mac OS X	old PowerPC box	Safari_4.X	 Safari on old PowerPC box
+28	0x0301	15	c00a,c009,c007,c008,c013,*,33,38,39,16,15,14,13,12,11	3	?0,a,b	0x00	 Mac OS X	old PowerPC box	Safari_5.1.2	 Safari on old PowerPC box
+29	0x0301	11	c00a,c009,c007,c008,c013,*,33,38,39,16,13	3	?0,a,b	0x00	 Mac OS X	old PowerPC box	Safari_5.1.3_newer	 Safari on old PowerPC box
+30	0x0301	19	39,38,35,16,13,a,33,32,2f,5,4,15,12,9,14,11,8,6,3	0	-	0x00	 Linux	old PowerPC box	Android_1.5-2.1	 in http Android is treated as Linux, oh, well...
+31	0x0301	16	4,5,2f,33,32,a,16,13,9,15,12,3,8,14,11,ff	0	-	0x00	 Linux	old PowerPC box	Android_2.3	 in http Android is treated as Linux, oh, well...
+32	0x0301	21	c014,c00a,39,38,c00f,c005,35,*,c00c,c002,5,4,15,12,9,14,11,8,6,3,ff	5	?0,b,a,23,3374	0x20	 Linux	old PowerPC box	Android_3.2	 in http Android is treated as Linux, oh, well...
+33	0x0301	13	c014,c00a,39,38,c00f,c005,35,*,c00c,c002,5,4,ff	5	?0,b,a,23,3374	0x20	 Linux	old PowerPC box	Android_4.X	 in http Android is treated as Linux, oh, well...
+34	0x0301	9	c00a,c009,c007,*,33,39,16,15,14	3	?0,a,b	0x00	 iOS	old PowerPC box	Safari_iOS-4.X	 iPhone iPad
+35	0x0303	8	ff,c024,c023,c00a,*,33,39,16	4	?0,a,b,d	0x00	 iOS	old PowerPC box	Safari_iOS-5.X	 iPhone iPad
+36	0x0301	17	39,38,37,36,35,33,32,31,30,2f,5,4,13,d,16,10,a	3	?0,ff01,5	0x00	 Windows,unix	old PowerPC box	Opera-Mini_11.X	 Weird Mobile
+37	0x0301	18	ff,39,38,37,36,35,33,32,31,30,2f,5,4,13,d,16,10,a	3	?0,ff01,5	0x00	 Windows,unix	old PowerPC box	Opera-Mini_11.X	 Weird Mobile
+38	0x0301	11	39,38,35,16,13,a,33,32,2f,5,4	1	?0	0x00	 Touchpad	old PowerPC box	HP-tablet_unknown	 Weird Mobile
+39	0x0302	27	6b,6a,69,68,3d,39,38,37,36,35,67,40,3f,3e,3c,33,32,31,30,2f,5,4,13,d,16,10,a	2	?0,5	0x02	 Windows,unix	old PowerPC box	Opera_10.x---11.00	 Opera
+40	0x0303	27	6b,6a,69,68,3d,39,38,37,36,35,67,40,3f,3e,3c,33,32,31,30,2f,5,4,13,d,16,10,a	4	?0,ff01,5,d	0x02	 Windows,unix	old PowerPC box	Opera_10.x---11.00	 Opera
+41	0x0301	27	6b,6a,69,68,3d,39,38,37,36,35,67,40,3f,3e,3c,33,32,31,30,2f,5,4,13,d,16,10,a	3	?0,ff01,5	0x00	 Windows,unix	old PowerPC box	Opera_11.52_newer	 Opera
+42	0x0301	28	ff,6b,6a,69,68,3d,39,38,37,36,35,67,40,3f,3e,3c,33,32,31,30,2f,5,4,13,d,16,10,a	3	?0,ff01,5	0x00	 Windows,unix	old PowerPC box	Opera_11.52_newer	 Opera
+43	0x0301	12	*,6b,6a,69,68,3d,*,13,d,16,10,a	3	?0,?ff01,5	0x00	 Windows,unix	old PowerPC box	Opera	 On second connection Opera replies with the last used crypto in a first place I guess
+44	0x0301	12	*,39,38,37,36,35,*,13,d,16,10,a	3	?0,?ff01,5	0x00	 Windows,unix	old PowerPC box	Opera	 On second connection Opera replies with the last used crypto in a first place I guess
+45	0x0302	12	*,6b,6a,69,68,3d,*,13,d,16,10,a	3	?0,?ff01,5	0x00	 Windows,unix	old PowerPC box	Opera	 On second connection Opera replies with the last used crypto in a first place I guess
+46	0x0302	12	*,39,38,37,36,35,*,13,d,16,10,a	3	?0,?ff01,5	0x00	 Windows,unix	old PowerPC box	Opera	 On second connection Opera replies with the last used crypto in a first place I guess
+47	0x0303	12	*,6b,6a,69,68,3d,*,13,d,16,10,a	3	?0,?ff01,5	0x00	 Windows,unix	old PowerPC box	Opera	 On second connection Opera replies with the last used crypto in a first place I guess
+48	0x0303	12	*,39,38,37,36,35,*,13,d,16,10,a	3	?0,?ff01,5	0x00	 Windows,unix	old PowerPC box	Opera	 On second connection Opera replies with the last used crypto in a first place I guess
+49	0x0301	12	33,16,39,2f,a,35,5,4,32,13,38,66	0	-	0x20	 unix	old PowerPC box	gnutls	 Various things
+50	0x0302	17	2f,5,4,a,35,32,66,13,38,33,16,39,34,18,1b,3a,3	0	-	0x00	 unix	old PowerPC box	gnutls	 Various things
+51	0x0303	24	3c,2f,5,4,a,3d,35,40,32,66,13,6a,38,67,33,16,6b,39,6c,34,18,1b,6d,3a	2	ff01,d	0x00	 unix	old PowerPC box	gnutls	 Various things
+52	0x0301	12	*,2f,5,4,a,*,35,*,18,1b,3a,*	1	*	0x00	 unix	old PowerPC box	gnutls	 Various things
+53	0x0301	20	39,38,35,16,13,a,33,32,2f,5,4,15,12,9,14,11,8,6,3,ff	1	23	0x20	 unix	old PowerPC box	openssl	 Various things
+54	0x0301	20	39,38,35,16,13,a,33,32,2f,5,4,15,12,9,14,11,8,6,3,ff	1	?0	0x20	 unix	old PowerPC box	openssl	 Various things
+55	0x0301	20	39,38,35,16,13,a,33,32,2f,5,4,15,12,9,14,11,8,6,3,ff	2	?0,23	0x00	 unix	old PowerPC box	openssl	 Various things
+56	0x0301	23	39,38,35,16,13,a,33,32,2f,9a,99,96,5,4,15,12,9,14,11,8,6,3,ff	2	?0,23	0x20	 unix	old PowerPC box	openssl	 Various things
+57	0x0301	23	39,38,35,16,13,a,33,32,2f,9a,99,96,5,4,15,12,9,14,11,8,6,3,ff	1	?0	0x20	 unix	old PowerPC box	openssl	 Various things
+58	0x0301	29	39,38,35,16,13,a,700c0,33,32,2f,9a,99,96,30080,5,4,10080,15,12,9,60040,14,11,8,6,40080,3,20080,ff	0	-	0x01	 unix	old PowerPC box	openssl	 darwin
+59	0x0301	26	39,38,35,16,13,a,700c0,33,32,2f,30080,5,4,10080,15,12,9,60040,14,11,8,6,40080,3,20080,ff	0	-	0x01	 unix	old PowerPC box	openssl	 darwin
+60	0x0301	29	39,38,88,87,35,84,16,13,a,33,32,9a,99,45,44,2f,96,41,5,4,15,12,9,14,11,8,6,3,ff	1	23	0x20	 unix	old PowerPC box	openssl	 darwin
+61	0x0301	15	c014,c00a,39,38,88,87,c00f,c005,35,84,*,8,6,3,ff	3	b,a,23	0x20	 unix	old PowerPC box	openssl	 darwin
+62	0x0301	15	c014,c00a,39,38,88,87,c00f,c005,35,84,*,8,6,3,ff	3	?0,b,a	0x20	 unix	old PowerPC box	openssl	 darwin
+63	0x0300	11	33,39,16,32,38,13,2f,35,a,5,4	0	-	0x00	 Linux	old PowerPC box	Epiphany_2.X	 darwin

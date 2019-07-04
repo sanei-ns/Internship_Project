@@ -1,0 +1,36 @@
+#!/usr/bin/env awk
+#
+# Returns all packets whose number appears in 'p'
+#
+# Parameters:
+#   - p: the packet number(s) to test
+#
+# Dependencies:
+#   - basicFlow
+#
+# See Also:
+#   - flow
+#
+# Examples:
+#   - tawk 'packet(123)' file.txt        # test for packet 123
+#   - tawk 'packet("123;456")' file.txt  # test for packet 123 or 456
+#   - tawk 'packet("123-456")' file.txt  # test for packet 123, 124, ... or 456
+
+@include "hdr"
+@include "_validate_col"
+
+function packet(p,        _c, _i, _l, _pkts) {
+    _c = _validate_col("pktNo", _my_pktNo)
+    if (hdr()) return __PRIHDR__
+    if (match(p, /^([0-9]+)-([0-9]+)$/, _pkts)) { # range
+        return ($_c >= strtonum(_pkts[1]) && $_c <= strtonum(_pkts[2]))
+    } else if (p ~ /^[0-9]+(;[0-9]+)*;?$/) {
+        _l = split(p, _pkts, /;/)
+        for (_i = 1; _i <= _l; _i++) {
+            if ($_c == _pkts[_i]) {
+                return 1
+            }
+        }
+        return 0
+    }
+}

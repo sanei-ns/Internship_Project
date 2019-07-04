@@ -1,0 +1,10 @@
+#H bit | sctpStat | Description
+#H =============================================================================
+#E   0 | 0x01     | Adler32 error
+#E   1 | 0x02     | CRC32 error
+     2 | 0x04     | -
+     3 | 0x08     | Chunk truncated
+     4 | 0x10     | -
+#W   5 | 0x20     | Type Field overflow
+     6 | 0x40     | Type BF: do not report
+     7 | 0x80     | Type BF: stop processing of the packet

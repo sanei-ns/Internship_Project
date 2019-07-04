@@ -1,0 +1,17 @@
+-- Top IP protocols by number of flows
+
+SELECT
+    "l4Proto" AS proto,
+    SUM("numBytesSnt" + "numBytesRcvd") AS cnt
+FROM
+    flow
+WHERE
+    dir = 'A'
+    AND ("flowStat"::BIGINT & x'c000'::BIGINT) != 0::BIGINT  -- IPv4/6 only
+    AND "timeFirst" >= to_timestamp(:time_from)
+    AND "timeLast" <= to_timestamp(:time_to)
+
+GROUP BY proto
+ORDER BY cnt DESC
+
+LIMIT :n

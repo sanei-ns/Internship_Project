@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+#
+# Configuration file for txtSink
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    #HEX_CAPITAL radio "" "Hexadecimal output; 0: lower case; 1: upper case"
+    #IP4_NORMALIZE check "" "Normalize IP addresses (zero padded to 3 digits)"
+    #IP6_COMPRESS check "" "Compress IPv6 addresses"
+    #TFS_EXTENDED_HEADER check "" "Extended header in flow file"
+    #B2T_LOCALTIME radio "" "Time representation; 0: UTC; 1: localtime"
+    #B2T_TIME_IN_MICRO_SECS radio "" "Time precision; 0: nanoseconds; 1: microseconds"
+    #TFS_NC_TYPE radio "" "Type representation in _header.txt file; 0: Numbers; 1: C types"
+    #HDR_CHR text "" "Start character of comments"
+    #SEP_CHR text "" "Character to use to separate the columns in the flow file"
+
+    TFS_SPLIT       check "" "Split output file (-W option)"
+    TFS_PRI_HDR     check "" "Print header row at start of flow file"
+    TFS_HDR_FILE    check "" "Pint header file with detailed column information"
+    TFS_PRI_HDR_FW  check "" "Print header in every output fragment (-W option)"
+    GZ_COMPRESS     check "" "Compress the output using gzip"
+
+    FLOWS_TXT_SUFFIX text "" "Suffix for flow file"
+    HEADER_SUFFIX    text "" "Suffix for header file"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

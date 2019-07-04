@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#
+# Configuration file for entropy
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    ENT_THRES    range "" "Threshold for minimal string length: 1 255"
+    ENT_ALPHA_D  check "" "Print alphabet distribution in flow file"
+    ENT_D_OFFSET range "" "Start of entropy calc in payload: 0 255"
+
+    ENT_FLOW radio ""
+        "Global flow entropy; \
+            0: output; \
+            1: entropy; \
+            2: +distribution"
+
+    #ENT_MAX_DATA_SIZE range "" "Maximum data-size before crash: 0 1000000000"
+    #ENT_NTUPLE 55
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

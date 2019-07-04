@@ -1,0 +1,18 @@
+#!/usr/bin/env awk
+
+hdr() {
+    next
+}
+
+!strisempty($httpMimes) {
+    _l = split(tolower($httpMimes), _m, "\";\"");
+    gsub(/^"/, "", _m[1])  # remove leading quote
+    gsub(/"$/, "", _m[_l]) # remove trailing quote
+    for (_i = 1; _i <= _l; _i++) {
+        if (!strisempty(_m[_i]) && _m[_i] ~ /.*\/.*/) {
+            # discard charset, name, boundary, ver, ...
+            gsub(/;.*$/, "", _m[_i])
+            aggr(_m[_i], "flows", n)
+        }
+    }
+}

@@ -1,0 +1,10 @@
+#H bit | httpCFlags | Description
+#H =============================================================================
+     0 | 0x0001     | Set-Cookie detected
+     1 | 0x0002     | Refresh detected
+     2 | 0x0004     | Hostname detected
+     3 | 0x0008     | Post Boundary marker
+     4 | 0x0010     | Potential HTTP content
+     5 | 0x0020     | Stream
+     6 | 0x0040     | Quarantine virus upload
+    15 | 0x8000     | Stream1

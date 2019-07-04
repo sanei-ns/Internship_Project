@@ -1,0 +1,15 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/mysqlSink
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+#
+# Flag name     File
+
+# src/mysqlSink.h
+MYSQL_OVERWRITE_DB          src/mysqlSink.h
+MYSQL_OVERWRITE_TABLE       src/mysqlSink.h
+MYSQL_TRANSACTION_NFLOWS    src/mysqlSink.h

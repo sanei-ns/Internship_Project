@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+#
+# Use this script to create a new plugin.
+
+source "$(dirname "$0")/t2utils.sh"
+
+if [ -z "$1" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+    echo "Usage: $SNAME plugin_name [plugin_number]"
+    exit 1
+fi
+
+PLUGIN_NAME="${1%/}"
+PLUGIN_NUM="$2"
+SKELETON="t2PSkel"
+
+rand_pl_num() {
+    PLUGIN_NUM=$(cat /dev/urandom | tr -dc '0-9' | fold -w 3 | head -1)
+}
+
+cd "$T2PLHOME"
+
+if [ ! -d "$SKELETON" ]; then
+    printerr "Could not find folder '$SKELETON/'"
+    exit 1
+fi
+
+if [ -d "$PLUGIN_NAME" ] && [ "$(ls -a "$PLUGIN_NAME" | grep -v "^\.")" ]; then
+    printerr "Folder '$PLUGIN_NAME' already exists and is not empty"
+    exit 1
+fi
+
+if [ -z "$PLUGIN_NUM" ]; then
+    rand_pl_num
+    while [ "$(grep "^PLUGINORDER=$PLUGIN_NUM\ *$" */autogen.sh)" ]; do
+        rand_pl_num
+    done
+    echo "No plugin number provided... using $PLUGIN_NUM"
+elif [ -n "$(tr -d '0-9' <<< "$PLUGIN_NUM")" ]; then
+    printerr "Invalid plugin number $PLUGIN_NUM"
+    exit 1
+else
+    TMP="$(grep "^PLUGINORDER=$PLUGIN_NUM\ *$" */autogen.sh)"
+    if [ "$TMP" ]; then
+        printerr "Plugin number $PLUGIN_NUM already used by '${TMP%/*}' plugin"
+        exit 1
+    fi
+fi
+
+FILES=(
+    AUTHORS
+    autogen.sh
+    ChangeLog
+    configure.ac
+    COPYING
+    doc/Makefile
+    doc/"$SKELETON".tex
+    Makefile.am
+    NEWS
+    README
+    src/Makefile.am
+    src/"$SKELETON".h
+    src/"$SKELETON".c
+    t2plconf
+    tests/"$SKELETON".flags
+)
+
+# Create directories and copy files
+mkdir -p "$PLUGIN_NAME/"{doc,src,tests}
+for i in ${FILES[@]}; do
+    cp "$SKELETON/$i" "$PLUGIN_NAME/$i"
+done
+cd "$PLUGIN_NAME"
+
+# Replace plugin name and order
+$SED -i "s/$SKELETON/$PLUGIN_NAME/g" ${FILES[@]}
+$SED -i "s/$SKELETON/\U$PLUGIN_NAME\E/ig" ${FILES[@]}
+$SED -i "s/^PLUGINORDER=999$/PLUGINORDER=${PLUGIN_NUM}/" autogen.sh
+
+# Replace guard in header file
+GUARD=$($SED 's/\([a-z0-9_]\+\)\([A-Z]\)/\1_\2/g' <<< "$PLUGIN_NAME")
+SGUARD=$($SED 's/\([a-z0-9_]\+\)\([A-Z]\)/\1_\2/g' <<< "$SKELETON")
+$SED -i "s/__${SGUARD}_H__/__\U$GUARD\E_H__/ig" "src/${SKELETON}.h"
+
+# Rename files
+mv "doc/${SKELETON}.tex" "doc/${PLUGIN_NAME}.tex"
+mv "src/${SKELETON}.c" "src/${PLUGIN_NAME}.c"
+mv "src/${SKELETON}.h" "src/${PLUGIN_NAME}.h"
+mv "tests/${SKELETON}.flags" "tests/${PLUGIN_NAME}.flags"
+
+printok "Plugin '$PLUGIN_NAME' created"

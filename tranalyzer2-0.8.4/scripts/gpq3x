@@ -1,0 +1,414 @@
+#!/usr/bin/env bash
+#
+# Usage: ./gpq3x [OPTION...] <FILE>
+
+source "$(dirname "$0")/t2utils.sh"
+
+check_dependency gnuplot
+
+# default values
+FILE="-"
+TITLE="Tranalyzer2"
+PLOT_TITLE="\"Centrality = f(IP,time)\""
+STYLE="pm3d"
+TX="Time [s]"
+TY="IP Addresses"
+TZ="Centrality"
+WSIZE="800,600"  # Window size (width, height)
+TSIZE=20         # title size
+LSIZE=20         # label size
+KSIZE=18         # key/tics size
+ORDER="1:2:3"
+SETZ="0.001:*"
+VIEW="67,116"
+D=100          # number of elements to read
+M=700          # number of past values to display
+N=8            # number of IP labels
+Y0=0x00000000  # Lowest IP in y-axis
+YN=0xffffffff  # Highest IP in y-axis
+HX=0           # Whether to use IP (0) or hex (1) as labels
+LZ=0           # Whether or not to use logscale for Z axis
+MODE=0         # 0: update plot after every record
+               # 1: read all the data, then plot
+
+usage() {
+    echo "Usage:"
+    echo "    $SNAME [OPTION...] <FILE>"
+    echo
+    echo "Optional arguments:"
+    echo "    --mode NUM        0: update plot after every record (default),"
+    echo "                      1: read all the data, then plot"
+    echo "    -d   NUM          number of elements to read"
+    echo "    -m   NUM          number of past values to display"
+    echo "    -n   NUM          number of IP labels (X tics)"
+    echo "    -y   IP_low IP_high"
+    echo "                      IP range to display"
+    echo "    -hx               Use hex instead of IP as labels for X axis"
+    echo
+    echo "    -lx               Use logscale for Z axis"
+    echo "    -ly               Use logscale for Y axis"
+    echo "    -lz               Use logscale for Z axis"
+    echo
+    echo "    -pi               Use impulses instead of pm3d"
+    echo "    -pl               Use lines instead of pm3d"
+    echo "    -pt               Use points instead of pm3d"
+    echo
+    echo "    -g                Display a grid in the background"
+    echo
+    echo "    -ts size          Size of the title [$TSIZE]"
+    echo "    -ls size          Size of the labels [$LSIZE]"
+    echo "    -ks size          Size of the keys/tics [$KSIZE]"
+    echo
+    echo "    -sx begin:end     Set x range"
+    echo "    -sy begin:end     Set y range"
+    echo "    -sz begin:end     Set z range"
+    echo
+    echo "    -o x:y[:z]        Order of columns to display, e.g., 1:2 or 2:1:3"
+    echo "    -v rotx,rotz      View of graphics, e.g., 60,30"
+    echo
+    echo "    -ws w,h           Window size (width,height) [$WSIZE]"
+    echo "    -fs               Maximise window size (fullscreen)"
+    echo
+    echo "    -r [num]          Refresh the graph every num-seconds [$DEFAULT_REFRESH]"
+    echo
+    echo "    -tx               Label for X axis"
+    echo "    -ty               Label for Y axis"
+    echo "    -tz               Label for Z axis"
+    echo
+    echo "    -t title          Main title of the plot [$TITLE]"
+    echo "    -tp title         Subtitle of the plot [$PLOT_TITLE]"
+    echo
+    echo "    -h, --help        Show this help, then exit"
+}
+
+while [ $# -ne 0 ]; do
+    case "$1" in
+        -tx|--xlabel)
+            validate_next_arg "$1" "$2"
+            TX="$2"
+            shift
+            ;;
+        -ty|--ylabel)
+            validate_next_arg "$1" "$2"
+            TY="$2"
+            shift
+            ;;
+        -tz|--zlabel)
+            validate_next_arg "$1" "$2"
+            TZ="$2"
+            shift
+            ;;
+        -tp|--plot-title)
+            validate_next_arg "$1" "$2"
+            PLOT_TITLE="$2"
+            shift
+            ;;
+        -t|--title)
+            validate_next_arg "$1" "$2"
+            TITLE="$2"
+            shift
+            ;;
+        -sx|--xrange)
+            validate_next_arg_exists "$1" "$2"
+            if [ -n "$(perl -pe 's/^-?[0-9]+(.[0-9]*)?:-?[0-9]+(.[0-9]*)?$//' <<< "$2")" ]; then
+                printerr "Invalid argument for option '$1': expected begin:end; found '$2'"
+                abort_with_help
+            fi
+            SETX="$2"
+            shift
+            ;;
+        -sy|--yrange)
+            validate_next_arg_exists "$1" "$2"
+            if [ -n "$(perl -pe 's/^-?[0-9]+(.[0-9]*)?:-?[0-9]+(.[0-9]*)?$//' <<< "$2")" ]; then
+                printerr "Invalid argument for option '$1': expected begin:end; found '$2'"
+                abort_with_help
+            fi
+            SETY="$2"
+            shift
+            ;;
+        -sz|--zrange)
+            validate_next_arg_exists "$1" "$2"
+            if [ -n "$(perl -pe 's/^-?[0-9]+(.[0-9]*)?:-?[0-9]+(.[0-9]*)?$//' <<< "$2")" ]; then
+                printerr "Invalid argument for option '$1': expected begin:end; found '$2'"
+                abort_with_help
+            fi
+            SETZ="$2"
+            shift
+            ;;
+        -o|--order)
+            validate_next_arg "$1" "$2"
+            if [ -n "$(perl -pe 's/^[[:alnum:]_]+:[[:alnum:]_]+(:[[:alnum:]_]+)?$//' <<< "$2")" ]; then
+                printerr "Invalid argument for option '$1': expected x:y or x:y:z; found '$2'"
+                abort_with_help
+            fi
+            ORDER="$2"
+            shift
+            ;;
+        -v|--rotate)
+            validate_next_arg "$1" "$2"
+            if [ -n "$(perl -pe 's/^[0-9]+(.[0-9]*)?,[0-9]+(.[0-9]*)?$//' <<< "$2")" ]; then
+                printerr "Invalid argument for option '$1': expected rotx,rotz; found '$2'"
+                abort_with_help
+            fi
+            VIEW="$2"
+            shift
+            ;;
+        --mode)
+            validate_next_num "$1" "$2"
+            if [ "$MODE" != 0 ] && [ "$MODE" != 1 ]; then
+                printerr "Invaliud argument for option '$1': expected 0 or 1, found '$2'"
+                abort_with_help
+            fi
+            MODE="$2"
+            shift
+            ;;
+        -ts|--tsize|--t-size|--title-size)
+            validate_next_num "$1" "$2"
+            TSIZE="$2"
+            shift
+            ;;
+        -ls|--lsize|--l-size|--label-size)
+            validate_next_num "$1" "$2"
+            LSIZE="$2"
+            shift
+            ;;
+        -ks|--ksize|--k-size|--key-size|--tics-size)
+            validate_next_num "$1" "$2"
+            KSIZE="$2"
+            shift
+            ;;
+        -ws|--wsize|--win-size|--window-size)
+            validate_next_arg "$1" "$2"
+            if [ -n "$(perl -pe 's/^[1-9][0-9]*,[1-9][0-9]*$//' <<< "$2")" ]; then
+                printerr "Invalid argument for option '$1': expected width,height; found '$2'"
+                abort_with_help
+            fi
+            WSIZE="$2"
+            shift
+            ;;
+        -fs|--fullscreen)
+            if [ "$(uname)" = "Darwin" ]; then
+                WSIZE="$(system_profiler SPDisplaysDataType | $AWK '/^\s*Resolution:/ { print $2/2 "," $4/2; exit }')"
+            else
+                WSIZE="$(xrandr | $AWK '/\*/ { sub(/x/, ","); print $1; exit }')"
+            fi
+            ;;
+        -d)
+            validate_next_num "$1" "$2"
+            D="$2"
+            shift
+            ;;
+        -m)
+            validate_next_num "$1" "$2"
+            M="$2"
+            shift
+            ;;
+        -n)
+            validate_next_num "$1" "$2"
+            N="$2"
+            shift
+            ;;
+        -y)
+            validate_next_arg "$1" "$2"
+            validate_next_arg "$1" "$3"
+            Y0="$2"
+            YN="$3"
+            shift  # Y0
+            shift  # YN
+            ;;
+        -r|--refresh)
+            if [ -n "$2" ] && [ -z "$(tr -d '0-9' <<< "$2")" ]; then
+                REFRESH="$2"
+                shift
+            else
+                REFRESH="$DEFAULT_REFRESH"
+            fi
+            ;;
+        -g|--grid) GRID=1;;
+        -hx) HX=1;;
+        -lx|--log-x) LX=1;;
+        -ly|--log-y) LY=1;;
+        -lz|--log-z) LZ=1;;
+        -pi|--impulses) STYLE="impulses";;
+        -pl|--points) STYLE="lines";;
+        -pt|--points) STYLE="points";;
+        -h|-\?|--help) usage; exit 0;;
+        *)
+            if [ ! -f "$1" ]; then
+                abort_option_unknown "$1"
+            fi
+            FILE="$1"
+            ;;
+    esac
+    shift
+done
+
+if [ "$FILE" == "-" ] && [ -t 0 ]; then
+    abort_required_file
+fi
+
+$AWK -F'\t' \
+        -v d="$D" -v m="$M" -v n="$N" -v mode="$MODE" \
+        -v y0="$Y0" -v yn="$YN" -v iplabel="$HX" \
+        -v lx="$LX" -v ly="$LY" -v lz="$LZ" \
+        -v sx="$SETX" -v sy="$SETY" -v sz="$SETZ" \
+        -v vw="$VIEW" -v ord="$ORDER" -v style="$STYLE" \
+        -v tx="$TX" -v ty="$TY" -v tz="$TZ" -v subtitle="$PLOT_TITLE" \
+        -v title="$TITLE" -v tsize="$TSIZE" -v lsize="$LSIZE" \
+        -v ksize="$KSIZE" -v wsize="$WSIZE" -v grid="$GRID" '
+
+BEGIN {
+    print "set term qt size " wsize " persist"
+    print "set title \"" title "\" font \"Times-Bold," tsize "\""
+    print "set style data " style
+    print "set key font \"Times-Bold," ksize "\""
+    print "set tics font \"Times-Bold," ksize "\""
+    print "set ticslevel 0"
+
+    if (grid) print "set grid"
+
+    if (hx) print "set format y \"0x%08x\""
+
+    if (lx) print "set logscale x"
+    if (ly) print "set logscale y"
+    if (lz) print "set logscale z"
+
+    if (sx) print "set xrange[" sx "]"
+    if (sy) print "set yrange[" sy "]"
+    if (sz) print "set zrange[" sz "]"
+
+    if (tx) print "set xlabel \"" tx "\" offset -15 font \"Times-Bold," lsize "\""
+    if (ty) print "set ylabel \"" ty "\" offset 5 font \"Times-Bold," lsize "\""
+    if (tz) print "set zlabel \"" tz "\" offset -10 rotate by 90 font \"Times-Bold," lsize "\""
+
+    if (vw) print "set view " vw
+
+    a[d,m] = 0.0
+    k = 0
+    u = l = 0
+
+    y0 = ip2hex(y0)
+    yn = ip2hex(yn)
+
+    inc = (yn-y0)/n
+    mask = and(compl(inc), 0xffffffff)
+
+    delta = 32
+    for (i = 0xf0000000; i > 0; i = rshift(i,4)) {
+        delta -= 4
+        fmask += (rshift(and(mask, i), delta) != 0) ? i : 0
+    }
+
+    if (iplabel) {
+        # IP as labels
+        for (i = y0; i < yn; i += inc) {
+            net = and(i, fmask)
+            p[1] = rshift(and(net, 0xff000000), 24)
+            p[2] = rshift(and(net, 0x00ff0000), 16)
+            p[3] = rshift(and(net, 0x0000ff00),  8)
+            p[4] =        and(net, 0x000000ff)
+            str = str ", \"" p[1] "." p[2] "." p[3] "." p[4] "\" " i
+        }
+        str = gensub(/^, /,"","",str)
+        print "set ytics (" str ")"
+    }
+
+    print "set yrange [" y0 ":" yn "]"
+    print "set ytics offset 5,-1 rotate by 90"
+    i = 0
+}
+
+{
+    for (b = 1; b <= d*2; b += 2) {
+        t[sprintf("%13d", $b)] = $(b+1)
+    }
+
+    kacke = asorti(t, id)
+    b = 1
+    for (wau = 1; wau <= kacke; wau++) {
+        a[b++,u] = id[wau]
+        a[b++,u] = t[id[wau]]
+    }
+
+    u = ++i % m
+
+    if (mode == 1) next
+
+    if (k != u) {
+        l = 0
+    } else {
+        k++
+        l -= m - 2
+    }
+
+    k %= m
+    l1 = l
+
+    print "splot \"-\" u " ord " title " subtitle
+    #print "splot \"-\" u " 1:2:3:ytic(4) title " subtitle  # IP clustering
+
+    for (b = 1; b <= d*2; b += 2) {
+        j = k
+        l = l1
+
+        while (j%m != u) {
+            printf "%d %lu %f\n", l++, a[b,j%m], a[b+1,j%m]
+
+            # IP clustering
+            #ip[1] = rshift(and(a[b,j%m], 0xff000000), 24)
+            #ip[2] = rshift(and(a[b,j%m], 0x00ff0000), 16)
+            #ip[3] = rshift(and(a[b,j%m], 0x0000ff00),  8)
+            #ip[4] = (and(a[b,j%m], 0x000000ff)
+            #printf "%d %lu %f %d.%d.%d.%d\n", l++, a[b,j%m], a[b+1,j%m], ip[1], ip[2], ip[3], ip[4]
+            j++
+        }
+
+        print " "
+    }
+
+    print "e"
+    fflush()
+}
+
+END {
+    if (mode == 0) exit
+
+    print "splot \"-\" u " ord " title " subtitle
+    #print "splot \"-\" u 1:2:3:ytic(4) title " title  # IP clustering
+
+    l = 0
+    for (b = 1; b <= d*2; b += 2) {
+        j = 0
+        l = 0
+
+        while (j < m ) {
+            printf "%d %lu %f\n", l++, a[b,j], a[b+1,j]
+
+            # IP clustering
+            #ip[1] = rshift(and(a[b,j%m], 0xff000000), 24)
+            #ip[2] = rshift(and(a[b,j%m], 0x00ff0000), 16)
+            #ip[3] = rshift(and(a[b,j%m], 0x0000ff00),  8)
+            #ip[4] = (and(a[b,j%m], 0x000000ff)
+            #printf "%d %lu %f %d.%d.%d.%d\n", l++, a[b,j%m], a[b+1,j%m], ip[1], ip[2], ip[3], ip[4]
+            j++
+        }
+
+        print " "
+    }
+
+    print "e"
+    fflush()
+}
+
+function ip2hex(ip) {
+    if (ip ~ /0x[0-9a-fA-F]{1,8}/) {
+        return strtonum(ip)
+    } else if (ip ~ /[[:digit:]]{1,3}(\.[[:digit:]]{1,3}){3}/) {
+        split(ip, tmp, /\./)
+        return lshift(tmp[1], 24) + lshift(tmp[2], 16) + lshift(tmp[3], 8) + tmp[4]
+    } else {
+        print "Invalid format: " ip
+        exit 1
+    }
+}
+' "$FILE" | gnuplot

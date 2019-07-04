@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+source "$(dirname "$0")/../../../scripts/t2utils.sh"
+
+usage() {
+    printf "Usage:\n"
+    printf "    $SNAME [OPTION...] <FILE>\n"
+    printf "\nOptional arguments:\n"
+    printf "    -w name     output filename\n"
+    printf "    -h          display this help, then exit\n"
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -w)
+            validate_next_arg "$1" "$2"
+            OUTFILE="$2"
+            shift
+            ;;
+        -h|-\?|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            if [ ! -f "$1" ]; then
+                abort_option_unknown "$1"
+            fi
+            INFILE="$1"
+            ;;
+    esac
+    shift
+done
+
+if [ ! -f "$INFILE" ]; then
+    abort_required_file
+fi
+
+if [ -z "$OUTFILE" ]; then
+    OUTFILE="$(replace_suffix "$INFILE" "txt" "bin")"
+fi
+
+if [ ! -d "utils" ]; then
+    printerr "Directory 'utils' could not be found."
+    printinf "$SNAME must be run from macRecorder root folder"
+    exit 1
+fi
+
+make -C utils || exit 1
+
+$AWK -F"\t" -v OFS="\t" '{
+    split($1, A, ":")
+    print "0x"A[6]A[5]A[4]A[3]A[2]A[1], $2, $3
+}' "$INFILE" | sort -k1,1 | ./utils/mbm "$OUTFILE"

@@ -1,0 +1,16 @@
+#!/usr/bin/env awk
+#
+# Returns true if val is NULL or the empty string
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk 'strisempty($httpURL)' file.txt
+#   - tawk '!strisempty($httpUsrAg) { print }' file.txt
+
+@include "hdr"
+
+function strisempty(val) {
+    return length(val) == 0 || val == "\"\""
+}

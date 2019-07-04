@@ -1,0 +1,761 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {tawk}
+    {Awk for Tranalyzer Flow Files}
+    {Tranalyzer Development Team} % author(s)
+
+\section{tawk}\label{s:tawk}
+
+\subsection{Description}
+This document describes tawk and its functionalities.
+tawk works just like awk, but provides access to the columns via their names.
+In addition, it provides access to helper functions, such as {\tt host()} or {\tt port()}.
+Custom functions can be added in the folder named {\tt\nameref{t2custom}} where they will be automatically loaded.
+
+\subsection{Dependencies}
+gawk version 4.1 is required.
+
+\paragraph{Kali/Ubuntu:} {\tt sudo apt-get install gawk}
+\paragraph{Arch:} {\tt sudo pacman --S gawk}
+\paragraph{Fedora/Red Hat:} {\tt sudo yum install gawk}
+\paragraph{Gentoo:} {\tt sudo emerge gawk}
+\paragraph{OpenSUSE:} {\tt sudo zypper install gawk}
+\paragraph{Mac OS X:} {\tt brew install gawk}\footnote{Brew is a packet manager for Mac OS X that can be found here: \url{https://brew.sh}}
+
+\subsection{Installation}
+The recommended way to install {\tt tawk} is to install {\tt t2\_aliases} as documented in {\tt README.md}:
+\begin{itemize}
+    \item Append the following line to {\tt\textasciitilde{}/.bashrc} (make sure to replace {\tt\$T2HOME}
+          with the actual path, e.g.,\\{\tt\$HOME/tranalyzer2-0.8.3}):
+\begin{lstlisting}
+if [ -f "$T2HOME/scripts/t2_aliases" ]; then
+    . $T2HOME/scripts/t2_aliases             # Note the leading `.'
+fi
+\end{lstlisting}
+\end{itemize}
+
+\subsubsection{Man Pages}
+The man pages for {\tt tawk} and {\tt\nameref{t2nfdump}} can be installed by running: {\tt ./install.sh man}.
+Once installed, they can be consulted by running {\tt man tawk} and {\tt man \nameref{t2nfdump}} respectively.
+
+\subsection{Usage}
+\begin{itemize}
+    \item To list the column numbers and names: {\tt tawk --l file\_flows.txt}
+    \item To list the column numbers and names as 3 columns: {\tt tawk --l=3 file\_flows.txt}
+    \item To list the available functions: {\tt tawk --g file\_flows.txt}
+    \item To list the available functions as 3 columns: {\tt tawk --g=3 file\_flows.txt}
+    \item To save the original filename and filter used: {\tt tawk --c `FILTER' file\_flows.txt > file.txt}
+    \item To extract all ICMP flows and the header: {\tt tawk `hdr() || \$l4Proto == 1' file\_flows.txt > icmp.txt}
+    \item To extract all ICMP flows without the header: {\tt tawk -H `icmp()' file\_flows.txt > icmp.txt}
+    \item To extract the flow with index 1234: {\tt tawk `\$flowInd == 1234' file\_flows.txt}
+    \item To extract all DNS flows and the header: {\tt tawk `hdr() || strtonum(\$dnsStat)' file\_flows.txt}
+    \item To consult the documentation for the function `func': {\tt tawk --d func}
+    \item To consult the documentation for the functions `min' and `max': {\tt tawk --d min,max}
+    \item To consult the documentation for all the available functions: {\tt tawk --d all}
+    \item To consult the documentation for the variable `var': {\tt tawk --V var}
+    \item To consult the documentation for the variable `var' with value {\tt 0x8a}: {\tt tawk --V var=0x8a}
+    \item To convert the output to JSON: {\tt tawk `\{ print json(\$flowStat "\textbackslash{}t" tuple5()) \}' file\_flows.txt}
+    \item To convert the output to JSON: {\tt tawk `aggr(tuple2())' file\_flows.txt | tawk `\{ print json(\$0) \}'}
+    \item To create a PCAP with all packets from flow 42: {\tt tawk -x flow42.pcap `\$flowInd == 42' file\_flows.txt}
+    \item To see all ICMP packets in Wireshark: {\tt tawk -k `imcp()' file\_flows.txt}
+\end{itemize}
+For a complete list of options, use the {\tt --h} option.\\
+
+Note that an option not recognized by tawk is internally passed to awk/gawk.
+One of the most useful is the {\tt --v} option to set the value of a variable:
+\begin{itemize}
+    \item Changing the output field separator:\\
+          {\tt tawk -v OFS=`,' `\{ print \$col1, \$col2 \}' file.txt}
+    \item Passing a variable to tawk:\\
+          {\tt tawk -v myvar=myvalue `\{ print \$col1, myvar \}' file.txt}
+\end{itemize}
+For a complete list of options, run {\tt awk --h}.
+
+%In order to access these functions, run {\tt awk} as follows:
+%\begin{center}
+%    {\tt awk -i t2funcs.awk `\{ program \}' FILE\_flows.txt}
+%\end{center}
+%Note that {\tt\nameref{s:tawk}} automatically loads these functions.
+
+\subsection{{\tt --s} Option}\label{tawk-s-option}
+The {\tt --s} option can be used to specify the starting character(s) of the row containing the column names (default: {\tt `\%'}).
+If several rows start with the specified character(s), then the last one is used as column names.
+To change this behaviour, the line number can be specified as well.
+For example if row 1 to 5 start with {\tt `\#'} and row 3 contains the column names, specify the separator as follows: {\tt tawk -s `\#NR==3'}
+If the row with column names does not start with a special character, use {\tt --s `'} or {\tt --s `NR==2'}.
+
+\subsection{Related Utilities}
+
+\subsubsection{awkf}\label{awkf}
+Configures {\tt awk} to use tabs, i.e., `{\tt\textbackslash{}t}' as input and output separator (prevents issue with repetitive values), e.g.,\\
+{\tt awkf `\{ print \$4 \}' file\_flows.txt}
+
+\subsubsection{lsx}
+Displays columns with fixed width (default: 40), e.g., {\tt lsx file\_flows.txt} or {\tt lsx 45 file\_flows.txt}
+
+\subsubsection{sortu}
+Sort rows and count the number of times a given row appears, then sort by the most occuring rows.
+(Alias for {\tt sort | uniq -c | sort -rn}).
+Useful, e.g., to analyse the most occuring user-agents: {\tt tawk `\{ print \$httpUsrAg \}' FILE\_flows.txt | sortu}
+
+\subsubsection{tcol}
+Displays columns with minimum width, e.g., {\tt tcol file\_flows.txt}.
+
+\subsection{Functions}\label{funcs}
+Collection of functions for {\tt tawk}:
+\begin{itemize}
+    \item Parameters between brackets are optional,
+    \item IPs can be given as string ({\tt "1.2.3.4"}), hexadecimal ({\tt 0xffffffff}) or int ({\tt 4294967295}),
+    \item Network masks can be given as string ({\tt "255.255.255.0"}), hexadecimal ({\tt 0xffffff00}) or CIDR notation ({\tt 24}),
+    \item Networks can be given as string, hexadecimal or int, e.g., {\tt "1.2.3.4/24"} or {\tt "0x01020304/255.255.255.0"},
+    \item String functions can be made case insensitive by adding the suffix {\tt i}, e.g., {\tt streq $\rightarrow$ streqi},
+    \item Some examples are provided below,
+    \item More details and examples can be found for every function by running {\tt tawk -d funcname}.
+\end{itemize}
+
+\begin{longtable}{ll}
+    \toprule
+    {\bf Function} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt hdr()} & Use this function in your tests to keep the header (column names)\\\\
+
+    {\tt tuple2()} & Returns the 2 tuple (source IP and destination IP)\\
+    {\tt tuple3()} & Returns the 3 tuple (source IP, destination IP and port)\\
+    {\tt tuple4()} & Returns the 4 tuple (source IP and port, destination IP and port)\\
+    {\tt tuple5()} & Returns the 5 tuple (source IP and port, destination IP and port, protocol)\\
+    {\tt tuple6()} & Returns the 6 tuple (source IP and port, dest.\ IP and port, proto, VLANID)\\\\
+
+    {\tt host([ip|net])}  & Returns true if the source or destination IP is equal to {\tt ip} or belongs to {\tt net}\\
+                          & If {\tt ip} is omitted, returns the source and destination IP\\
+    {\tt shost([ip|net])} & Returns true if the source IP is equal to {\tt ip} or belongs to {\tt net}\\
+                          & If {\tt ip} is omitted, returns the source IP\\
+    {\tt dhost([ip|net])} & Returns true if the destination IP is equal to {\tt ip} or belongs to {\tt net}\\
+                          & If {\tt ip} is omitted, returns the destination IP\\\\
+
+    {\tt net([ip|net])}   & Alias for {\tt host([ip|net])}\\
+    {\tt snet([ip|net])}  & Alias for {\tt shost([ip|net])}\\
+    {\tt dnet([ip|net])}  & Alias for {\tt dhost([ip|net])}\\\\
+
+    {\tt loopback(ip)} & Returns true if {\tt ip} is a loopback address\\
+    {\tt mcast(ip)}    & Returns true if {\tt ip} is a multicast address\\
+    {\tt privip(ip)}   & Returns true if {\tt ip} is a private IP\\\\
+
+    {\tt port([p])}  & Returns true if the source or destination port is equal to {\tt p}\\
+                     & (multiple ports or port ranges can also be specified)\\
+                     & If {\tt p} is omitted, returns the source and destination port\\
+    {\tt sport([p])} & Returns true if the source port is equal to {\tt p}\\
+                     & If {\tt p} is omitted, returns the source port\\
+    {\tt dport([p])} & Returns true if the destination port is equal to {\tt p}\\
+                     & If {\tt p} is omitted, returns the destination port\\\\
+
+    {\tt ip()}       & Returns true if the flow contains IPv4 or IPv6 traffic\\
+    {\tt ipv4()}     & Returns true if the flow contains IPv4 traffic\\
+    {\tt ipv6()}     & Returns true if the flow contains IPv6 traffic\\\\
+
+    {\tt proto([p])}   & Returns true if the protocol is equal to {\tt p}\\
+                       & If {\tt p} is omitted, returns the string representation of the protocol\\
+    {\tt proto2str(p)} & Returns the string representation of the protocol number {\tt p}\\
+                       & If {\tt p} is omitted, returns the protocol\\
+    {\tt icmp([p])}    & Returns true if the protocol is equal to 1 (ICMP)\\
+    {\tt igmp([p])}    & Returns true if the protocol is equal to 2 (IGMP)\\
+    {\tt tcp([p])}     & Returns true if the protocol is equal to 6 (TCP)\\
+    {\tt udp([p])}     & Returns true if the protocol is equal to 17 (UDP)\\
+    {\tt rsvp([p])}    & Returns true if the protocol is equal to 46 (RSVP)\\
+    {\tt gre([p])}     & Returns true if the protocol is equal to 47 (GRE)\\
+    {\tt esp([p])}     & Returns true if the protocol is equal to 50 (ESP)\\
+    {\tt ah([p])}      & Returns true if the protocol is equal to 51 (AH)\\
+    {\tt icmp6([p])}   & Returns true if the protocol is equal to 58 (ICMPv6)\\
+    {\tt sctp([p])}    & Returns true if the protocol is equal to 132 (SCTP)\\\\
+
+    {\tt dhcp()} & Returns true if the flow contains DHCP traffic\\
+    {\tt dns()}  & Returns true if the flow contains DNS traffic\\
+    {\tt http()} & Returns true if the flow contains HTTP traffic\\\\
+
+    {\tt tcpflags([val])} & If {\tt val} is specified, returns true if the specified flags are set.\\
+                          & If {\tt val} is omitted, returns a string representation of the TCP flags\\\\
+
+    {\tt ip2num(ip)}  & Converts an IP address to a number\\
+    {\tt ip2hex(ip)}  & Converts an IPv4 address to hex\\
+    {\tt ip2str(ip)}  & Converts an IPv4 address to string\\
+    {\tt ip62str(ip)} & Converts an IPv6 address to string\\\\
+
+    {\tt ip6compress(ip)}      & Compresses an IPv6 address\\
+    {\tt ip6expand(ip[,trim])} & Expands an IPv6 address.\\
+                               & If {\tt trim} is different from 0, removes leading zeros\\\\
+
+    {\tt ip2mask(ip)}    & Converts an IP address to a network mask (int)\\
+    {\tt mask2ip(m)}     & Converts a network mask (int) to an IPv4 address (int)\\
+    {\tt mask2ipstr(m)}  & Converts a network mask (int) to an IPv4 address (string)\\
+    {\tt mask2ip6(m)}    & Converts a network mask (int) to an IPv6 address (int)\\
+    {\tt mask2ip6str(m)} & Converts a network mask (int) to an IPv6 address (string)\\\\
+
+    {\tt ipinnet(ip,net[,mask])} & Tests whether an IP address belongs to a given network\\
+    {\tt ipinrange(ip,low,high)} & Tests whether an IP address lies between two addresses\\\\
+
+    {\tt localtime(t)} & Converts UNIX timestamp to string (localtime)\\
+    {\tt utc(t)}       & Converts UNIX timestamp to string (UTC)\\
+    {\tt timestamp(t)} & Converts date to UNIX timestamp\\\\
+
+    {\tt t2split(val,sep}          & Splits values according to {\tt sep}.\\
+    {\tt\qquad [,num[,osep]])}     & If {\tt num} is omitted or 0, {\tt val} is split into {\tt osep} separated columns.\\
+                                   & If {\tt num > 0}, returns the {\tt num} repetition.\\
+                                   & If {\tt num < 0}, returns the {\tt num} repetition from the end, e.g., -1 for last element.\\
+                                   & Multiple {\tt num} can be specified, e.g., {\tt "1;-1;2"}.\\
+                                   & Output separator {\tt osep}, defaults to {\tt OFS}.\\
+    {\tt splitc(val[,num[,osep]])} & Splits compound values. Alias for {\tt t2split(val, "\_", num, osep)}\\
+    {\tt splitr(val[,num[,osep]])} & Splits repetitive values. Alias for {\tt t2split(val, ";", num, osep)}\\\\
+
+    {\tt valcontains(val,sep,item)} & Returns true if one item of {\tt val} split by {\tt sep} is equal to {\tt item}.\\
+    {\tt cvalcontains(val,item)}    & Alias for {\tt valcontains(val, "\_", item)}\\
+    {\tt rvalcontains(val,item)}    & Alias for {\tt valcontains(val, ";", item)}\\\\
+
+    {\tt strisempty(val)}     & Returns true if {\tt val} is an empty string\\
+    {\tt streq(val1,val2)}    & Returns true if {\tt val1} is equal to {\tt val2}\\
+    {\tt strneq(val1,val2)}   & Returns true if {\tt val1} and {\tt val2} are not equal\\
+    {\tt hasprefix(val,pre)}  & Returns true if {\tt val} begins with the prefix {\tt pre}\\
+    {\tt hassuffix(val,suf)}  & Returns true if {\tt val} finished with the suffix {\tt suf}\\
+    {\tt contains(val,txt)}   & Returns true if {\tt val} contains the substring {\tt txt}\\\\
+
+    {\tt not(q)}               & Returns the logical negation of a query {\tt q}.\\
+                               & This function must be used to keep the header when negating a query.\\
+    {\tt bfeq(val1,val2)}      & Returns true if the hexadecimal numbers {\tt val1} and {\tt val2} are equal\\
+    {\tt bitsallset(val,mask)} & Returns true if all the bits set in {\tt mask} are also set in {\tt val}\\
+    {\tt bitsanyset(val,mask)} & Returns true if one of the bits set in {\tt mask} is also set in {\tt val}\\\\
+
+    {\tt isip(v)}     & Returns true if {\tt v} is an IPv4 address in hexadecimal, numerical or\\
+                      & dotted decimal notation\\
+    {\tt isip6(v)}    & Returns true if {\tt v} is an IPv6 address\\
+    {\tt isiphex(v)}  & Returns true if {\tt v} is an IPv4 address in hexadecimal notation\\
+    {\tt isipnum(v)}  & Returns true if {\tt v} is an IPv4 address in numerical (int) notation\\
+    {\tt isipstr(v)}  & Returns true if {\tt v} is an IPv4 address in dotted decimal notation\\
+    {\tt isnum(v)}    & Returns true if {\tt v} is a number\\\\
+
+    {\tt join(a,s)}   & Converts an array to string, separating each value with {\tt s}\\
+    {\tt unquote(s)}  & Removes leading and trailing quotes from a string\\
+    {\tt chomp(s)}    & Removes leading and trailing spaces from a string\\
+    {\tt strip(s)}    & Removes leading and trailing spaces from a string\\
+    {\tt lstrip(s)}   & Removes leading spaces from a string\\
+    {\tt rstrip(s)}   & Removes trailing spaces from a string\\\\
+
+    {\tt mean(c)}     & Computes the mean value of a column {\tt c}.\\
+                      & The result can be accessed with {\tt get\_mean(c)} or printed with {\tt print\_mean([c])}\\
+    {\tt min(c)}      & Keep track of the min value of a column {\tt c}.\\
+                      & The result can be accessed with {\tt get\_min(c)} or printed with {\tt print\_min([c])}\\
+    {\tt max(c)}      & Keep track of the max value of a column {\tt c}.\\
+                      & The result can be accessed with {\tt get\_max(c)} or printed with {\tt print\_max([c])}\\\\
+
+    {\tt abs(v)}      & Returns the absolute value of {\tt v}\\
+    {\tt min2(a,b)}   & Returns the minimum value between {\tt a} and {\tt b}\\
+    {\tt min3(a,b,c)} & Returns the minimum value between {\tt a}, {\tt b} and {\tt c}\\
+    {\tt max2(a,b)}   & Returns the maximum value between {\tt a} and {\tt b}\\
+    {\tt max3(a,b,c)} & Returns the maximum value between {\tt a}, {\tt b} and {\tt c}\\\\
+
+    {\tt aggr(fields[,val[,num]])} & Performs aggregation of {\tt fields} and store the sum of {\tt val}.\\
+                             & {\tt fields} and {\tt val} can be tab separated lists of fields, e.g., {\tt \$srcIP4"\textbackslash{}t"\$dstIP4}\\
+                             & Results are sorted according to the first value of {\tt val}.\\
+                             & If {\tt val} is omitted or equal to {\tt "flows"}, counts the number of flows.\\
+                             & If {\tt num} is omitted or 0, returns the full list,\\
+                             & If {\tt num > 0} returns the top {\tt num} results,\\
+                             & If {\tt num < 0} returns the bottom {\tt num} results.\\
+    \multicolumn{2}{l}{\tt aggrrep(fields[,val[,num[,ign\_e[,sep]]]])}\\
+                             & Performs aggregation of the repetitive {\tt fields} and store the sum of {\tt val}.\\
+                             & {\tt val} can be a tab separated lists of fields, e.g., {\tt \$numBytesSnt"\textbackslash{}t"\$numPktsSnt}\\
+                             & Results are sorted according to the first value of {\tt val}.\\
+                             & If {\tt val} is omitted or equal to {\tt "flows"}, counts the number of flows.\\
+                             & If {\tt num} is omitted or 0, returns the full list,\\
+                             & If {\tt num > 0} returns the top {\tt num} results,\\
+                             & If {\tt num < 0} returns the bottom {\tt num} results.\\
+                             & If {\tt ign\_e} is omitted or 0, consider all values, otherwise ignore emtpy values.\\
+                             & {\tt sep} can be used to change the separator character (default: {\tt ";"})\\\\
+
+
+    {\tt t2sort(col[,num[,type]])} & Sorts the file according to {\tt col}.\\
+                             & If {\tt num} is omitted or 0, returns the full list,\\
+                             & If {\tt num > 0} returns the top {\tt num} results,\\
+                             & If {\tt num < 0} returns the bottom {\tt num} results.\\
+                             & {\tt type} can be used to specify the type of data to sort:\\
+                             & {\tt "ip"}, {\tt "num"} or {\tt "str"} (default is based on the first matching record)\\\\
+
+    {\tt wildcard(expr)}     & Print all columns whose name matches the regular expression {\tt expr}.\\
+                             & If {\tt expr} is preceded by an exclamation mark, returns all columns whose name\\
+                             & does {\bf NOT} match {\tt expr}\\\\
+
+    {\tt hrnum(num[,mode[,suffix]])} & Convert the number {\tt num} to its human readable form.\\
+
+    {\tt json(s)}           & Convert the string {\tt s} to JSON. The first record is used as column names.\\
+    {\tt texscape(s)}       & Escape the string {\tt s} to make it LaTeX compatible\\
+    {\tt base64d(s)}        & Decode a base64 encoded string {\tt s}\\
+    {\tt urldecode(url)}    & Decode the encoded URL {\tt url}\\
+    {\tt printerr(s)}       & Prints the string {\tt s} in red with an added newline\\
+    {\tt diff(file[,mode])} & Compares {\tt file} and the input, and prints the name of the columns which differ.\\
+                            & The {\tt mode} parameter can be used to control the format of the output.\\
+
+    {\tt ffsplit([s[,k[,h]]])} & Split the input file into smaller more manageable files.\\
+                               & The files to create can be specified as argument to the function (one comma\\
+                               & separated string). If no argument is specified, creates one file per column\\
+                               & whose name ends with {\tt Stat}, e.g., {\tt dnsStat}, and one for \\
+                               & {\tt pwxType} ({\tt pw}) and {\tt covertChannels} ({\tt cc}).\\
+                               & If {\tt k} > 0, then only print relevant fields and those controlled by {\tt h}, a\\
+                               & comma separated list of fields to keep in each file, e.g., {\tt "srcIP,dstIP"}\\\\
+
+    {\tt flow(f)}   & Returns all flows whose index appears in {\tt f}\\
+    {\tt packet(p)} & Returns all packets whose number appears in {\tt f}\\\\
+
+    {\tt shark(q)}  & Query flow files according to Wireshark's syntax\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Examples}\label{examples.load}
+Collection of examples using {\tt tawk} functions:
+
+\begin{longtable}{ll}
+    \toprule
+    {\bf Function} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt covertChans([val[,num]])}\\
+                             & Returns information about hosts possibly involved in a covert channels.\\
+                             & If {\tt val} is omitted or equal to {\tt "flows"}, counts the number of flows.\\
+                             & Otherwise, sums up the values of {\tt val}.\\
+                             & If {\tt num} is omitted or 0, returns the full list,\\
+                             & If {\tt num > 0} returns the top {\tt num} results,\\
+                             & If {\tt num < 0} returns the bottom {\tt num} results.\\\\
+    {\tt dnsZT()}            & Returns all flows where a DNS zone transfer was performed.\\\\
+    {\tt exeDL([n])}         & Returns the top N EXE downloads.\\\\
+    {\tt httpHostsURL([f])}  & Returns all HTTP hosts and a list of the files hosted (sorted alphabetically).\\
+                             & If {\tt f > 0}, prints the number of times a URL was requested.\\\\
+    {\tt nonstdports()}      & Returns all flows running protocols over non-standard ports.\\\\
+    {\tt passwords([val[,num]])}\\
+                             & Returns information about hosts sending authentication in cleartext.\\
+                             & If {\tt val} is omitted or equal to {\tt "flows"}, counts the number of flows.\\
+                             & Otherwise, sums up the values of {\tt val}.\\
+                             & If {\tt num} is omitted or 0, returns the full list,\\
+                             & If {\tt num > 0} returns the top {\tt num} results,\\
+                             & If {\tt num < 0} returns the bottom {\tt num} results.\\\\
+    {\tt postQryStr([n])} & Returns the top N POST requests with query strings.\\\\
+    {\tt ssh()} & Returns the SSH connections.\\\\
+    {\tt topDnsA([n])} & Returns the top N DNS answers.\\
+    {\tt topDnsIp4([n])} & Returns the top N DNS answers IPv4 addresses.\\
+    {\tt topDnsIp6([n])} & Returns the top N DNS answers IPv6 addresses.\\
+    {\tt topDnsQ([n])} & Returns the top N DNS queries.\\\\
+    {\tt topHttpMimesST([n])} & Returns the top HTTP content-type (type/subtype).\\
+    {\tt topHttpMimesT([n])} & Returns the top HTTP content-type (type only).\\\\
+    {\tt topSLD([n])} & Returns the top N second-level domains queried (google.com, yahoo.com, \ldots).\\
+    {\tt topTLD([n])} & Returns the top N top-level domains (TLD) queried (.com, .net, \ldots).\\
+    \bottomrule
+\end{longtable}
+
+\subsection{t2nfdump}\label{t2nfdump}
+Collection of functions for {\tt tawk} allowing access to specific fields using a syntax similar as {\tt nfdump}.
+\begin{longtable}{ll}
+    \toprule
+    {\bf Function} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt ts()}        & Start Time --- first seen\\
+    {\tt te()}        & End Time --- last seen\\
+    {\tt td()}        & Duration\\
+    {\tt pr()}        & Protocol\\
+    {\tt sa()}        & Source Address\\
+    {\tt da()}        & Destination Address\\
+    {\tt sap()}       & Source Address:Port\\
+    {\tt dap()}       & Destination Address:Port\\
+    {\tt sp()}        & Source Port\\
+    {\tt dp()}        & Destination Port\\
+    {\tt pkt()}       & Packets --- default input\\
+    {\tt ipkt()}      & Input Packets\\
+    {\tt opkt()}      & Output Packets\\
+    {\tt byt()}       & Bytes --- default input\\
+    {\tt ibyt()}      & Input Bytes\\
+    {\tt obyt()}      & Output Bytes\\
+    {\tt flg()}       & TCP Flags\\
+    {\tt mpls1()}     & MPLS label 1\\
+    {\tt mpls2()}     & MPLS label 2\\
+    {\tt mpls3()}     & MPLS label 3\\
+    {\tt mpls4()}     & MPLS label 4\\
+    {\tt mpls5()}     & MPLS label 5\\
+    {\tt mpls6()}     & MPLS label 6\\
+    {\tt mpls7()}     & MPLS label 7\\
+    {\tt mpls8()}     & MPLS label 8\\
+    {\tt mpls9()}     & MPLS label 9\\
+    {\tt mpls10()}    & MPLS label 10\\
+    {\tt mpls()}      & MPLS labels 1--10\\
+    {\tt bps()}       & Bits per second\\
+    {\tt pps()}       & Packets per second\\
+    {\tt bpp()}       & Bytes per package\\\\
+    {\tt oline()}     & nfdump line output format ({\tt --o line})\\
+    {\tt olong()}     & nfdump long output format ({\tt --o long})\\
+    {\tt oextended()} & nfdump extended output format ({\tt --o extended})\\
+    \bottomrule
+\end{longtable}
+
+\subsection{t2custom}\label{t2custom}
+Copy your own functions in this folder.
+Refer to \refs{tawk-write-func} for more details on how to write a tawk function.
+To have your functions automatically loaded, include them in the file {\tt t2custom/t2custom.load}.
+
+\subsection{Writing a tawk Function}\label{tawk-write-func}
+\begin{itemize}
+    \item Ideally one function per file (where the filename is the name of the function)
+    \item Private functions are prefixed with an underscore
+    \item Always declare local variables 8 spaces after the function arguments
+    \item Local variables are prefixed with an underscore
+    \item Use uppercase letters and two leading and two trailing underscores for global variables
+    \item Include all referenced functions
+    \item Files should be structured as follows:
+\begin{verbatim}
+#!/usr/bin/env awk
+#
+# Function description
+#
+# Parameters:
+#   - arg1: description
+#   - arg2: description (optional)
+#
+# Dependencies:
+#   - plugin1
+#   - plugin2 (optional)
+#
+# Examples:
+#   - tawk `funcname()' file.txt
+#   - tawk `{ print funcname() }' file.txt
+
+@include "hdr"
+@include "_validate_col"
+
+function funcname(arg1, arg2, [8 spaces] _locvar1, _locvar2) {
+    _locvar1 = _validate_col("colname1;altcolname1", _my_colname1)
+    _validate_col("colname2")
+
+    if (hdr()) {
+        if (__PRIHDR__) print "header"
+    } else {
+        print "something", $_locvar1, $colname2
+    }
+}
+\end{verbatim}
+\end{itemize}
+
+\subsection{Using tawk Within Scripts}
+To use {\tt tawk} from within a script:
+\begin{enumerate}
+    \item Create a {\tt TAWK} variable pointing to the script: {\tt TAWK="\$T2HOME/scripts/tawk/tawk"}
+    \item Call {\tt tawk} as follows: {\tt \$TAWK `dport(80)' file.txt}
+\end{enumerate}
+
+\subsection{Using tawk With Non-Tranalyzer Files}\label{tawk-non-tranalyzer}
+{\tt tawk} can also be used with files which were not produced by Tranalyzer.
+
+\begin{itemize}
+    \item The input field separator can be specified with the {\tt --F} option, e.g., {\tt tawk --F `,' `program' file.csv}
+    \item The row listing the column names, can start with any character specified with the {\tt --s} option, e.g., {\tt tawk --s `\#' `program' file.txt}
+    \item All the column names must not be equal to a function name
+    \item Valid column names must start with a letter ({\tt a--z}, {\tt A--Z}) and can be followed by any number of alphanumeric characters or underscores
+    \item If no column names are present, use the {\tt --t} option to prevent tawk from trying to validate the column names.
+    \item If the column names are different from those used by Tranalyzer, refer to \refs{tawk:my_vars}.
+\end{itemize}
+
+\subsubsection{Mapping External Column Names to Tranalyzer Column Names}\label{tawk:my_vars}
+If the column names are different from those used by Tranalyzer, a mapping between the different names can be made in the file {\tt my\_vars}.
+The format of the file is as follows:
+\begin{verbatim}
+BEGIN {
+    _my_srcIP = non_t2_name_for_srcIP
+    _my_dstIP = non_t2_name_for_dstIP
+    ...
+}
+\end{verbatim}
+Once edited, run tawk with the {\tt --i \$T2HOME/scripts/tawk/my\_vars} option and the external column names will be automatically used by tawk functions, such as {\tt tuple2()}.
+For more details, refer to the {\tt my\_vars} file.
+
+\subsubsection{Using tawk with Bro Files}
+To use tawk with Bro log files, use the following command:
+\begin{center}
+    {\tt tawk -s `\#fields' -i \$T2HOME/scripts/tawk/vars\_bro `hdr() || !/\textasciicircum\#/ \{ program \}' file.log}
+\end{center}
+
+\subsection{Awk Cheat Sheet}
+\begin{itemize}
+    \item Tranalyzer flow files default field separator is `{\tt \textbackslash{}t}':
+    \begin{itemize}
+        \item {\bf Always} use {\tt awk -F`\textbackslash{}t'} (or {\tt awkf}/{\tt tawk}) when working with flow files.
+    \end{itemize}
+\item Load libraries, e.g., tawk functions, with {\tt --i}: {\tt awk --i file.awk `program' file.txt}
+    \item Always use {\tt strtonum} with hex numbers (bitfields)
+    \item Awk indices start at 1
+    \item Using tawk is recommended.
+\end{itemize}
+
+\subsubsection{Useful Variables}
+\begin{itemize}
+    \item {\tt \$0}: entire line
+    \item {\tt \$1}, {\tt \$2}, \ldots, {\tt \$NF}: column 1, 2, \ldots
+    \item {\tt FS}: field separator
+    \item {\tt OFS}: output field separator
+    \item {\tt ORS}: output record separator
+    \item {\tt NF}: number of fields (columns)
+    \item {\tt NR}: record (line) number
+    \item {\tt FNR}: record (line) number relative to the current file
+    \item {\tt FILENAME}: name of current file
+    \item To use external variables, use the {\tt -v} option, e.g., {\tt awk --v name="value" `\{ print name \}' file.txt}.
+\end{itemize}
+
+\subsubsection{Awk Program Structure}
+%\begin{itemize}
+%    \item {\tt if (val > 0) print}
+%    \item {\tt for (i = 0; i <= NF; i++) print \$i}
+%\end{itemize}
+
+\begin{verbatim}
+awk -F`\t' -i min -v OFS=`\t' -v h="$(hostname)" `
+    BEGIN { a = 0; b = 0; }         # Called once at the beginning
+    /^A/  { a++ }                   # Called for every row starting with char A
+    /^B/  { b++ }                   # Called for every row starting with char B
+          { c++ }                   # Called for every row
+    END   { print h, min(a, b), c } # Called once at the end
+' file.txt
+\end{verbatim}
+
+\subsection{Awk Templates}
+\begin{itemize}
+    \item Print the whole line:
+        \begin{itemize}
+            \item {\tt tawk `\{ print \}' file.txt}
+            \item {\tt tawk `\{ print \$0 \}' file.txt}
+            \item {\tt tawk `FILTER' file.txt}
+            \item {\tt tawk `FILTER \{ print \}' file.txt}
+            \item {\tt tawk `FILTER \{ print \$0 \}' file.txt}
+        \end{itemize}
+    \item Print selected columns only:
+        \begin{itemize}
+            \item {\tt tawk `\{ print \$srcIP4, \$dstIP4 \}' file.txt}
+            \item {\tt tawk `\{ print \$1, \$2 \}' file.txt}
+            \item {\tt tawk `\{ print \$4 "\textbackslash{}t" \$6 \}' file.txt}
+            \item \begin{verbatim}
+tawk `{
+    for (i = 6; i < NF; i++) {
+        printf "%s\t", $i
+    }
+    printf "%s\n", $NF
+}' file.txt
+\end{verbatim}
+        \end{itemize}
+    \item Keep the column names:
+        \begin{itemize}
+            \item {\tt tawk `hdr() || FILTER' file.txt}
+            \item {\tt awkf `NR == 1 || FILTER' file.txt}
+            \item {\tt awkf `/\textasciicircum{}\%/ || FILTER' file.txt}
+            \item {\tt awkf `/\textasciicircum{}\%[[:space:]]*[[:alpha:]][[:alnum:]\_]*\$/ || FILTER' file.txt}
+        \end{itemize}
+
+    \item Skip the column names:
+        \begin{itemize}
+            \item {\tt tawk `!hdr() \&\& FILTER' file.txt}
+            \item {\tt awkf `NR > 1 \&\& FILTER' file.txt}
+            \item {\tt awkf `!/\textasciicircum{}\%/ \&\& FILTER' file.txt}
+            \item {\tt awkf `!/\textasciicircum{}\%[[:space:]]*[[:alpha:]][[:alnum:]\_]*\$/ \&\& FILTER' file.txt}
+        \end{itemize}
+
+    \item Bitfields and hexadecimal numbers:
+        \begin{itemize}
+            \item {\tt tawk `bfeq(\$3,0)' file.txt}
+            \item {\tt awkf `strtonum(\$3) == 0' file.txt}
+            \item {\tt tawk `bitsanyset(\$3,1)' file.txt}
+            \item {\tt tawk `bitsallset(\$3,0x81)' file.txt}
+            \item {\tt awkf `and(strtonum(\$3), 0x1)' file.txt}
+        \end{itemize}
+
+    \item Split compound values:
+        \begin{itemize}
+            \item {\tt tawk `\{ print splitc(\$16, 1) \}' file.txt \# first element}
+            \item {\tt tawk `\{ print splitc(\$16, -1) \}' file.txt \# last element}
+            \item {\tt awkf `\{ split(\$16, A, "\_"); print A[1] \}' file.txt}
+            \item {\tt awkf `\{ n = split(\$16, A, "\_"); print A[n] \}' file.txt \# last element}
+            \item {\tt tawk `\{ print splitc(\$16) \}' file.txt}
+            \item {\tt awkf `\{ split(\$16, A, "\_"); for (i=1;i<=length(A);i++) print A[i] \}' file.txt}
+        \end{itemize}
+
+    \item Split repetitive values:
+        \begin{itemize}
+            \item {\tt tawk `\{ print splitr(\$16, 3) \}' file.txt \# third repetition}
+            \item {\tt tawk `\{ print splitr(\$16, -2) \}' file.txt \# second to last repetition}
+            \item {\tt awkf `\{ split(\$16, A, ";"); print A[3] \}' file.txt}
+            \item {\tt awkf `\{ n = split(\$16, A, ";"); print A[n] \}' file.txt \# last repetition}
+            \item {\tt tawk `\{ print splitr(\$16) \}' file.txt}
+            \item {\tt awkf `\{ split(\$16, A, ";"); for (i=1;i<=length(A);i++) print A[i] \}' file.txt}
+        \end{itemize}
+
+    \item Filter out empty strings:
+        \begin{itemize}
+            \item {\tt tawk `!strisempty(\$4)' file.txt}
+            \item {\tt awkf `!(length(\$4) == 0 || \$4 == "\textbackslash{}"\textbackslash{}"")' file.txt}
+        \end{itemize}
+
+    \item Compare strings (case sensitive):
+        \begin{itemize}
+            \item {\tt tawk `streq(\$3,\$4)' file.txt}
+            \item {\tt awkf `\$3 == \$4' file.txt}
+            \item {\tt awkf `\$3 == \textbackslash{}"text\textbackslash{}"' file.txt}
+        \end{itemize}
+
+    \item Compare strings (case insensitive):
+        \begin{itemize}
+            \item {\tt tawk `streqi(\$3,\$4)' file.txt}
+            \item {\tt awkf `tolower(\$3) == tolower(\$4)' file.txt}
+        \end{itemize}
+
+    \item Use regular expressions on specific columns:
+        \begin{itemize}
+            \item {\tt awkf `\$8 \textasciitilde{} /\textasciicircum{}192.168.1.[0-9]\{1,3\}\$/' file.txt  \# print matching rows}
+            \item {\tt awkf `\$8 !\textasciitilde{} /\textasciicircum{}192.168.1.[0-9]\{1,3\}\$/' file.txt \# print non-matching rows}
+        \end{itemize}
+
+    \item Use column names in awk:
+        \begin{itemize}
+            \item {\tt tawk `\{ print \$srcIP4, \$dstIP4 \}' file.txt}
+            \item \begin{verbatim}
+awkf `
+    NR == 1 {
+        for (i = 1; i <= NF; i++) {
+            if ($i == "srcIP4") srcIP4 = i
+            else if ($i == "dstIP4") dstIP4 = i
+        }
+        if (srcIP4 == 0 || dstIP4 == 0) {
+            print "No column with name srcIP4 and/or dstIP4"
+            exit
+        }
+    }
+    NR > 1 {
+        print $srcIP4, $dstIP4
+    }
+' file.txt
+\end{verbatim}
+            \item \begin{verbatim}
+awkf `
+    NR == 1 {
+        for (i = 1; i <= NF; i++) {
+            col[$i] = i
+        }
+    }
+    NR > 1 {
+        print $col["srcIP4"], $col["dstIP4"];
+    }
+
+' file.txt
+\end{verbatim}
+        \end{itemize}
+\end{itemize}
+
+\subsection{Examples}
+\begin{enumerate}
+    \item Pivoting (variant 1):
+        \begin{enumerate}
+            \item First extract an attribute of interest, e.g., an unresolved IP address in the {\tt Host:} field of the HTTP header:
+                \begin{center}{\tt tawk `aggr(\$httpHosts)' FILE\_flows.txt | tawk `\{ print unquote(\$1); exit \}'}\end{center}
+                \item Then, put the result of the last command in the {\tt badguy} variable and use it to extract flows involving this IP:
+                \begin{center}{\tt tawk -v badguy="\$(!!)" `host(badguy)' FILE\_flows.txt}\end{center}
+        \end{enumerate}
+    \item Pivoting (variant 2):
+        \begin{enumerate}
+            \item First extract an attribute of interest, e.g., an unresolved IP address in the {\tt Host:} field of the HTTP header, and store it into a {\tt badip} variable:
+                \begin{center}{\tt badip="\$(tawk `aggr(\$httpHosts)' FILE\_flows.txt | tawk `\{ print unquote(\$1);exit \}')"}\end{center}
+            \item Then, use the {\tt badip} variable to extract flows involving this IP:
+                \begin{center}{\tt tawk -v badguy="\$badip" `host(badguy)' FILE\_flows.txt}\end{center}
+        \end{enumerate}
+    \item Aggregate the number of bytes sent between source and destination addresses (independent of the protocol and port) and output the top 10 results:
+        \begin{center}{\tt tawk `aggr(\$srcIP4 "\textbackslash{}t" \$dstIP4, \$numBytesSnt, 10)' FILE\_flows.txt}\end{center}
+            \begin{center}{\tt tawk `aggr(tuple2(), \$numBytesSnt "\textbackslash{}t" "Flows", 10)' FILE\_flows.txt}\end{center}
+    \item Sort the flow file according to the duration (longest flows first) and output the top 5 results:
+        \begin{center}{\tt tawk `t2sort(duration, 5)' FILE\_flows.txt}\end{center}
+    \item Extract all TCP flows while keeping the header (column names):
+        \begin{center}{\tt tawk `hdr() || tcp()' FILE\_flows.txt}\end{center}
+    \item Extract all flows whose destination port is between 6000 and 6008 (included):
+        \begin{center}{\tt tawk `dport("6000-6008")' FILE\_flows.txt}\end{center}
+    \item Extract all flows whose destination port is 53, 80 or 8080:
+        \begin{center}{\tt tawk `dport("53;80;8080")' FILE\_flows.txt}\end{center}
+    \item Extract all flows whose source IP is in subnet 192.168.1.0/24 (using {\tt host} or {\tt net}):
+        \begin{center}{\tt tawk `shost("192.168.1.0/24")' FILE\_flows.txt}\end{center}
+        \begin{center}{\tt tawk `snet("192.168.1.0/24")' FILE\_flows.txt}\end{center}
+    \item Extract all flows whose source IP is in subnet 192.168.1.0/24 (using {\tt ipinrange}):
+        \begin{center}{\tt tawk `ipinrange(\$srcIP4, "192.168.1.0", "192.168.1.255")' FILE\_flows.txt}\end{center}
+    \item Extract all flows whose source IP is in subnet 192.168.1.0/24 (using {\tt ipinnet}):
+        \begin{center}{\tt tawk `ipinnet(\$srcIP4, "192.168.1.0", "255.255.255.0")' FILE\_flows.txt}\end{center}
+    \item Extract all flows whose source IP is in subnet 192.168.1.0/24 (using {\tt ipinnet} and a hex mask):
+        \begin{center}{\tt tawk `ipinnet(\$srcIP4, "192.168.1.0", 0xffffff00)' FILE\_flows.txt}\end{center}
+    \item Extract all flows whose source IP is in subnet 192.168.1.0/24 (using {\tt ipinnet} and the CIDR notation):
+        \begin{center}{\tt tawk `ipinnet(\$srcIP4, "192.168.1.0/24")' FILE\_flows.txt}\end{center}
+    \item Extract all flows whose source IP is in subnet 192.168.1.0/24 (using {\tt ipinnet} and a CIDR mask):
+        \begin{center}{\tt tawk `ipinnet(\$srcIP4, "192.168.1.0", 24)' FILE\_flows.txt}\end{center}
+\end{enumerate}
+For more examples, refer to tawk {\tt --d} option, e.g., {\tt tawk --d aggr}, where every function is documented and comes with a set of examples.
+The complete documentation can be consulted by running {\tt tawk --d all}.
+
+%\subsection{Known Bugs and Limitations}
+%Awk only supports number up to $2^{53}$. % Fixed with -M -v PREC=256
+%Bigger values may produce unexpected results\ldots
+
+\subsection{FAQ}
+
+\subsubsection{Can I use tawk with non Tranalyzer files?}
+Yes, refer to \refs{tawk-non-tranalyzer}.
+
+\subsubsection{Can I use tawk functions with non Tranalyzer column names?}
+Yes, edit the {\tt my\_vars} file and load it using {\tt --i \$T2HOME/scripts/tawk/my\_vars} option.
+Refer to \refs{tawk:my_vars} for more details.
+
+\subsubsection{Can I use tawk with files without column names?}
+Yes, use the {\tt --t} option to prevent tawk from trying to validate the column names.
+
+\subsubsection{The row listing the column names start with a {\tt `\#'} instead of a {\tt `\%'}\ldots Can I still use tawk?}
+Yes, use the {\tt --s} option to specify the first character, e.g., {\tt tawk -s `\#' `program'}
+
+\subsubsection{Can I process a CSV (Comma Separated Value) file with tawk?}
+The input field separator can be changed with the {\tt --F} option.
+To process a CSV file, run tawk as follows:\\
+{\tt tawk --F `,' `program' file.csv}
+
+\subsubsection{Can I produce a CSV (Comma Separated Value) file from tawk?}
+The output field separator ({\tt OFS}) can be changed with the {\tt --v OFS=`char'} option.
+To produce a CSV file, run tawk as follows: {\tt tawk --v OFS=`,' `program' file.txt}
+
+\subsubsection{Can I write my tawk programs in a file instead of the command line?}
+Yes, copy the program (without the single quotes) in a file, e.g., {\tt prog.txt} and run it as follows:\\
+{\tt tawk --f prog.txt file.txt}
+
+\subsubsection{Can I still use column names if I pipe data into tawk?}
+Yes, you can specify a file containing the column names with the {\tt --I} option as follows:\\
+{\tt cat file.txt | tawk --I colnames.txt `program'}
+
+\subsubsection{Can I use tawk if the row with the column names does not start with a special character?}
+Yes, you can specify the empty character with {\tt --s ""}.
+Refer to \refs{tawk-s-option} for more details.
+
+\subsubsection{I get a list of syntax errors from gawk... what is the problem?}
+The name of the columns is used to create variable names.
+If it contains forbidden characters, then an error similar to the following is reported.
+\begin{verbatim}
+gawk: /tmp/fileBndhdf:3: col-name = 3
+gawk: /tmp/fileBndhdf:3:          ^ syntax error
+\end{verbatim}
+Although tawk will try to replace forbidden characters with underscore, the best practice is to use only alphanumeric characters ({\tt A--Z}, {\tt a--z}, {\tt 0--9}) and underscore as column names.
+Note that a column name {\bf MUST NOT} start with a number.
+
+\subsubsection{Tawk cannot find the column names... what is the problem?}
+First, make sure the comment char ({\tt --s} option) is correctly set for your file (the default is {\tt `\%'}).
+Second, make sure the column names do not contain forbidden characters, i.e., use only alphanumeric and underscore and do not start with a number.
+If the row with column names is not the last one to start with the separator character, then specify the line number ({\tt NR}) as follows: {\tt --s `\#NR==3'} or {\tt --s `\%NR==2'}.
+Refer to \refs{tawk-s-option} for more details.
+
+\subsubsection{How to make tawk faster?}
+Tawk tries to validate the column names by ensuring that no column names is equal to a function name and that all column names used in the program exist. This verification process is quite slow and can easily by disabled by using the {\tt --t} option.
+
+\subsubsection{Wireshark refuses to open PCAP files generated with tawk {\tt--k} option...}
+If Wireshark displays the message {\tt Couldn't run /usr/bin/dumpcap in child process: Permission Denied.}, then this means that your user does not belong to the {\tt wireshark} group.
+To fix this issue, simply run the following command {\tt sudo gpasswd -a YOUR\_USERNAME wireshark} (you will then need to log off and on again).
+
+\end{document}

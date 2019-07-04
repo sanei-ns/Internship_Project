@@ -1,0 +1,438 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {sslDecode}
+    {SSL/TLS and OpenVPN}
+    {Tranalyzer Development Team}
+
+\section{sslDecode}\label{s:sslDecode}
+
+\subsection{Description}
+This plugin analyzes SSL/TLS and OpenVPN traffic.
+
+\subsection{Dependencies}
+If {\tt SSL\_ANALYZE\_CERT} is activated, then {\bf libssl} is required.
+\paragraph{Arch:} {\tt sudo pacman -S openssl}
+\paragraph{Ubuntu/Kali:} {\tt sudo apt-get install libssl-dev}
+\paragraph{OpenSUSE:} {\tt sudo zypper install libopenssl-devel}
+\paragraph{Red Hat/Fedora:} {\tt sudo yum install openssl-devel}
+\paragraph{Mac OSX:} {\tt brew install openssl}
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcl}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt SSL\_ANALYZE\_OVPN}  & 0 & Analyze OpenVPN (Experimental)\\\\
+
+    {\tt SSL\_EXT\_LIST} & 1 & Output the list and number of extensions\\
+    {\tt SSL\_MAX\_EXT}  & 8 & Maximum number of extensions to store\\\\
+
+    {\tt SSL\_EC}      & 1 & Output the list and number of elliptic curves\\
+    {\tt SSL\_MAX\_EC} & 6 & Maximum number of elliptic curves to store\\\\
+
+    {\tt SSL\_EC\_FORMATS}      & 1 & Output the list and number of elliptic curve formats\\
+    {\tt SSL\_MAX\_EC\_FORMATS} & 6 & Maximum number of elliptic curve formats to store\\\\
+
+    {\tt SSL\_PROTO\_LIST} &  1 & Output the list and number of protocols\\
+    {\tt SSL\_MAX\_PROTO}  &  6 & Maximum number of protocols to store\\
+    {\tt SSL\_PROTO\_LEN}  & 16 & Maximum number of characters per protocol\\\\
+
+    {\tt SSL\_CIPHER\_LIST} & 1 & Output the list and number of supported ciphers\\
+    {\tt SSL\_MAX\_CIPHER}  & 3 & Maximum number of ciphers to store\\\\
+
+    {\tt SSL\_ANALYZE\_CERT} & 1 & Analyze certificates\\\\
+
+    \multicolumn{3}{l}{If {\tt SSL\_ANALYZE\_CERT > 0}, the following flags are available:}\\\\
+
+    {\tt SSL\_CERT\_SERIAL}          & 1 & Print the certificate serial number\\
+    {\tt SSL\_CERT\_FINGPRINT}       & 1 & 0: no certificate fingerprint, 1: SHA1, 2: MD5\\
+    {\tt SSL\_CERT\_VALIDITY}        & 1 & Print certificates validity (Valid from/to, lifetime)\\
+    {\tt SSL\_CERT\_SIG\_ALG}        & 1 & Print the certificate signature algorithm\\
+    {\tt SSL\_CERT\_PUBKEY\_ALG}     & 1 & Print the certificate public key algorithm\\
+    {\tt SSL\_CERT\_ALG\_NAME\_LONG} & 0 & Whether to use short (0) or long (1) names for algorithms\\
+    {\tt SSL\_CERT\_PUBKEY\_TS}      & 1 & Print certificates public key type and size\\\\
+
+    {\tt SSL\_CERT\_SUBJECT} & 2 & 0: no info about cert subject,\\
+                             &   & 1: whole subject as one string,\\
+                             &   & 2: selected fields (see below)\\\\
+
+    {\tt SSL\_CERT\_ISSUER}  & 2 & 0: no info about cert issuer,\\
+                             &   & 1: whole issuer as one string,\\
+                             &   & 2: selected fields (see below)\\\\
+
+    {\tt SSL\_CERT\_COMMON\_NAME} & 1 & Print the common name of the issuer/subject\\
+    {\tt SSL\_CERT\_ORGANIZATION} & 1 & Print the organization name of the issuer/subject\\
+    {\tt SSL\_CERT\_ORG\_UNIT}    & 1 & Print the organizational unit of the issuer/subject\\
+    {\tt SSL\_CERT\_LOCALITY}     & 1 & Print the locality name of the issuer/subject\\
+    {\tt SSL\_CERT\_STATE}        & 1 & Print the state/province name of the issuer/subject\\
+    {\tt SSL\_CERT\_COUNTRY}      & 1 & Print the country of the issuer/subject (iso3166)\\\\
+
+    {\tt SSL\_RM\_CERTDIR}        & 1 & Remove {\tt SSL\_CERT\_PATH} before starting\\
+    {\tt SSL\_SAVE\_CERT}         & 0 & Save certificates\\
+    {\tt SSL\_CERT\_NAME\_FINDEX} & 0 & Prepend the flowIndex to the certificate name\\\\
+
+    {\tt SSL\_BLIST}              & 0 & Flag blacklisted certificates\\% & {\tt SSL\_SAVE\_CERT=1||SSL\_CERT\_FINGPRINT=1}\\
+    {\tt SSL\_JA3}                & 1 & Output JA3 fingerprints (hash and description)\\% & {\tt SSL\_SAVE\_CERT=1||SSL\_CERT\_FINGPRINT=1}\\
+    {\tt SSL\_JA3\_STR}           & 0 & Also output JA3 fingerprints before hashing\\% & {\tt SSL\_SAVE\_CERT=1||SSL\_CERT\_FINGPRINT=1}\\
+    %{\tt SSL\_CERT\_PATH} & {\small\tt``/tmp/TranCerts/''} & Folder for saved certificates\\
+    %{\tt SSL\_CERT\_EXT}  & {\small\tt``.pem''}            & Extension for saved certificates\\
+    \bottomrule
+\end{longtable}
+
+If {\tt SSL\_SAVE\_CERT==1} then, certificates are saved under {\tt SSL\_CERT\_PATH} (default: {\tt /tmp/TranCerts/}) with the extension {\tt SSL\_CERT\_EXT} (default: {\tt .pem}) and the SHA1 or MD5 fingerprint as filename.
+
+\subsection{Flow File Output}
+The sslDecode plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{sslStat}}  & H16 & Status\\
+    {\tt \nameref{sslProto}} & H16 & Protocol\\\\
+
+    {\tt \nameref{ovpnType}} & H16 & OpenVPN message types & {\small\tt SSL\_ANALYZE\_OVPN=1}\\
+    {\tt ovpnSessionID}      & U64 & OpenVPN session ID    & {\small\tt SSL\_ANALYZE\_OVPN=1}\\\\
+
+    {\tt \nameref{sslFlags}}   & H8  & SSL flags\\
+    {\tt \nameref{sslVersion}} & H16 & SSL/TLS Version\\
+    {\tt \nameref{sslVuln}}    & H8  & Vulnerabilities\\
+    {\tt \nameref{sslAlert}}   & H32 & Alert type\\
+    {\tt \nameref{sslCipher}}  & H16 & Preferred (Client)/Negotiated (Server) cipher\\
+
+    {\tt sslNumExt}            & U16  & Number of extensions & {\small\tt SSL\_EXT\_LIST=1}\\
+    {\tt \nameref{sslExtList}} & RH16 & List of extensions   & {\small\tt SSL\_EXT\_LIST=1}\\
+
+    {\tt sslNumECPt}      & U16  & Number of elliptic curve points & {\small\tt SSL\_EC=1}\\
+    {\tt sslECPt}         & RH16 & List of elliptic curve points   & {\small\tt SSL\_EC=1}\\
+    {\tt sslNumECFormats} & U8   & Number of EC point formats      & {\small\tt SSL\_EC\_FORMATS=1}\\
+    {\tt sslECFormats}    & RH8  & List of EC point formats        & {\small\tt SSL\_EC\_FORMATS=1}\\
+
+    {\tt sslNumProto}  & U16 & Number of protocols & {\small\tt SSL\_PROTO\_LIST=1}\\
+    {\tt sslProtoList} & RS  & List of protocols   & {\small\tt SSL\_PROTO\_LIST=1}\\
+
+    {\tt sslNumCipher} & U16 & Number of supported ciphers & {\small\tt SSL\_CIPHER\_LIST=1}\\
+    {\tt \hyperref[sslCipher]{sslCipherList}} & RH16 & List of supported ciphers & {\small\tt SSL\_CIPHER\_LIST=1}\\
+
+    {\tt \hyperref[sslNumRec]{sslNumCC\_}} & U16\_        & Number of change\_cipher records,\\
+    {\tt \qquad\hyperref[sslNumRec]{A\_}}  & \qquad U16\_ & \qquad Number of alert records,\\
+    {\tt \qquad\hyperref[sslNumRec]{H\_}}  & \qquad U16\_ & \qquad Number of handshake records,\\
+    {\tt \qquad\hyperref[sslNumRec]{AD\_}} & \qquad U64\_ & \qquad Number of application data records,\\
+    {\tt \qquad\hyperref[sslNumRec]{HB}}   & \qquad U64   & \qquad Number of heartbeat records\\
+
+    {\tt sslSessIdLen}  & U8  & Session ID length\\
+    {\tt sslGMTTime}    & RTS & GMT Unix Time\\
+    {\tt sslServerName} & RS  & server name\\\\
+
+    \multicolumn{4}{l}{If {\tt SSL\_ANALYZE\_CERT == 1}, the following columns are output:}\\\\
+
+    {\tt sslCertVersion} & RU8 & Certificate version          & {\small\tt SSL\_CERT\_FINGPRINT=1}\\
+    {\tt sslCertSerial}  & RSC & Certificate serial number    & {\small\tt SSL\_CERT\_SERIAL=1}\\
+    {\tt sslCertSha1FP}  & RSC & Certificate SHA1 fingerprint & {\small\tt SSL\_CERT\_FINGPRINT=1}\\
+    {\tt sslCertMd5FP}   & RSC & Certificate MD5 fingerprint  & {\small\tt SSL\_CERT\_FINGPRINT=2}\\
+
+    {\tt\hyperref[sslValidity]{sslCNotValidBefore\_}} & TS\_        & Certificate validity: not valid before, & {\small\tt SSL\_CERT\_VALIDITY=1}\\
+    {\tt\qquad\hyperref[sslValidity]{after\_}}        & \qquad TS\_ & \qquad not valid after, & \\
+    {\tt\qquad\hyperref[sslValidity]{lifetime}}       & \qquad U64  & \qquad lifetime         & \\
+
+    {\tt sslCSigAlg}     & RS         & Certificate signature algorithm           & {\small\tt SSL\_CERT\_SIG\_ALG=1}\\
+    {\tt sslCKeyAlg}     & RS         & Certificate public key algorithm          & {\small\tt SSL\_CERT\_PUBKEY\_ALG=1}\\
+    {\tt sslCPKeyType\_} & SC\_       & Certificate public key type,              & {\small\tt SSL\_CERT\_PUBKEY\_TS=1}\\
+    {\tt \qquad Size}    & \qquad U16 & \qquad Certificate public key size (bits) & \\\\
+
+    \multicolumn{4}{l}{If {\tt SSL\_CERT\_SUBJECT > 0}, the following columns are output:}\\\\
+
+    {\tt sslCSubject}             & RS & Certificate subject                          & {\small\tt SSL\_CERT\_SUBJECT=1}\\\\
+    {\tt sslCSubjectCommonName}   & RS & Certificate subject common name              & {\small\tt SSL\_CERT\_SUBJECT=2}\\
+    {\tt sslCSubjectOrgName}      & RS & Certificate subject organization name        & {\small\tt SSL\_CERT\_SUBJECT=2}\\
+    {\tt sslCSubjectOrgUnit}      & RS & Certificate subject organizational unit name & {\small\tt SSL\_CERT\_SUBJECT=2}\\
+    {\tt sslCSubjectLocality}     & RS & Certificate subject locality name            & {\small\tt SSL\_CERT\_SUBJECT=2}\\
+    {\tt sslCSubjectState}        & RS & Certificate subject state or province name   & {\small\tt SSL\_CERT\_SUBJECT=2}\\
+    {\tt sslCSubjectCountry}      & RS & Certificate subject country name             & {\small\tt SSL\_CERT\_SUBJECT=2}\\\\
+
+    \multicolumn{4}{l}{If {\tt SSL\_CERT\_ISSUER > 0}, the following columns are output:}\\\\
+
+    {\tt sslCIssuer}             & RS & Certificate issuer                          & {\small\tt SSL\_CERT\_ISSUER=1}\\\\
+    {\tt sslCIssuerCommonName}   & RS & Certificate issuer common name              & {\small\tt SSL\_CERT\_ISSUER=2}\\
+    {\tt sslCIssuerOrgName}      & RS & Certificate issuer organization name        & {\small\tt SSL\_CERT\_ISSUER=2}\\
+    {\tt sslCIssuerOrgUnit}      & RS & Certificate issuer organizational unit name & {\small\tt SSL\_CERT\_ISSUER=2}\\
+    {\tt sslCIssuerLocality}     & RS & Certificate issuer locality name            & {\small\tt SSL\_CERT\_ISSUER=2}\\
+    {\tt sslCIssuerState}        & RS & Certificate issuer state or province name   & {\small\tt SSL\_CERT\_ISSUER=2}\\
+    {\tt sslCIssuerCountry}      & RS & Certificate issuer country name             & {\small\tt SSL\_CERT\_ISSUER=2}\\\\
+
+    {\tt sslBlistCat}            & RS  & Blacklisted certificate category & {\small\tt SSL\_BLIST=1}\\\\
+
+    {\tt sslJA3Hash}             & RSC & JA3 fingerprint                  & {\small\tt SSL\_JA3=1}\\
+    {\tt sslJA3Desc}             & RS  & JA3 description                  & {\small\tt SSL\_JA3=1}\\
+    {\tt sslJA3Str}              & RS  & JA3 string                       & {\small\tt SSL\_JA3=1\&\&}\\
+                                 &     &                                  & {\small\tt SSL\_JA3\_STR=1}\\\\
+    \bottomrule
+\end{longtable}
+
+If {\tt SSL\_CERT\_SUBJECT=2} or {\tt SSL\_CERT\_ISSUER=2}, then the columns displayed are controlled by the following self-explanatory flags:
+\begin{itemize}
+    \item {\tt SSL\_CERT\_COMMON\_NAME},
+    \item {\tt SSL\_CERT\_ORGANIZATION},
+    \item {\tt SSL\_CERT\_ORG\_UNIT},
+    \item {\tt SSL\_CERT\_LOCALITY},
+    \item {\tt SSL\_CERT\_STATE},
+    \item {\tt SSL\_CERT\_COUNTRY}.
+\end{itemize}
+
+\clearpage
+
+\subsubsection{sslStat}\label{sslStat}
+The hex based status variable {\tt sslStat} is defined as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf sslStat} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt 0x0001} & message had mismatched version\\
+    {\tt 0x0002} & record was too long (max 16384)\\
+    {\tt 0x0004} & record was malformed, eg, invalid value\\
+    {\tt 0x0008} & certificate had expired\\
+    {\tt 0x0010} & connection was closed due to fatal alert\\
+    {\tt 0x0020} & connection was renegotiated (existed before)\\
+    {\tt 0x0040} & peer not allowed to send heartbeat requests\\\\
+
+    {\tt 0x0080} & cipher list truncated\ldots increase {\tt SSL\_MAX\_CIPHER}\\
+    {\tt 0x0100} & extension list truncated\ldots increase {\tt SSL\_MAX\_EXT}\\
+    {\tt 0x0200} & protocol list truncated\ldots increase {\tt SSL\_MAX\_PROTO}\\
+    {\tt 0x0400} & protocol name truncated\ldots increase {\tt SSL\_PROTO\_LEN}\\
+    {\tt 0x0800} & EC or EC formats list truncated... increase {\tt SSL\_MAX\_EC} or {\tt SSL\_MAX\_EC\_FORMATS}\\\\
+    {\tt 0x1000} & Certificate is blacklisted\\
+    {\tt 0x2000} & weak cipher detected (Null, DES, RC4 (RFC7465), ADH, 40/56 bits)\\
+    {\tt 0x4000} & weak protocol detected (SSL 2.0, SSL 3.0)\\
+    {\tt 0x8000} & weak key detected\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{sslProto}\label{sslProto}
+The hex based protocol variable {\tt sslProto} is defined as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf sslProto} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt 0x0001} & HTTP/0.9, HTTP/1.0, HTTP/1.1 (ALPN starts with {\tt http})\\
+    {\tt 0x0002} & HTTP/2 ({\tt h2}, {\tt h2c})\\
+    {\tt 0x0004} & HTTP/3 ({\tt h3})\\
+    {\tt 0x0008} & SPDY \\
+    {\tt 0x0010} & IMAP \\
+    {\tt 0x0020} & POP3 \\
+    {\tt 0x0040} & FTP \\
+    {\tt 0x0080} & XMPP jabber \\
+    {\tt 0x0100} & STUN/TURN \\
+    {\tt 0x0200} & APNS (Apple Push Notification Service) \\
+    {\tt 0x0400} & WebRTC Media and Data \\
+    {\tt 0x0800} & \href{https://tools.ietf.org/html/rfc8323}{CoAP} \\
+    {\tt 0x1000} & \href{https://tools.ietf.org/html/rfc5804}{ManageSieve} \\
+    {\tt 0x2000} & RTP or RTCP\footnote{Guessed by the presence of the {\tt use-srtp} hello extension}\\
+    {\tt 0x4000} & OpenVPN\footnote{Guessed by being able to decode the protocol}\\
+    {\tt 0x8000} & Unknown protocol (ALPN matched none of the above)\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{ovpnType}\label{ovpnType}
+The {\tt ovpnType} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf ovpnType} & {\bf Description} \\
+    \midrule\endhead%
+    $2^{1}$ (={\tt 0x0002}) & {\tt P\_CONTROL\_HARD\_RESET\_CLIENT\_V1}\\
+    $2^{2}$ (={\tt 0x0004}) & {\tt P\_CONTROL\_HARD\_RESET\_SERVER\_V1}\\
+    $2^{3}$ (={\tt 0x0008}) & {\tt P\_CONTROL\_SOFT\_RESET\_V1}\\
+    $2^{4}$ (={\tt 0x0010}) & {\tt P\_CONTROL\_V1}\\
+    $2^{5}$ (={\tt 0x0020}) & {\tt P\_ACK\_V1}\\
+    $2^{6}$ (={\tt 0x0040}) & {\tt P\_DATA\_V1}\\
+    $2^{7}$ (={\tt 0x0080}) & {\tt P\_CONTROL\_HARD\_RESET\_CLIENT\_V2}\\
+    $2^{8}$ (={\tt 0x0100}) & {\tt P\_CONTROL\_HARD\_RESET\_SERVER\_V2}\\
+    $2^{9}$ (={\tt 0x0200}) & {\tt P\_DATA\_V2}\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{sslFlags}\label{sslFlags}
+The {\tt sslFlags} is defined as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf sslFlags} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x01} & request is SSLv2\\
+    {\tt 0x02} & SSLv3 version on `request' layer different than on `record' layer\\
+    {\tt 0x04} & {\tt gmt\_unix\_time} is small (less than 1 year since epoch, probably seconds since boot)\\
+    {\tt 0x08} & {\tt gmt\_unix\_time} is more than 5 years in the future (probably random)\\
+    {\tt 0x10} & random data (28 bytes) is not random\\
+    {\tt 0x20} & compression (deflate) is enabled\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{sslVersion}\label{sslVersion}
+The hex based version variable {\tt sslVersion} is defined as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf sslVersion} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt 0x0300} & SSL 3.0\\
+    {\tt 0x0301} & TLS 1.0\\
+    {\tt 0x0302} & TLS 1.1\\
+    {\tt 0x0303} & TLS 1.2\\
+    {\tt 0x0304} & TLS 1.3\\
+    {\tt 0xfefd} & DTLS 1.2\\
+    {\tt 0xfeff} & DTLS 1.0\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{sslVuln}\label{sslVuln}
+The hex based vulnerability variable {\tt sslVuln} is defined as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf sslVuln} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt 0x01} & vulnerable to BEAST\\
+    {\tt 0x02} & vulnerable to BREACH\\
+    {\tt 0x04} & vulnerable to CRIME\\
+    {\tt 0x08} & vulnerable to FREAK\\
+    {\tt 0x10} & vulnerable to POODLE\\
+    {\tt 0x20} & HEARTBLEED attack attempted\\
+    {\tt 0x40} & HEARTBLEED attack successful (Not implemented)\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{sslAlert}\label{sslAlert}
+The hex based alert variable {\tt sslAlert} is defined as follows:\\
+\begin{minipage}{0.48\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf sslAlert} & {\bf Description} \\
+        \midrule\endhead%
+        {\tt 0x00000001} & close notify\\
+        {\tt 0x00000002} & unexpected message\\
+        {\tt 0x00000004} & bad record MAC\\
+        {\tt 0x00000008} & decryption failed\\
+        {\tt 0x00000010} & record overflow\\
+        {\tt 0x00000020} & decompression failed\\
+        {\tt 0x00000040} & handshake failed\\
+        {\tt 0x00000080} & no certificate\\
+        {\tt 0x00000100} & bad certificate\\
+        {\tt 0x00000200} & unsupported certificate\\
+        {\tt 0x00000400} & certificate revoked\\
+        {\tt 0x00000800} & certificate expired\\
+        {\tt 0x00001000} & certificate unknown\\
+        {\tt 0x00002000} & illegal parameter\\
+        {\tt 0x00004000} & unknown CA\\
+        {\tt 0x00008000} & access denied\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}%
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf sslAlert} & {\bf Description} \\
+        \midrule\endhead%
+        {\tt 0x00010000} & decode error\\
+        {\tt 0x00020000} & decrypt error\\
+        {\tt 0x00040000} & export restriction\\
+        {\tt 0x00080000} & protocol version\\
+        {\tt 0x00100000} & insufficient security\\
+        {\tt 0x00200000} & internal error\\
+        {\tt 0x00400000} & user canceled\\
+        {\tt 0x00800000} & no renegotiation\\
+        {\tt 0x01000000} & unsupported extension\\
+        {\tt 0x02000000} & inappropriate fallback\\
+        {\tt 0x04000000} & certificate unobtainable\\
+        {\tt 0x08000000} & unrecognized name\\
+        {\tt 0x10000000} & bad certificate status response\\
+        {\tt 0x20000000} & bad certificate hash value\\
+        {\tt 0x40000000} & unknown PSK identity\\
+        {\tt 0x80000000} & no application protocol\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+
+\subsubsection{sslCipher}\label{sslCipher}
+The {\tt sslCipher} variable represents the preferred cipher for the client and the negotiated cipher for the server. The corresponding name can be found in the {\em src/sslCipher.h} file.\\
+
+\subsubsection{sslNumCC\_A\_H\_AD\_HB}\label{sslNumRec}
+The number of message variable {\tt sslNumCC\_A\_H\_AD\_HB} decomposed as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf sslNumCC\_A\_H\_AD\_HB} & {\bf Description} \\
+    \midrule\endhead%
+    {\tt sslNumCC} & number of change cipher records\\
+    {\tt sslNumA}  & number of alerts records\\
+    {\tt sslNumH}  & number of handshake records\\
+    {\tt sslNumAD} & number of application data records\\
+    {\tt sslNumHB} & number of heartbeat records\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{sslExtList}\label{sslExtList}
+The list of extensions is to be interpreted as follows:
+
+\begin{minipage}{0.48\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf sslExt} & {\bf Description}\\
+        \midrule\endhead%
+        {\tt 0x0000} & Server name\\
+        {\tt 0x0001} & Max fragment length\\
+        {\tt 0x0002} & Client certificate URL\\
+        {\tt 0x0003} & Trusted CA keys\\
+        {\tt 0x0004} & Truncated HMAC\\
+        {\tt 0x0005} & Status request\\
+        {\tt 0x0006} & User mapping\\
+        {\tt 0x0007} & Client authz\\
+        {\tt 0x0008} & Server authz\\
+        {\tt 0x0009} & Cert type\\
+        {\tt 0x000a} & Supported groups (elliptic curves)\\
+        {\tt 0x000b} & EC point formats\\
+        {\tt 0x000c} & SRP\\
+        {\tt 0x000d} & Signature algorithms\\
+        {\tt 0x000e} & Use SRTP\\
+        {\tt 0x000f} & Heartbeat\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf sslExt} & {\bf Description}\\
+        \midrule\endhead%
+        {\tt 0x0010} & ALPN\\
+        {\tt 0x0011} & Status request v2\\
+        {\tt 0x0012} & Signed certificate timestamp\\
+        {\tt 0x0013} & Client certificate type\\
+        {\tt 0x0014} & Server certificate type\\
+        {\tt 0x0015} & Padding\\
+        {\tt 0x0016} & Encrypt then MAC\\
+        {\tt 0x0017} & Extended master secret type\\
+        {\tt 0x0023} & Session ticket\\
+        {\tt 0x0028} & Extended random\\
+        {\tt 0x3374} & NPN\\
+        {\tt 0x3377} & Origin bound cert\\
+        {\tt 0x337c} & Encrypted client cert\\
+        {\tt 0x754f} & Channel ID old\\
+        {\tt 0x7550} & Channel ID\\
+        {\tt 0xff01} & renegotiation\_info\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+
+\subsubsection{sslCNotValidBefore\_after\_lifetime}\label{sslValidity}
+The {\tt sslCNotValidBefore\_after\_lifetime} indicates the validity period of the certificate, i.e., not valid before / after, and the number of seconds between those two dates.
+
+\subsection{Plugin Report Output}
+The number of OpenVPN, Tor, SSL 2.0, 3.0, TLS 1.0, 1.1, 1.2 and 1.3 and DTLS 1.0 (OpenSSL pre 0.9.8f), 1.0 and 1.2 flows is reported.
+
+\subsection{TODO}
+In order to analyze all certificates, we need to reassemble packets.
+
+\end{document}

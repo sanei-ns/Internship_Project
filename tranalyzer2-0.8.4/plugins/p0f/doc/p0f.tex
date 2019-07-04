@@ -1,0 +1,70 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {p0f} % Plugin name
+    {OS/Application Fingerprinting} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{p0f}\label{s:p0f}
+
+\subsection{Description}
+The p0f plugin tries to fingerprint OS and applications.
+
+\subsection{Dependencies}
+
+\subsubsection{Other Plugins}
+This plugin requires the {\bf sslDecode} plugin with the following flags activated, i.e., set to 1:
+\begin{itemize}
+    \item {\tt SSL\_EXT\_LIST}
+    \item {\tt SSL\_CIPHER\_LIST}
+\end{itemize}
+
+\subsubsection{Required Files}
+The file {\tt p0f-ssl.txt} is required.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt P0F\_SSL\_VER}     & 1 & whether or not to consider the version for fingerprint match\\
+    {\tt P0F\_SSL\_NCIPHER} & 1 & whether or not to consider the number of ciphers for fingerprint match\\
+    {\tt P0F\_SSL\_NUMEXT}  & 1 & whether or not to consider the number of extensions for fingerprint match\\
+    {\tt P0F\_SSL\_FLAGS}   & 1 & whether or not to consider flags for fingerprint match\\
+    {\tt P0F\_SSL\_CIPHER}  & 1 & whether or not to consider ciphers for fingerprint match\\
+    {\tt P0F\_SSL\_EXT}     & 1 & whether or not to consider extensions for fingerprint match\\\\
+    {\tt P0F\_SSL\_ELEN}    &    6 & Maximum length of cipher or extension\\
+    {\tt P0F\_SSL\_NSIG}    &   64 & Maximum number of signatures to read\\
+    {\tt P0F\_SSL\_SLEN}    &  128 & Maximum length of a string (os, browser, comment)\\
+    {\tt P0F\_SSL\_LLEN}    & 1024 & Maximum length of a line in the DB\\\\
+    {\tt P0F\_SSL\_DB} & {\tt "p0f-ssl.txt"} & Name of the database to use\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The p0f plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt p0fSSLRule}    & U16 & p0f SSL fingerprint rule number\\
+    {\tt p0fSSLOS}      &   S & p0f SSL OS fingerprint\\
+    {\tt p0fSSLOS2}     &   S & p0f SSL OS fingerprint (2)\\
+    {\tt p0fSSLBrowser} &   S & p0f SSL browser fingerprint\\
+    {\tt p0fSSLComment} &   S & p0f SSL fingerprint comment\\
+    \bottomrule
+\end{longtable}
+
+\subsection{References}
+\begin{itemize}
+    \item \url{https://idea.popcount.org/2012-06-17-ssl-fingerprinting-for-p0f}
+\end{itemize}
+
+\end{document}

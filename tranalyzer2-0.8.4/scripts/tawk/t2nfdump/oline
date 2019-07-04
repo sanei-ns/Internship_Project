@@ -1,0 +1,23 @@
+#!/usr/bin/env awk
+#
+# nfdump line output format
+#
+# Dependencies:
+#   - basicFlow
+#   - basicStats
+#
+# Example:
+#   - tawk '{ print oline() }' file
+
+@include "byt"
+@include "dap"
+@include "pkt"
+@include "pr"
+@include "sap"
+@include "td"
+@include "ts"
+
+function oline() {
+    return ts() OFS td() OFS pr() OFS sap() OFS "->" OFS dap() OFS \
+           pkt() OFS byt() #OFS fl()
+}

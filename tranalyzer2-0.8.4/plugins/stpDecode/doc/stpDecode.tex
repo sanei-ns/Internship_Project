@@ -1,0 +1,176 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find 't2doc.cls'}
+}
+
+\begin{document}
+
+\trantitle
+    {stpDecode} % Plugin name
+    {Spanning Tree Protocol (STP)} % Short description
+    {Tranalyzer Development Team} % author(s)
+
+\section{stpDecode}\label{s:stpDecode}
+
+\subsection{Description}
+The stpDecode plugin analyzes STP traffic.
+
+%\subsection{Dependencies}
+
+%\traninput{file} % use this command to input files
+%\traninclude{file} % use this command to include files
+
+%\tranimg{image} % use this command to include an image (must be located in a subfolder ./img/)
+
+%\subsubsection{External Libraries}
+%This plugin depends on the {\bf XXX} library.
+%\paragraph{Ubuntu:} {\tt sudo apt-get install XXX}
+%\paragraph{Arch:} {\tt sudo pacman -S XXX}
+%
+%\subsubsection{Other Plugins}
+%This plugin requires the {\bf XXX} plugin.
+%
+%\subsubsection{Required Files}
+%The file {\tt file.txt} is required.
+
+%\subsection{Configuration Flags}
+%The following flags can be used to control the output of the plugin:
+%\begin{longtable}{lcll}
+%    \toprule
+%    {\bf Name} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+%    \midrule\endhead%
+%    {\tt FLAG1} & 0 & Whether (1) or not (0) to activate FLAG1\\
+%    {\tt OPT2} & 1 & 0: no OPT2, 1: one OPT2, 2: two OPT2 & {\tt FLAG1=1}\\
+%    \bottomrule
+%\end{longtable}
+
+\subsection{Flow File Output}
+The stpDecode plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt \nameref{stpStat}}    & H8 & Status \\
+    %{\tt \nameref{stpProto}}   & H16 & Protocol Identifier \\ % Always 0
+    {\tt \nameref{stpVersion}} & U8 & Protocol Version Identifier \\
+    {\tt \nameref{stpType}}    & H8 & Aggregated BPDU Types \\
+    {\tt \nameref{stpFlags}}   & H8 & Aggregated BPDU flags \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{stpStat}\label{stpStat}
+The {\tt stpStat} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf stpStat} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x01} & Flow is STP\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{stpProto}\label{stpProto}
+The {\tt stpProto} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf stpProto} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x0000} & Spanning Tree Protocol\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{stpVersion}\label{stpVersion}
+The {\tt stpVersion} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf stpVersion} & {\bf Description}\\
+    \midrule\endhead%
+    0 & Spanning Tree\\
+    2 & Rapid Spanning Tree\\
+    3 & Multiple Spanning Tree\\
+    4 & Shortest Path Tree\\
+    \bottomrule
+\end{longtable}
+
+\clearpage
+\subsubsection{stpType}\label{stpType}
+The {\tt stpType} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf stpType} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x00} & Configuration\\
+    %{\tt 0x01} & ---\\
+    {\tt 0x02} & Rapid/Multiple Spanning Tree\\
+    %{\tt 0x04} & ---\\
+    %{\tt 0x08} & ---\\
+    %{\tt 0x10} & ---\\
+    %{\tt 0x20} & ---\\
+    %{\tt 0x40} & ---\\
+    {\tt 0x80} & Topology Change Notification\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{stpFlags}\label{stpFlags}
+The {\tt stpFlags} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf stpFlags} & {\bf Description}\\
+    \midrule\endhead%
+    $2^0$ (={\tt 0x0\textcolor{magenta}{1}}) & Topology Change Acknowledgment\\
+    $2^1$ (={\tt 0x0\textcolor{magenta}{2}}) & Agreement\\
+    $2^2$ (={\tt 0x0\textcolor{magenta}{4}}) & Forwarding\\
+    $2^3$ (={\tt 0x0\textcolor{magenta}{8}}) & Learning\\
+    $2^4$ (={\tt 0x\textcolor{magenta}{1}0}) & \multirow{2}{*}{Port Role: {\tt 0x00}: Unknown, {\tt 0x10}: Alternate or Backup, {\tt 0x20}: Root, {\tt 0x30}: Designated}\\
+    $2^5$ (={\tt 0x\textcolor{magenta}{2}0}) & \\
+    $2^6$ (={\tt 0x\textcolor{magenta}{4}0}) & Proposal\\
+    $2^7$ (={\tt 0x\textcolor{magenta}{8}0}) & Topology Change\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Packet File Output}
+In packet mode ({\tt --s} option), the stpDecode plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description}\\% & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt \nameref{stpProto}}   & H16 & Protocol Identifier\\
+    {\tt \nameref{stpVersion}} & U8  & Protocol Version Identifier\\
+    {\tt \nameref{stpType}}    & H8  & BPDU Type\\
+    {\tt \nameref{stpFlags}}   & H8  & BPDU flags\\
+    {\tt stpRootPrio}          & U16 & Root Priority\\
+    {\tt stpRootHw}            & MAC & Root System ID\\
+    {\tt stpRootCost}          & U32 & Root Path Cost\\
+    {\tt stpBridgePrio}        & U16 & Bridge Priority\\
+    {\tt stpBridgeHw}          & MAC & Bridge System ID\\
+    {\tt stpPort}              & H16 & Port Identifier\\
+    {\tt stpMsgAge}            & U16 & Message Age\\
+    {\tt stpMaxAge}            & U16 & Max Age\\
+    {\tt stpHello}             & U16 & Hello Time\\
+    {\tt stpForward}           & U16 & Forward Delay\\
+	{\tt stpPvstOrigVlan}      & U16 & Originating VLAN (PVSTP+)\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Plugin Report Output}
+The number of STP packets is reported.
+
+%\subsection{Post-Processing}
+%
+%\subsection{Example Output}
+%
+%\subsection{Known Bugs and Limitations}
+%
+%\subsection{TODO}
+%\begin{itemize}
+%    \item TODO1
+%    \item TODO2
+%\end{itemize}
+%
+%\subsection{References}
+%\begin{itemize}
+%    \item \href{https://tools.ietf.org/html/rfcXXXX}{RFCXXXX}: Title
+%    \item \url{https://www.iana.org/assignments/}
+%\end{itemize}
+
+\end{document}

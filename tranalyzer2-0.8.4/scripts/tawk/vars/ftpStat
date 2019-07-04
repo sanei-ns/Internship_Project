@@ -1,0 +1,10 @@
+#H bit | ftpStat | Description
+#H =============================================================================
+     0 | 0x01    | FTP port found
+     1 | 0x02    | FTP passive parent flow
+     2 | 0x04    | FTP passive parent flow write finished
+     3 | 0x08    | FTP active parent flow
+#W   4 | 0x10    | FTP Hash map full
+#E   5 | 0x20    | File error, FTP_SAVE == 1
+#W   6 | 0x40    | Data flow not detected
+#W   7 | 0x80    | array overflow

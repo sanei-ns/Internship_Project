@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+#
+# Configuration file for basicStats
+#
+# Usage: ./t2plconf
+#
+# [Defining the configurations options]
+#
+# If no configuration options are available, ITEMS must be set as follows:
+#   - ITEMS=(none)
+#
+# Otherwise, enter configurations items as follows:
+#   "NAME" "TYPE" "DEPENDENCIES" "DESCRIPTION"
+#
+#   - TYPE can be:
+#       - check (boolean),
+#       - radio (set of values),
+#       - range (min <= val <= max)
+#       - text
+#
+#   - DEPENDENCIES MUST be numeric, e.g., "A == 1 && (B < 4 || C >= 1)"
+#
+#   - DESCRIPTION for type 'check' MUST NOT contain tabs ('\t')
+#   - DESCRIPTION for TYPE 'range' MUST NOT contain '\t' or ':'
+#   - DESCRIPTION for TYPE 'radio' MUST NOT contain '\t', ':' or ';'
+#   - DESCRIPTION for TYPE 'text'  MUST NOT contain '\t'
+#
+#   - DESCRIPTION MUST be formatted according to the type (see examples below):
+#       - check: description
+#       - radio: description ';' val1 ':' description1 ';' valN ':' descriptionN
+#       - range: description ':' min ' ' max
+#       - text : description
+
+ITEMS=(
+    BS_AGRR_CNT  check "" "Add A+B counts"
+    BS_REV_CNT   check "" "Add reverse counts from opposite flow"
+    BS_STATS     check "" "Output statistics (min, max, average, ...)"
+
+    BS_PL_STATS  check "BS_STATS == 1" "Basic packet length statistics"
+    BS_IAT_STATS check "BS_STATS == 1" "Basic IAT statistics"
+
+    BS_VAR    check "BS_STATS == 1" "Compute the variance"
+    BS_STDDEV check "BS_STATS == 1" "Compute the standard deviation"
+
+    BS_XCLD radio "BS_STATS == 1"
+          ";
+            0: Include all the values in the statistics; \
+            1: Ignore all values <= BS_XMIN; \
+            2: Ignore all values >= BS_XMAX; \
+            3: Ignore all values < BS_XMIN and > BS_XMAX; \
+            4: Ignore all values >= BS_XMIN and <= BS_XMAX"
+
+    BS_XMIN range "BS_STATS == 1 && BS_XCLD == 1"
+          "Minimal packet length: 0 65535"
+
+    BS_XMAX range "BS_STATS == 1 && BS_XCLD == 1"
+          "Maximal packet length: 0: 65535"
+)
+
+# Source the main config file
+source "$(dirname "$0")/../../scripts/t2conf/t2plconf"

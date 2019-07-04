@@ -1,0 +1,26 @@
+cursor = db.flow.aggregate([
+    {
+        $match : {
+            timeFirst : { $gte : time_from },
+            timeLast  : { $lte : time_to },
+            arpStat : { $bitsAllSet : NumberInt(0x80) }
+        }
+    },
+    {
+        $project : {
+            mac_ip: "$MAC_IP_cnt",
+        }
+    },
+    {
+        $unwind : "$mac_ip"
+    },
+])
+
+cursor.forEach(
+    function(e) {
+        print(
+              e.mac_ip[0] + "\t"
+            + e.mac_ip[1]
+        )
+    }
+)

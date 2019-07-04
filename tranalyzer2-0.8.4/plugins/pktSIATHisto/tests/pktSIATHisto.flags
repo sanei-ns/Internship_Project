@@ -1,0 +1,16 @@
+# Flags to toggle
+#
+# Run the ../../../tests/test.sh script from the plugin main directory:
+#
+# cd $T2HOME/plugins/pktSIATHisto
+# ../../tests/test.sh [OPTION...]
+#
+# If run from this folder, make sure to use absolute path for the '-p' option.
+
+# src/pktSIATHisto.h
+PRINT_HISTO             src/pktSIATHisto.h
+HISTO_PRINT_BIN         src/pktSIATHisto.h
+HISTO_EARLY_CLEANUP     src/pktSIATHisto.h
+HISTO_DEBUG             src/pktSIATHisto.h
+PSI_XCLD                src/pktSIATHisto.h
+PSI_MOD                 src/pktSIATHisto.h

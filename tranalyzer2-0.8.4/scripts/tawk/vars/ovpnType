@@ -1,0 +1,18 @@
+#H bit | ovpnType | Description
+#H =============================================================================
+     0 | 0x0001   | -
+     1 | 0x0002   | P_CONTROL_HARD_RESET_CLIENT_V1
+     2 | 0x0004   | P_CONTROL_HARD_RESET_SERVER_V1
+     3 | 0x0008   | P_CONTROL_SOFT_RESET_V1
+     4 | 0x0010   | P_CONTROL_V1
+     5 | 0x0020   | P_ACK_V1
+     6 | 0x0040   | P_DATA_V1
+     7 | 0x0080   | P_CONTROL_HARD_RESET_CLIENT_V2
+     8 | 0x0100   | P_CONTROL_HARD_RESET_SERVER_V2
+     9 | 0x0200   | P_DATA_V2
+    10 | 0x0400   | -
+    11 | 0x0800   | -
+    12 | 0x1000   | -
+    13 | 0x2000   | -
+    14 | 0x4000   | -
+    15 | 0x8000   | -

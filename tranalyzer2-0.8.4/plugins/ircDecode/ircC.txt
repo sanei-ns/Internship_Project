@@ -1,0 +1,48 @@
+ADMIN	Get information about the administrator of a server.
+AWAY	Set an automatic reply string for any PRIVMSG commands.
+CONNECT	Request a new connection to another server immediately.
+DIE	Shutdown the server.
+ERROR	Report a serious or fatal error to a peer.
+INFO	Get information describing a server.
+INVITE	Invite a user to a channel.
+ISON	Determine if a nickname is currently on IRC.
+JOIN	Join a channel.
+KICK	Request the forced removal of a user from a channel.
+KILL	Close a client-server connection by the server which has the actual connection.
+LINKS	List all servernames which are known by the server answering the query.
+LIST	List channels and their topics.
+LUSERS	Get statistics about the size of the IRC network.
+MODE	User mode.
+MOTD	Get the Message of the Day.
+NAMES	List all visible nicknames.
+NICK	Define a nickname.
+NJOIN	Exchange the list of channel members for each channel between servers.
+NOTICE
+OPER	Obtain operator privileges.
+PART	Leave a channel.
+PASS	Set a connection password.
+PING	Test for the presence of an active client or server.
+PONG	Reply to a PING message.
+PRIVMSG	Send private messages between users, as well as to send messages to channels.
+QUIT	Terminate the client session.
+REHASH	Force the server to re-read and process its configuration file.
+RESTART	Force the server to restart itself.
+SERVER	Register a new server.
+SERVICE	Register a new service.
+SERVLIST	List services currently connected to the network.
+SQUERY
+SQUIRT	Disconnect a server link.
+SQUIT	Break a local or remote server link.
+STATS	Get server statistics.
+SUMMON	Ask a user to join IRC.
+TIME	Get the local time from the specified server.
+TOPIC	Change or view the topic of a channel.
+TRACE	Find the route to a server and information about it's peers.
+USER	Specify the username, hostname and realname of a new user.
+USERHOST	Get a list of information about upto 5 nicknames.
+USERS	Get a list of users logged into the server.
+VERSION	Get the version of the server program.
+WALLOPS	Send a message to all currently connected users who have set the 'w' user mode.
+WHO	List a set of users.
+WHOIS	Get information about a specific user.
+WHOWAS	Get information about a nickname which no longer exists.

@@ -1,0 +1,45 @@
+-- Top destination IP by number of bytes
+
+SELECT
+    ip,
+    CASE WHEN cc ~ '^\d+'      THEN '--'
+         WHEN cc = '--'        THEN 'N/A'
+         WHEN LOWER(cc) = 'ff' THEN 'N/A'
+         ELSE UPPER(cc)
+    END AS cn,
+    SUM(bytes) AS cnt
+
+FROM (
+    -- A flows
+    SELECT
+        "dstIP" AS ip,
+        "dstIPCC" AS cc,
+        "numBytesRcvd" AS bytes
+    FROM
+        flow
+    WHERE
+        ("flowStat"::BIGINT & 1) = 0::BIGINT
+        AND ("flowStat"::BIGINT & x'c000'::BIGINT) > 0::BIGINT  -- IPv4/6 only
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+
+    UNION ALL
+
+    -- B flows
+    SELECT
+        "srcIP" AS ip,
+        "srcIPCC" AS cc,
+        "numBytesSnt" AS bytes
+    FROM
+        flow
+    WHERE
+        ("flowStat"::BIGINT & 1) = 1::BIGINT
+        AND ("flowStat"::BIGINT & x'c000'::BIGINT) > 0::BIGINT  -- IPv4/6 only
+        AND "timeFirst" >= to_timestamp(:time_from)
+        AND "timeLast" <= to_timestamp(:time_to)
+) AS flows
+
+GROUP BY ip, cn
+ORDER BY cnt DESC
+
+LIMIT :n

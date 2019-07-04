@@ -1,0 +1,503 @@
+\IfFileExists{t2doc.cls}{
+    \documentclass[documentation]{subfiles}
+}{
+    \errmessage{Error: could not find t2doc.cls}
+}
+
+\begin{document}
+
+\trantitle
+    {dhcpDecode}
+    {Dynamic Host Configuration Protocol (DHCP)}
+    {Tranalyzer Development Team}
+
+\section{dhcpDecode}\label{s:dhcpDecode}
+
+\subsection{Description}
+This dhcpDecode plugin analyzes DHCP traffic.
+
+%\subsection{Dependencies}
+%None.
+
+\subsection{Configuration Flags}
+The following flags can be used to control the output of the plugin:
+\begin{longtable}{lcll}
+    \toprule
+    {\bf Name} & {\bf Default} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt DHCPBITFLD}      &  1 & Options representation: 1: bitfield, 0: option numbers in a row \\
+    {\tt DHCPMAXOPT}      & 50 & maximum stored options & {\tt DHCPBITFLD=0}\\
+    {\tt DHCPNMMAX}       & 10 & maximal number of domain/host names per flow \\
+    {\tt DHCPMASKFRMT}    &  1 & Netmask representation: 0: hex, 1: IP\\
+    {\tt DHCP\_ADD\_CNT}  &  0 & Print the number of times a given mac/domain/host appeared\\
+    {\tt DHCP\_FLAG\_MAC} &  0 & Store a global mapping IP->MAC and add the source and\\
+                          &    & destination MAC address to every flow [EXPERIMENTAL]\\
+    {\tt DHCP\_FM\_DEBUG} &  0 & print debug information about {\tt DHCP\_FLAG\_MAC} operations\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Flow File Output}
+The dhcpDecode plugin outputs the following columns:
+\begin{longtable}{llll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description} & {\bf Flags}\\
+    \midrule\endhead%
+    {\tt\nameref{dhcpStat}}   & H16           & Status, warnings and errors\\
+    {\tt\nameref{dhcpMType}}  & H16/H32       & Message type                        & \\
+    {\tt\nameref{dhcpHWType}} & H32           & Hardware Type                       & \\
+    {\tt dhcpCHWAdd}          & R(MAC)        & Client hardware addresses           & {\tt DHCP\_ADD\_CNT=0}\\
+    {\tt dhcpCHWAdd\_HWCnt}   & R(MAC\_H32)   & Client hardware addresses and count & {\tt DHCP\_ADD\_CNT=1}\\\\
+
+    \multicolumn{3}{l}{If {\tt IPV6\_ACTIVATE == 0|2}, the following columns are output:}\\\\
+
+    {\tt dhcpNetmask}         & H32/IP4       & Network mask & {\tt DHCPMASKFRMT=0/1}\\
+    {\tt dhcpGWIP}            & IP4           & Gateway IP\\
+    {\tt dhcpDnsIP}           & IP4           & DNS IP\\
+    {\tt\nameref{dhcpHopCnt}} & H32           & Hop Count\\
+    {\tt dhcpSrvName}         & S             & Server host name\\
+    {\tt dhcpBootFile}        & S             & Boot file name\\
+    {\tt dhcpOptCnt}          & U16           & Option Count\\
+    {\tt dhcpOpts}            & RU8           & Options & {\tt DHCPBITFLD=0}\\
+    {\tt\nameref{dhcpOptBF}}  & H64\_H64\_H64 & Option Bit field & {\tt DHCPBITFLD=1}\\
+    {\tt dhcpHosts}           & R(S)          & Maximal {\tt DHCPNMMAX} hosts             & {\tt DHCP\_ADD\_CNT=0}\\
+    {\tt dhcpHosts\_HCnt}     & R(S\_U16)     & Maximal {\tt DHCPNMMAX} hosts and count   & {\tt DHCP\_ADD\_CNT=1}\\
+    {\tt dhcpDomains}         & R(S)          & Maximal {\tt DHCPNMMAX} domains           & {\tt DHCP\_ADD\_CNT=0}\\
+    {\tt dhcpDomains\_DCnt}   & R(S\_U16)     & Maximal {\tt DHCPNMMAX} domains and count & {\tt DHCP\_ADD\_CNT=1}\\
+    {\tt dhcpMaxSecEl}        & U16           & Maximum seconds elapsed\\
+    {\tt dhcpLeaseT}          & U32           & Lease time\\
+    {\tt dhcpRenewT}          & U32           & Renewal time\\
+    {\tt dhcpRebindT}         & U32           & Rebind time\\
+    {\tt dhcpCliIP}           & IP4           & DHCP client IP\\
+    {\tt dhcpYourIP}          & IP4           & DHCP your (client) IP\\
+    {\tt dhcpNextServer}      & IP4           & DHCP next server IP\\
+    {\tt dhcpRelay}           & IP4           & DHCP relay agent IP\\
+    {\tt dhcpLFlow}           & U64           & DHCP linked flow\\
+    \\
+    {\tt dhcpSrcMac}          & MAC           & DHCP source MAC address      & {\tt DHCP\_FLAG\_MAC=1}\\
+    {\tt dhcpDstMac}          & MAC           & DHCP destination MAC address & {\tt DHCP\_FLAG\_MAC=1}\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{dhcpStat}\label{dhcpStat}
+The {\tt dhcpStat} status bit field is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf dhcpStat} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x0001} & DHCP detected \\
+    {\tt 0x0002} & Boot request \\
+    {\tt 0x0004} & Boot reply \\
+    {\tt 0x0008} & Broadcast \\
+    {\tt 0x0010} & Client ID (option 61) different from Client MAC address\\
+    {\tt 0x0020} & Option overload: server host name and/or boot file name carry options\\
+    {\tt 0x0100} & Option list truncated\ldots increase {\tt DHCPMAXOPT} \\
+    {\tt 0x0200} & Client HW address, domain or host name list truncated\ldots increase {\tt DHCPNMMAX}\\
+    {\tt 0x2000} & Error: DHCP magic number corrupt \\
+    {\tt 0x4000} & Error: DHCP options corrupt \\
+    {\tt 0x8000} & Something weird happened\ldots\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{dhcpMType}\label{dhcpMType}
+
+For IPv4, the {\tt dhcpMType} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf dhcpMType4} & {\bf Description}\\
+    \midrule\endhead%
+    $2^{1}$  (={\tt 0x0002}) & Discover Message\\
+    $2^{2}$  (={\tt 0x0004}) & Offer Message\\
+    $2^{3}$  (={\tt 0x0008}) & Request Message\\
+    $2^{4}$  (={\tt 0x0010}) & Decline Message\\
+    $2^{5}$  (={\tt 0x0020}) & Acknowledgment Message\\
+    $2^{6}$  (={\tt 0x0040}) & Negative Acknowledgment Message\\
+    $2^{7}$  (={\tt 0x0080}) & Release Message\\
+    $2^{8}$  (={\tt 0x0100}) & Informational Message\\
+    %$2^{9}$  (={\tt 0x0000 0200}) & Force Renew Message\\
+    %$2^{10}$ (={\tt 0x0000 0400}) & Lease Query Message\\
+    %$2^{11}$ (={\tt 0x0000 0800}) & Lease Unassigned Message\\
+    %$2^{12}$ (={\tt 0x0000 1000}) & Lease Unknown Message\\
+    %$2^{13}$ (={\tt 0x0000 2000}) & Lease Active Message\\
+    %$2^{14}$ (={\tt 0x0000 4000}) & Bulk Lease Query Message\\
+    %$2^{15}$ (={\tt 0x0000 8000}) & Lease Query Done Message\\
+    %$2^{16}$ (={\tt 0x0001 0000}) & Active Lease Query Message\\
+    %$2^{17}$ (={\tt 0x0002 0000}) & Lease Query Status Message\\
+    %$2^{18}$ (={\tt 0x0004 0000}) & TLS Message\\
+    %$2^{31}$ (={\tt 0x8000 0000}) & All values bigger than 30 are reported here\\
+    \bottomrule
+\end{longtable}
+
+For IPv6, the {\tt dhcpMType} column is to be interpreted as follows:\\
+\begin{minipage}{0.48\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf dhcpMType6} & {\bf Description}\\
+        \midrule\endhead%
+        {\tt 0x0000 0001} & Reserved\\
+        {\tt 0x0000 0002} & SOLICIT\\
+        {\tt 0x0000 0004} & ADVERTISE\\
+        {\tt 0x0000 0008} & REQUEST\\
+        {\tt 0x0000 0010} & CONFIRM\\
+        {\tt 0x0000 0020} & RENEW\\
+        {\tt 0x0000 0040} & REBIND\\
+        {\tt 0x0000 0080} & REPLY\\
+        {\tt 0x0000 0100} & RELEASE\\
+        {\tt 0x0000 0200} & DECLINE\\
+        {\tt 0x0000 0400} & RECONFIGURE\\
+        {\tt 0x0000 0800} & INFORMATION-REQUEST\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \begin{longtable}{rl}
+        \toprule
+        {\bf dhcpMType6} & {\bf Description}\\
+        \midrule\endhead%
+        {\tt 0x0000 1000} & RELAY-FORW\\
+        {\tt 0x0000 2000} & RELAY-REPL\\
+        % RFC5007
+        {\tt 0x0000 4000} & LEASEQUERY\\
+        {\tt 0x0000 8000} & LEASEQUERY-REPLY\\
+        % RFC5460
+        {\tt 0x0001 0000} & LEASEQUERY-DONE\\
+        {\tt 0x0002 0000} & LEASEQUERY-DATA\\
+        % RFC6977
+        {\tt 0x0004 0000} & RECONFIGURE-REQUEST\\
+        {\tt 0x0008 0000} & RECONFIGURE-REPLY\\
+        % RFC7341
+        {\tt 0x0010 0000} & DHCPV4-QUERY\\
+        {\tt 0x0020 0000} & DHCPV4-RESPONSE\\
+        % RFC7653
+        {\tt 0x0040 0000} & ACTIVELEASEQUERY\\
+        {\tt 0x0080 0000} & STARTTLS\\
+        % https://www.iana.org/go/draft-ietf-dhc-dhcpv6-failover-protocol-06
+        % & BNDUPD\\
+        % & BNDREPLY\\
+        % & POOLREQ\\
+        % & POOLRESP\\
+        % & UPDREQ\\
+        % & UPDREQALL\\
+        % & UPDDONE\\
+        % & CONNECT\\
+        % & CONNECTREPLY\\
+        % & DISCONNECT\\
+        % & STATE\\
+        % & CONTACT\\
+        % 36-255
+        %Unassigned\\
+        \bottomrule
+    \end{longtable}
+\end{minipage}
+
+\subsubsection{dhcpHWType}\label{dhcpHWType}
+The {\tt dhcpHWType} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf dhcpHWType} & {\bf Description}\\
+    \midrule\endhead%
+    $2^{0}$  (={\tt 0x0000 0000 0000 0001}) & --- \\
+    $2^{1}$  (={\tt 0x0000 0000 0000 0002}) & Ethernet \\
+    $2^{2}$  (={\tt 0x0000 0000 0000 0004}) & Experimental Ethernet \\
+    $2^{3}$  (={\tt 0x0000 0000 0000 0008}) & Amateur Radio AX.25 \\
+    $2^{4}$  (={\tt 0x0000 0000 0000 0010}) & Proteon ProNET Token Ring \\
+    $2^{5}$  (={\tt 0x0000 0000 0000 0020}) & Chaos \\
+    $2^{6}$  (={\tt 0x0000 0000 0000 0040}) & IEEE 802 \\
+    $2^{7}$  (={\tt 0x0000 0000 0000 0080}) & ARCNET \\
+    $2^{8}$  (={\tt 0x0000 0000 0000 0100}) & Hyperchannel \\
+    $2^{9}$  (={\tt 0x0000 0000 0000 0200}) & Lanstar \\
+    $2^{10}$ (={\tt 0x0000 0000 0000 0400}) & Autonet Short Address \\
+    $2^{11}$ (={\tt 0x0000 0000 0000 0800}) & LocalTalk \\
+    $2^{12}$ (={\tt 0x0000 0000 0000 1000}) & LocalNet (IBM PCNet or SYTEK LocalNET) \\
+    $2^{13}$ (={\tt 0x0000 0000 0000 2000}) & Ultra link \\
+    $2^{14}$ (={\tt 0x0000 0000 0000 4000}) & SMDS \\
+    $2^{15}$ (={\tt 0x0000 0000 0000 8000}) & Frame Relay \\
+    $2^{16}$ (={\tt 0x0000 0000 0001 0000}) & ATM, Asynchronous Transmission Mode \\
+    $2^{17}$ (={\tt 0x0000 0000 0002 0000}) & HDLC \\
+    $2^{18}$ (={\tt 0x0000 0000 0004 0000}) & Fibre Channel \\
+    $2^{19}$ (={\tt 0x0000 0000 0008 0000}) & ATM, Asynchronous Transmission Mode \\
+    $2^{20}$ (={\tt 0x0000 0000 0010 0000}) & Serial Line \\
+    $2^{21}$ (={\tt 0x0000 0000 0020 0000}) & ATM, Asynchronous Transmission Mode \\
+    $2^{22}$ (={\tt 0x0000 0000 0040 0000}) & MIL-STD-188-220 \\
+    $2^{23}$ (={\tt 0x0000 0000 0080 0000}) & Metricom \\
+    $2^{24}$ (={\tt 0x0000 0000 0100 0000}) & IEEE 1394.1995 \\
+    $2^{25}$ (={\tt 0x0000 0000 0200 0000}) & MAPOS \\
+    $2^{26}$ (={\tt 0x0000 0000 0400 0000}) & Twinaxia \\
+    $2^{27}$ (={\tt 0x0000 0000 0800 0000}) & EUI-64 \\
+    $2^{28}$ (={\tt 0x0000 0000 1000 0000}) & HIPARP \\
+    $2^{29}$ (={\tt 0x0000 0000 2000 0000}) & IP and ARP over ISO 7816-3 \\
+    $2^{30}$ (={\tt 0x0000 0000 4000 0000}) & ARPSec \\
+    $2^{31}$ (={\tt 0x0000 0000 8000 0000}) & IPsec tunnel \\
+    $2^{32}$ (={\tt 0x0000 0001 0000 0000}) & Infiniband \\
+    $2^{33}$ (={\tt 0x0000 0002 0000 0000}) & CAI, TIA-102 Project 25 Common Air Interface \\
+    $2^{34}$ (={\tt 0x0000 0004 0000 0000}) & Wiegand Interface \\
+    $2^{35}$ (={\tt 0x0000 0008 0000 0000}) & Pure IP \\\\
+    $2^{63}$ (={\tt 0x8000 0000 0000 0000}) & All values bigger than 62 are reported here\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{dhcpHopCnt}\label{dhcpHopCnt}
+The {\tt dhcpHopCnt} column is to be interpreted as follows:
+\begin{longtable}{rl}
+    \toprule
+    {\bf dhcpHopCnt} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt 0x00000000--0x00010000} & Number of hops (0--16) $\left(2^\text{HopCount}\right)$ \\
+    {\tt 0x80000000} & Invalid hop count (> 16)\\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{dhcpOptBF1\_BF2\_BF3}\label{dhcpOptBF}
+The {\tt dhcpOptBF1\_BF2\_BF3} column is to be interpreted as follows:
+\begin{small}
+    \begin{longtable}{rcl}
+        \toprule
+        {\bf dhcpOptBF1} & {\bf Length} & {\bf Description}\\
+        \midrule\endhead%
+        $2^{0}$  (={\tt 0x0000.0000.0000.0001}) & 0     & Pad \\
+        $2^{1}$  (={\tt 0x0000.0000.0000.0002}) & 4     & Subnet Mask \\
+        $2^{2}$  (={\tt 0x0000.0000.0000.0004}) & 4     & Time Offset (deprecated) \\
+        $2^{3}$  (={\tt 0x0000.0000.0000.0008}) & 4+    & Router \\
+        $2^{4}$  (={\tt 0x0000.0000.0000.0010}) & 4+    & Time Server \\
+        $2^{5}$  (={\tt 0x0000.0000.0000.0020}) & 4+    & Name Server \\
+        $2^{6}$  (={\tt 0x0000.0000.0000.0040}) & 4+    & Domain Name Server \\
+        $2^{7}$  (={\tt 0x0000.0000.0000.0080}) & 4+    & Log Server \\
+        $2^{8}$  (={\tt 0x0000.0000.0000.0100}) & 4+    & Quote Server\\
+        $2^{9}$  (={\tt 0x0000.0000.0000.0200}) & 4+    & LPR Server \\
+        $2^{10}$ (={\tt 0x0000.0000.0000.0400}) & 4+    & Impress Server \\
+        $2^{11}$ (={\tt 0x0000.0000.0000.0800}) & 4+    & Resource Location Server \\
+        $2^{12}$ (={\tt 0x0000.0000.0000.1000}) & 1+    & Host Name \\
+        $2^{13}$ (={\tt 0x0000.0000.0000.2000}) & 2     & Boot File Size \\
+        $2^{14}$ (={\tt 0x0000.0000.0000.4000}) & 1+    & Merit Dump File \\
+        $2^{15}$ (={\tt 0x0000.0000.0000.8000}) & 1+    & Domain Name \\
+        $2^{16}$ (={\tt 0x0000.0000.0001.0000}) & 4     & Swap Server \\
+        $2^{17}$ (={\tt 0x0000.0000.0002.0000}) & 1+    & Root Path \\
+        $2^{18}$ (={\tt 0x0000.0000.0004.0000}) & 1+    & Extensions Path \\
+        $2^{19}$ (={\tt 0x0000.0000.0008.0000}) & 1     & IP Forwarding enable/disable \\
+        $2^{20}$ (={\tt 0x0000.0000.0010.0000}) & 1     & Non-local Source Routing enable/disable \\
+        $2^{21}$ (={\tt 0x0000.0000.0020.0000}) & 8+    & Policy Filter \\
+        $2^{22}$ (={\tt 0x0000.0000.0040.0000}) & 2     & Maximum Datagram Reassembly Size \\
+        $2^{23}$ (={\tt 0x0000.0000.0080.0000}) & 1     & Default IP Time-to-live \\
+        $2^{24}$ (={\tt 0x0000.0000.0100.0000}) & 4     & Path MTU Aging Timeout \\
+        $2^{25}$ (={\tt 0x0000.0000.0200.0000}) & 2+    & Path MTU Plateau Table \\
+        $2^{26}$ (={\tt 0x0000.0000.0400.0000}) & 2     & Interface MTU \\
+        $2^{27}$ (={\tt 0x0000.0000.0800.0000}) & 1     & All Subnets are Local \\
+        $2^{28}$ (={\tt 0x0000.0000.1000.0000}) & 4     & Broadcast Address \\
+        $2^{29}$ (={\tt 0x0000.0000.2000.0000}) & 1     & Perform Mask Discovery \\
+        $2^{30}$ (={\tt 0x0000.0000.4000.0000}) & 1     & Mask supplier \\
+        $2^{31}$ (={\tt 0x0000.0000.8000.0000}) & 1     & Perform router discovery \\
+        $2^{32}$ (={\tt 0x0000.0001.0000.0000}) & 4     & Router solicitation address \\
+        $2^{33}$ (={\tt 0x0000.0002.0000.0000}) & 8+    & Static routing table \\
+        $2^{34}$ (={\tt 0x0000.0004.0000.0000}) & 1     & Trailer encapsulation \\
+        $2^{35}$ (={\tt 0x0000.0008.0000.0000}) & 4     & ARP cache timeout \\
+        $2^{36}$ (={\tt 0x0000.0010.0000.0000}) & 1     & Ethernet encapsulation \\
+        $2^{37}$ (={\tt 0x0000.0020.0000.0000}) & 1     & Default TCP TTL \\
+        $2^{38}$ (={\tt 0x0000.0040.0000.0000}) & 4     & TCP keepalive interval \\
+        $2^{39}$ (={\tt 0x0000.0080.0000.0000}) & 1     & TCP keepalive garbage \\
+        $2^{40}$ (={\tt 0x0000.0100.0000.0000}) & 1+    & Network Information Service Domain \\
+        $2^{41}$ (={\tt 0x0000.0200.0000.0000}) & 4+    & Network Information Servers \\
+        $2^{42}$ (={\tt 0x0000.0400.0000.0000}) & 4+    & NTP servers \\
+        $2^{43}$ (={\tt 0x0000.0800.0000.0000}) & 1+    & Vendor specific information \\
+        $2^{44}$ (={\tt 0x0000.1000.0000.0000}) & 4+    & NetBIOS over TCP/IP name server \\
+        $2^{45}$ (={\tt 0x0000.2000.0000.0000}) & 4+    & NetBIOS over TCP/IP Datagram Distribution Server \\
+        $2^{46}$ (={\tt 0x0000.4000.0000.0000}) & 1     & NetBIOS over TCP/IP Node Type \\
+        $2^{47}$ (={\tt 0x0000.8000.0000.0000}) & 1+    & NetBIOS over TCP/IP Scope \\
+        $2^{48}$ (={\tt 0x0001.0000.0000.0000}) & 4+    & X Window System Font Server \\
+        $2^{49}$ (={\tt 0x0002.0000.0000.0000}) & 4+    & X Window System Display Manager \\
+        $2^{50}$ (={\tt 0x0004.0000.0000.0000}) & 4     & Requested IP Address \\
+        $2^{51}$ (={\tt 0x0008.0000.0000.0000}) & 4     & IP address lease time \\
+        $2^{52}$ (={\tt 0x0010.0000.0000.0000}) & 4     & Option overload \\
+        $2^{53}$ (={\tt 0x0020.0000.0000.0000}) & 4     & DHCP message type \\
+        $2^{54}$ (={\tt 0x0040.0000.0000.0000}) & 1     & Server identifier \\
+        $2^{55}$ (={\tt 0x0080.0000.0000.0000}) & 1+    & Parameter request list\\
+        $2^{56}$ (={\tt 0x0100.0000.0000.0000}) & 1+    & Message \\
+        $2^{57}$ (={\tt 0x0200.0000.0000.0000}) & 2     & Maximum DHCP message size \\
+        $2^{58}$ (={\tt 0x0400.0000.0000.0000}) & 4     & Renew time value \\
+        $2^{59}$ (={\tt 0x0800.0000.0000.0000}) & 4     & Rebinding time value \\
+        $2^{60}$ (={\tt 0x1000.0000.0000.0000}) & 1+    & Class-identifier \\
+        $2^{61}$ (={\tt 0x2000.0000.0000.0000}) & 2+    & Client-identifier \\
+        $2^{62}$ (={\tt 0x4000.0000.0000.0000}) & 1-255 & NetWare/IP Domain Name \\
+        $2^{63}$ (={\tt 0x8000.0000.0000.0000}) & 1     & NetWare/IP information \\
+        \bottomrule
+    \end{longtable}
+\end{small}
+
+\begin{small}
+    \begin{longtable}{rcl}
+        \toprule
+        {\bf dhcpOptBF2} & {\bf Length} & {\bf Description}\\
+        \midrule\endhead%
+        $2^{64}$  (={\tt 0x0000.0000.0000.0001}) & 1+    & Network Information Service+ Domain \\
+        $2^{65}$  (={\tt 0x0000.0000.0000.0002}) & 4+    & Network Information Service+ Servers \\
+        $2^{66}$  (={\tt 0x0000.0000.0000.0004}) & 1+    & TFTP server name \\
+        $2^{67}$  (={\tt 0x0000.0000.0000.0008}) & 1+    & Bootfile name \\
+        $2^{68}$  (={\tt 0x0000.0000.0000.0010}) & 0+    & Mobile IP Home Agen \\
+        $2^{69}$  (={\tt 0x0000.0000.0000.0020}) & 4+    & Simple Mail Transport Protocol Server \\
+        $2^{70}$  (={\tt 0x0000.0000.0000.0040}) & 4+    & Post Office Protocol Server \\
+        $2^{71}$  (={\tt 0x0000.0000.0000.0080}) & 4+    & Network News Transport Protocol Server \\
+        $2^{72}$  (={\tt 0x0000.0000.0000.0100}) & 4+    & Default World Wide Web Server \\
+        $2^{73}$  (={\tt 0x0000.0000.0000.0200}) & 4+    & Default Finger Server \\
+        $2^{74}$  (={\tt 0x0000.0000.0000.0400}) & 4+    & Default Internet Relay Chat Server \\
+        $2^{75}$  (={\tt 0x0000.0000.0000.0800}) & 4+    & StreetTalk Server \\
+        $2^{76}$  (={\tt 0x0000.0000.0000.1000}) & 4+    & StreetTalk Directory Assistance Server \\
+        $2^{77}$  (={\tt 0x0000.0000.0000.2000}) & 0-255 & User Class Information \\
+        $2^{78}$  (={\tt 0x0000.0000.0000.4000}) & 0-255 & SLP Directory Agent \\
+        $2^{79}$  (={\tt 0x0000.0000.0000.8000}) & 0-255 & SLP Service Scope \\
+        $2^{80}$  (={\tt 0x0000.0000.0001.0000}) & 0     & Rapid Commit \\
+        $2^{81}$  (={\tt 0x0000.0000.0002.0000}) & 4+    & FQDN, Fully Qualified Domain Name \\
+        $2^{82}$  (={\tt 0x0000.0000.0004.0000}) & 0-255 & Relay Agent Information \\
+        $2^{83}$  (={\tt 0x0000.0000.0008.0000}) & 14+   & Internet Storage Name Service \\
+        $2^{84}$  (={\tt 0x0000.0000.0010.0000}) & ---   & ---\\
+        $2^{85}$  (={\tt 0x0000.0000.0020.0000}) & 8+    & ---\\
+        $2^{86}$  (={\tt 0x0000.0000.0040.0000}) & 2     & ---\\
+        $2^{87}$  (={\tt 0x0000.0000.0080.0000}) & 1     & ---\\
+        $2^{88}$  (={\tt 0x0000.0000.0100.0000}) & 4     & ---\\
+        $2^{89}$  (={\tt 0x0000.0000.0200.0000}) & 2+    & ---\\
+        $2^{90}$  (={\tt 0x0000.0000.0400.0000}) & 2     & ---\\
+        $2^{91}$  (={\tt 0x0000.0000.0800.0000}) & 1     & ---\\
+        $2^{92}$  (={\tt 0x0000.0000.1000.0000}) & 4     & ---\\
+        $2^{93}$  (={\tt 0x0000.0000.2000.0000}) & 1     & ---\\
+        $2^{94}$  (={\tt 0x0000.0000.4000.0000}) & 1     & ---\\
+        $2^{95}$  (={\tt 0x0000.0000.8000.0000}) & 1     & ---\\
+        $2^{96}$  (={\tt 0x0000.0001.0000.0000}) & ---   & ---\\
+        $2^{97}$  (={\tt 0x0000.0002.0000.0000}) & ---   & ---\\
+        $2^{98}$  (={\tt 0x0000.0004.0000.0000}) & ---   & ---\\
+        $2^{99}$  (={\tt 0x0000.0008.0000.0000}) & ---   & ---\\
+        $2^{100}$ (={\tt 0x0000.0010.0000.0000}) & ---   & ---\\
+        $2^{101}$ (={\tt 0x0000.0020.0000.0000}) & ---   & ---\\
+        $2^{102}$ (={\tt 0x0000.0040.0000.0000}) & ---   & ---\\
+        $2^{103}$ (={\tt 0x0000.0080.0000.0000}) & ---   & ---\\
+        $2^{104}$ (={\tt 0x0000.0100.0000.0000}) & 1+    & ---\\
+        $2^{105}$ (={\tt 0x0000.0200.0000.0000}) & ---   & ---\\
+        $2^{106}$ (={\tt 0x0000.0400.0000.0000}) & ---   & ---\\
+        $2^{107}$ (={\tt 0x0000.0800.0000.0000}) & ---   & ---\\
+        $2^{108}$ (={\tt 0x0000.1000.0000.0000}) & ---   & ---\\
+        $2^{109}$ (={\tt 0x0000.2000.0000.0000}) & ---   & ---\\
+        $2^{110}$ (={\tt 0x0000.4000.0000.0000}) & ---   & ---\\
+        $2^{111}$ (={\tt 0x0000.8000.0000.0000}) & ---   & ---\\
+        $2^{112}$ (={\tt 0x0001.0000.0000.0000}) & ---   & ---\\
+        $2^{113}$ (={\tt 0x0002.0000.0000.0000}) & ---   & ---\\
+        $2^{114}$ (={\tt 0x0004.0000.0000.0000}) & ---   & ---\\
+        $2^{115}$ (={\tt 0x0008.0000.0000.0000}) & ---   & ---\\
+        $2^{116}$ (={\tt 0x0010.0000.0000.0000}) & ---   & ---\\
+        $2^{117}$ (={\tt 0x0020.0000.0000.0000}) & ---   & ---\\
+        $2^{118}$ (={\tt 0x0040.0000.0000.0000}) & ---   & ---\\
+        $2^{119}$ (={\tt 0x0080.0000.0000.0000}) & ---   & ---\\
+        $2^{120}$ (={\tt 0x0100.0000.0000.0000}) & ---   & ---\\
+        $2^{121}$ (={\tt 0x0200.0000.0000.0000}) & 5+    & ---\\
+        $2^{122}$ (={\tt 0x0400.0000.0000.0000}) & 0-255 & ---\\
+        $2^{123}$ (={\tt 0x0800.0000.0000.0000}) & 16    & ---\\
+        $2^{124}$ (={\tt 0x1000.0000.0000.0000}) & ---   & ---\\
+        $2^{125}$ (={\tt 0x2000.0000.0000.0000}) & ---   & ---\\
+        $2^{126}$ (={\tt 0x4000.0000.0000.0000}) & ---   & ---\\
+        $2^{127}$ (={\tt 0x8000.0000.0000.0000}) & ---   & ---\\
+        \bottomrule
+    \end{longtable}
+\end{small}
+
+\begin{small}
+    \begin{longtable}{rcl}
+        \toprule
+        {\bf dhcpOptBF3} & {\bf Length} & {\bf Description}\\
+        \midrule\endhead%
+        $2^{128}$ (={\tt 0x0000.0000.0000.0001}) & ---   & TFTP Server IP address \\
+        $2^{129}$ (={\tt 0x0000.0000.0000.0002}) & ---   & Call Server IP addres \\
+        $2^{130}$ (={\tt 0x0000.0000.0000.0004}) & ---   & Discrimination string \\
+        $2^{131}$ (={\tt 0x0000.0000.0000.0008}) & ---   & Remote statistics server IP address \\
+        $2^{132}$ (={\tt 0x0000.0000.0000.0010}) & ---   & 802.1P VLAN ID \\
+        $2^{133}$ (={\tt 0x0000.0000.0000.0020}) & ---   & 802.1Q L2 Priority \\
+        $2^{134}$ (={\tt 0x0000.0000.0000.0040}) & ---   & Diffserv Code Point \\
+        $2^{135}$ (={\tt 0x0000.0000.0000.0080}) & ---   & HTTP Proxy for phone-specific applications \\
+        $2^{136}$ (={\tt 0x0000.0000.0000.0100}) & 4+    & PANA Authentication Agent \\
+        $2^{137}$ (={\tt 0x0000.0000.0000.0200}) & 0-255 & LoST Server \\
+        $2^{138}$ (={\tt 0x0000.0000.0000.0400}) & ---   & CAPWAP Access Controller addresses \\
+        $2^{139}$ (={\tt 0x0000.0000.0000.0800}) & ---   & OPTION-IPv4\_Address-MoS \\
+        $2^{140}$ (={\tt 0x0000.0000.0000.1000}) & ---   & OPTION-IPv4\_FQDN-MoS \\
+        $2^{141}$ (={\tt 0x0000.0000.0000.2000}) & 2+    & SIP UA Configuration Service Domains \\
+        $2^{142}$ (={\tt 0x0000.0000.0000.4000}) & ---   & OPTION-IPv4\_Address-ANDSF \\
+        $2^{143}$ (={\tt 0x0000.0000.0000.8000}) & ---   & OPTION-IPv6\_Address-ANDSF \\
+        $2^{144}$ (={\tt 0x0000.0000.0001.0000}) & ---   & --- \\
+        $2^{145}$ (={\tt 0x0000.0000.0002.0000}) & ---   & --- \\
+        $2^{146}$ (={\tt 0x0000.0000.0004.0000}) & ---   & --- \\
+        $2^{147}$ (={\tt 0x0000.0000.0008.0000}) & ---   & --- \\
+        $2^{148}$ (={\tt 0x0000.0000.0010.0000}) & ---   & --- \\
+        $2^{149}$ (={\tt 0x0000.0000.0020.0000}) & ---   & --- \\
+        $2^{150}$ (={\tt 0x0000.0000.0040.0000}) & ---   & TFTP server address or Etherboot-GRUB configuration path name \\
+        $2^{151}$ (={\tt 0x0000.0000.0080.0000}) & ---   & status-code \\
+        $2^{152}$ (={\tt 0x0000.0000.0100.0000}) & ---   & base-time \\
+        $2^{153}$ (={\tt 0x0000.0000.0200.0000}) & ---   & start-time-of-state \\
+        $2^{154}$ (={\tt 0x0000.0000.0400.0000}) & ---   & query-start-time \\
+        $2^{155}$ (={\tt 0x0000.0000.0800.0000}) & ---   & query-end-time \\
+        $2^{156}$ (={\tt 0x0000.0000.1000.0000}) & ---   & dhcp-state \\
+        $2^{157}$ (={\tt 0x0000.0000.2000.0000}) & ---   & data-source \\
+        $2^{158}$ (={\tt 0x0000.0000.4000.0000}) & ---   & --- \\
+        $2^{159}$ (={\tt 0x0000.0000.8000.0000}) & ---   & --- \\
+        $2^{160}$ (={\tt 0x0000.0001.0000.0000}) & ---   & --- \\
+        $2^{161}$ (={\tt 0x0000.0002.0000.0000}) & ---   & --- \\
+        $2^{162}$ (={\tt 0x0000.0004.0000.0000}) & ---   & --- \\
+        $2^{163}$ (={\tt 0x0000.0008.0000.0000}) & ---   & --- \\
+        $2^{164}$ (={\tt 0x0000.0010.0000.0000}) & ---   & --- \\
+        $2^{165}$ (={\tt 0x0000.0020.0000.0000}) & ---   & --- \\
+        $2^{166}$ (={\tt 0x0000.0040.0000.0000}) & ---   & --- \\
+        $2^{167}$ (={\tt 0x0000.0080.0000.0000}) & ---   & --- \\
+        $2^{168}$ (={\tt 0x0000.0100.0000.0000}) & ---   & --- \\
+        $2^{169}$ (={\tt 0x0000.0200.0000.0000}) & ---   & --- \\
+        $2^{170}$ (={\tt 0x0000.0400.0000.0000}) & ---   & --- \\
+        $2^{171}$ (={\tt 0x0000.0800.0000.0000}) & ---   & --- \\
+        $2^{172}$ (={\tt 0x0000.1000.0000.0000}) & ---   & --- \\
+        $2^{173}$ (={\tt 0x0000.2000.0000.0000}) & ---   & --- \\
+        $2^{174}$ (={\tt 0x0000.4000.0000.0000}) & ---   & --- \\
+        $2^{175}$ (={\tt 0x0000.8000.0000.0000}) & ---   & Etherboot \\
+        $2^{176}$ (={\tt 0x0001.0000.0000.0000}) & ---   & IP Telephone \\
+        $2^{177}$ (={\tt 0x0002.0000.0000.0000}) & ---   & Etherboot, PacketCable and CableHome \\
+        $2^{178}$ (={\tt 0x0004.0000.0000.0000}) & ---   & --- \\
+        $2^{179}$ (={\tt 0x0008.0000.0000.0000}) & ---   & --- \\
+        $2^{180}$ (={\tt 0x0010.0000.0000.0000}) & ---   & --- \\
+        $2^{181}$ (={\tt 0x0020.0000.0000.0000}) & ---   & --- \\
+        $2^{182}$ (={\tt 0x0040.0000.0000.0000}) & ---   & --- \\
+        $2^{183}$ (={\tt 0x0080.0000.0000.0000}) & ---   & --- \\
+        $2^{184}$ (={\tt 0x0100.0000.0000.0000}) & ---   & --- \\
+        $2^{185}$ (={\tt 0x0200.0000.0000.0000}) & ---   & --- \\
+        $2^{186}$ (={\tt 0x0400.0000.0000.0000}) & ---   & --- \\
+        $2^{187}$ (={\tt 0x0800.0000.0000.0000}) & ---   & --- \\
+        $2^{188}$ (={\tt 0x1000.0000.0000.0000}) & ---   & --- \\
+        $2^{189}$ (={\tt 0x2000.0000.0000.0000}) & ---   & --- \\
+        $2^{190}$ (={\tt 0x4000.0000.0000.0000}) & ---   & --- \\
+        $2^{191}$ (={\tt 0x8000.0000.0000.0000}) & ---   & --- \\
+        \bottomrule
+    \end{longtable}
+\end{small}
+
+\subsection{Packet File Output}
+In packet mode ({\tt --s} option), the dhcpDecode plugin outputs the following columns:
+\begin{longtable}{lll}
+    \toprule
+    {\bf Column} & {\bf Type} & {\bf Description}\\
+    \midrule\endhead%
+    {\tt \nameref{dhcpMType}} & U8  & Message type\\
+    {\tt dhcpHops}            & U8  & Number of hops\\
+    {\tt dhcpTransID}         & U16 & Transaction Identifier\\
+    {\tt dhcpLFlow}           & U16 & Linked flow\\
+    \bottomrule
+\end{longtable}
+
+\subsection{Plugin Report Output}
+The number of DHCP packets of each type (\refs{dhcpMType}) is reported.
+
+%\subsection{Example Output}
+
+%\subsection{Known Bugs and Limitations}
+%IPv6 is not tested yet, so there might be bugs.
+
+\subsection{TODO}
+\begin{itemize}
+    \item DHCPv6
+\end{itemize}
+
+\subsection{References}
+\begin{itemize}
+    \item \href{https://tools.ietf.org/html/rfc2131}{RFC2131}: Dynamic Host Configuration Protocol
+    \item \href{https://tools.ietf.org/html/rfc2132}{RFC2132}: DHCP Options and BOOTP Vendor Extensions
+\end{itemize}
+
+\end{document}

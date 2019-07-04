@@ -1,0 +1,21 @@
+#!/usr/bin/env awk
+#
+# Returns true if 'ip' is a private ip
+#   IPv4: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+#
+# Dependencies:
+#   - None
+#
+# Examples:
+#   - tawk 'privip($srcIP4)' file.txt
+#   - tawk '!privip($dstIP4) { print }' file.txt
+
+@include "hdr"
+@include "ipinnet"
+
+function privip(ip) {
+    return ipinnet(ip, "10.0.0.0/8")     ||
+           ipinnet(ip, "172.16.0.0/12")  ||
+           ipinnet(ip, "192.168.0.0/16") ||
+           (__PRIHDR__ && hdr())
+}

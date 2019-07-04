@@ -1,0 +1,35 @@
+#!/usr/bin/env awk
+#
+# Returns the SSH connections
+#
+# Dependencies:
+#   - basicFlow
+#   - basicStats
+#   - nDPI
+#   - sshDecode (optional)
+#
+# Examples:
+#   - tawk 'ssh()' file.txt
+
+#@include "bitsallset"
+@include "hdr"
+@include "tuple2"
+@include "utc"
+@include "_validate_col"
+
+function ssh(        _obyt, _opkt, _sshver, _td, _ts) {
+    _validate_col("flowStat")
+    _validate_col("nDPIclass")
+    _ts   = _validate_col("timeFirst", _my_timeFirst)
+    _td   = _validate_col("duration", _my_duration)
+    _opkt = _validate_col("numPktsSnt", _my_numPktsSnt)
+    _obyt = _validate_col("numBytesSnt", _my_numBytesSnt)
+    if (sshVersion != 0) _sshver = $sshVersion
+    else _sshver = ""
+    if (__PRIHDR__ && hdr()) {
+        print "DateFirstSeen", "Duration", tuple2(), "SPkts", "SBytes", _sshver
+    } else if ($nDPIclass ~ /SSH/ && $_td > 0) {
+        print utc($_ts), $_td, tuple2(), $_opkt, $_obyt, _sshver
+        #if (bitsallset($flowStat, 1)) printf "\n"
+    }
+}
