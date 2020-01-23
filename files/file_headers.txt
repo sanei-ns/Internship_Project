@@ -3,7 +3,7 @@
 # sensorID: 666
 # PID: 15624
 # Command line: tranalyzer -r /root/Documents/NetwareDetection/NetwareDetection/snif3.pcap -w /root/Documents/files/file
-# HW Info: may;Linux;4.19.0-kali5-amd64;#1 SMP Debian 4.19.37-5kali1 (2019-06-20);x86_64
+# HW Info: root;Linux;4.19.0-kali5-amd64;#1 SMP Debian 4.19.37-5kali1 (2019-06-20);x86_64
 #
 # Plugins loaded:
 #   01: protoStats, version 0.8.4
